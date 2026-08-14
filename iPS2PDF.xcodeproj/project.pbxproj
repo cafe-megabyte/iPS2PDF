@@ -1,0 +1,426 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 71;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		7C10A0013100000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7C10A0023100000000000002 /* Assets.xcassets */; };
+		84873F6E302F47530092ED67 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 84873F6D302F47530092ED67 /* Localizable.xcstrings */; };
+		A10000000000000000000001 /* iPS2PDFApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* iPS2PDFApp.swift */; };
+		A10000000000000000000002 /* PDFVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* PDFVersion.swift */; };
+		A10000000000000000000003 /* ConversionFailure.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* ConversionFailure.swift */; };
+		A10000000000000000000004 /* AppAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000004 /* AppAlert.swift */; };
+		A10000000000000000000005 /* SettingsStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000005 /* SettingsStore.swift */; };
+		A10000000000000000000006 /* FileConverting.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000006 /* FileConverting.swift */; };
+		A10000000000000000000007 /* WorkingDirectoryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000007 /* WorkingDirectoryService.swift */; };
+		A10000000000000000000008 /* GhostscriptConverter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000008 /* GhostscriptConverter.swift */; };
+		A10000000000000000000009 /* ConversionViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* ConversionViewModel.swift */; };
+		A10000000000000000000010 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* ContentView.swift */; };
+		A10000000000000000000011 /* PDFViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* PDFViewer.swift */; };
+		A10000000000000000000012 /* ProcessingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* ProcessingOverlay.swift */; };
+		A10000000000000000000013 /* GhostscriptBridge.c in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* GhostscriptBridge.c */; };
+		A10000000000000000000015 /* PDFKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* PDFKit.framework */; };
+		A10000000000000000000016 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* UIKit.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		28164352302F5EE000DCBA60 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		7C10A0023100000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		84873F6D302F47530092ED67 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		A20000000000000000000001 /* iPS2PDFApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = iPS2PDFApp.swift; sourceTree = "<group>"; };
+		A20000000000000000000002 /* PDFVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFVersion.swift; sourceTree = "<group>"; };
+		A20000000000000000000003 /* ConversionFailure.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionFailure.swift; sourceTree = "<group>"; };
+		A20000000000000000000004 /* AppAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAlert.swift; sourceTree = "<group>"; };
+		A20000000000000000000005 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
+		A20000000000000000000006 /* FileConverting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileConverting.swift; sourceTree = "<group>"; };
+		A20000000000000000000007 /* WorkingDirectoryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkingDirectoryService.swift; sourceTree = "<group>"; };
+		A20000000000000000000008 /* GhostscriptConverter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GhostscriptConverter.swift; sourceTree = "<group>"; };
+		A20000000000000000000009 /* ConversionViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionViewModel.swift; sourceTree = "<group>"; };
+		A20000000000000000000010 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* PDFViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFViewer.swift; sourceTree = "<group>"; };
+		A20000000000000000000012 /* ProcessingOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessingOverlay.swift; sourceTree = "<group>"; };
+		A20000000000000000000013 /* GhostscriptBridge.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = GhostscriptBridge.c; sourceTree = "<group>"; };
+		A20000000000000000000016 /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = System/Library/Frameworks/PDFKit.framework; sourceTree = SDKROOT; };
+		A20000000000000000000017 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		A20000000000000000000022 /* iPS2PDF.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iPS2PDF.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A60000000000000000000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000015 /* PDFKit.framework in Frameworks */,
+				A10000000000000000000016 /* UIKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A70000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				A70000000000000000000002 /* App */,
+				A70000000000000000000007 /* GhostscriptIntegration */,
+				A70000000000000000000008 /* Scripts */,
+				A70000000000000000000009 /* Vendor */,
+				A70000000000000000000011 /* Frameworks */,
+				A70000000000000000000012 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A70000000000000000000002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000001 /* iPS2PDFApp.swift */,
+				7C10A0023100000000000002 /* Assets.xcassets */,
+				A70000000000000000000003 /* Models */,
+				A70000000000000000000004 /* Services */,
+				A70000000000000000000005 /* ViewModels */,
+				A70000000000000000000006 /* Views */,
+				84873F6D302F47530092ED67 /* Localizable.xcstrings */,
+				28164352302F5EE000DCBA60 /* Info.plist */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000003 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000002 /* PDFVersion.swift */,
+				A20000000000000000000003 /* ConversionFailure.swift */,
+				A20000000000000000000004 /* AppAlert.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000004 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000005 /* SettingsStore.swift */,
+				A20000000000000000000006 /* FileConverting.swift */,
+				A20000000000000000000007 /* WorkingDirectoryService.swift */,
+				A20000000000000000000008 /* GhostscriptConverter.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000005 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000009 /* ConversionViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000006 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000010 /* ContentView.swift */,
+				A20000000000000000000011 /* PDFViewer.swift */,
+				A20000000000000000000012 /* ProcessingOverlay.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000007 /* GhostscriptIntegration */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000013 /* GhostscriptBridge.c */,
+			);
+			path = GhostscriptIntegration;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000008 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Scripts;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000009 /* Vendor */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Vendor;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000011 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000016 /* PDFKit.framework */,
+				A20000000000000000000017 /* UIKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000012 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000022 /* iPS2PDF.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A50000000000000000000001 /* iPS2PDF */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A80000000000000000000001 /* Build configuration list for PBXNativeTarget "iPS2PDF" */;
+			buildPhases = (
+				A60000000000000000000008 /* Generate Build Number */,
+				A60000000000000000000003 /* Build Ghostscript */,
+				A60000000000000000000004 /* Sources */,
+				A60000000000000000000001 /* Frameworks */,
+				A60000000000000000000005 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = iPS2PDF;
+			productName = iPS2PDF;
+			productReference = A20000000000000000000022 /* iPS2PDF.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A40000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+				TargetAttributes = {
+					A50000000000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+				};
+			};
+			buildConfigurationList = A80000000000000000000003 /* Build configuration list for PBXProject "iPS2PDF" */;
+			compatibilityVersion = "Xcode 16.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				de,
+			);
+			mainGroup = A70000000000000000000001;
+			productRefGroup = A70000000000000000000012 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A50000000000000000000001 /* iPS2PDF */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A60000000000000000000005 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7C10A0013100000000000001 /* Assets.xcassets in Resources */,
+				84873F6E302F47530092ED67 /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A60000000000000000000003 /* Build Ghostscript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build Ghostscript";
+			outputPaths = (
+				"$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)/libgs.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"$SRCROOT/Scripts/build_ghostscript.sh\" \"$PLATFORM_NAME\" \"$ARCHS\" \"$IPHONEOS_DEPLOYMENT_TARGET\"\n";
+		};
+		A60000000000000000000008 /* Generate Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Build Number";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/BuildNumber.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"#define BUILD_NUMBER_VALUE $(date '+%Y%m%d.%H%M%S')\" > \"${DERIVED_FILE_DIR}/BuildNumber.h\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A60000000000000000000004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000000000000000000001 /* iPS2PDFApp.swift in Sources */,
+				A10000000000000000000002 /* PDFVersion.swift in Sources */,
+				A10000000000000000000003 /* ConversionFailure.swift in Sources */,
+				A10000000000000000000004 /* AppAlert.swift in Sources */,
+				A10000000000000000000005 /* SettingsStore.swift in Sources */,
+				A10000000000000000000006 /* FileConverting.swift in Sources */,
+				A10000000000000000000007 /* WorkingDirectoryService.swift in Sources */,
+				A10000000000000000000008 /* GhostscriptConverter.swift in Sources */,
+				A10000000000000000000009 /* ConversionViewModel.swift in Sources */,
+				A10000000000000000000010 /* ContentView.swift in Sources */,
+				A10000000000000000000011 /* PDFViewer.swift in Sources */,
+				A10000000000000000000012 /* ProcessingOverlay.swift in Sources */,
+				A10000000000000000000013 /* GhostscriptBridge.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		AA0000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AA0000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AA0000000000000000000003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_TESTABILITY = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/Ghostscript/upstream/psi",
+					"$(SRCROOT)/Vendor/Ghostscript/upstream/base",
+				);
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iPS2PDF;
+				INFOPLIST_PREFIX_HEADER = "$(DERIVED_FILE_DIR)/BuildNumber.h";
+				INFOPLIST_PREPROCESS = YES;
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)";
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lgs",
+					"-lc++",
+					"-liconv",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/GhostscriptIntegration/GhostscriptBridge.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = arm64;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/Vendor/Ghostscript/upstream/psi",
+					"$(SRCROOT)/Vendor/Ghostscript/upstream/base",
+				);
+				INFOPLIST_FILE = App/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = iPS2PDF;
+				INFOPLIST_PREFIX_HEADER = "$(DERIVED_FILE_DIR)/BuildNumber.h";
+				INFOPLIST_PREPROCESS = YES;
+				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)";
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-lgs",
+					"-lc++",
+					"-liconv",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/GhostscriptIntegration/GhostscriptBridge.h";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A80000000000000000000001 /* Build configuration list for PBXNativeTarget "iPS2PDF" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000003 /* Debug */,
+				AA0000000000000000000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A80000000000000000000003 /* Build configuration list for PBXProject "iPS2PDF" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000001 /* Debug */,
+				AA0000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A40000000000000000000001 /* Project object */;
+}

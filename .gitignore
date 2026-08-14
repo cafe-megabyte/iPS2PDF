@@ -1,0 +1,16 @@
+# Object files
+*.o
+
+# Backups
+*~
+
+# Mac OS X metadata
+*.DS_Store
+
+# Xcode user-specific state
+xcuserdata/
+*.xcuserstate
+xcschememanagement.plist
+
+# Ghostscript expanded source files
+Vendor/Ghostscript/upstream/*
