@@ -6,6 +6,20 @@
 	objectVersion = 71;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		C50000000000000000000001 /* Generate Build Number */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = C80000000000000000000001 /* Build configuration list for PBXAggregateTarget "Generate Build Number" */;
+			buildPhases = (
+				C60000000000000000000001 /* Generate Build Number */,
+			);
+			dependencies = (
+			);
+			name = "Generate Build Number";
+			productName = "Generate Build Number";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		7C10A0013100000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7C10A0023100000000000002 /* Assets.xcassets */; };
 		84873F6E302F47530092ED67 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 84873F6D302F47530092ED67 /* Localizable.xcstrings */; };
@@ -44,6 +58,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = B50000000000000000000001;
 			remoteInfo = iPS2PDFShare;
+		};
+		C30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A40000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C50000000000000000000001;
+			remoteInfo = "Generate Build Number";
+		};
+		C30000000000000000000002 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A40000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C50000000000000000000001;
+			remoteInfo = "Generate Build Number";
 		};
 /* End PBXContainerItemProxy section */
 
@@ -240,6 +268,7 @@
 			);
 			dependencies = (
 				B90000000000000000000001 /* PBXTargetDependency */,
+				C90000000000000000000001 /* PBXTargetDependency */,
 			);
 			name = iPS2PDF;
 			productName = iPS2PDF;
@@ -258,6 +287,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				C90000000000000000000002 /* PBXTargetDependency */,
 			);
 			name = iPS2PDFShare;
 			productName = iPS2PDFShare;
@@ -280,6 +310,9 @@
 					B50000000000000000000001 = {
 						CreatedOnToolsVersion = 27.0;
 					};
+					C50000000000000000000001 = {
+						CreatedOnToolsVersion = 27.0;
+					};
 				};
 			};
 			buildConfigurationList = A80000000000000000000003 /* Build configuration list for PBXProject "iPS2PDF" */;
@@ -298,6 +331,7 @@
 			targets = (
 				A50000000000000000000001 /* iPS2PDF */,
 				B50000000000000000000001 /* iPS2PDFShare */,
+				C50000000000000000000001 /* Generate Build Number */,
 			);
 		};
 /* End PBXProject section */
@@ -355,6 +389,22 @@
 			shellPath = /bin/bash;
 			shellScript = "\"$SRCROOT/Scripts/build_ghostscript.sh\" \"$PLATFORM_NAME\" \"$ARCHS\" \"$IPHONEOS_DEPLOYMENT_TARGET\"\n";
 		};
+		C60000000000000000000001 /* Generate Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Build Number";
+			outputPaths = (
+				"$(PROJECT_TEMP_DIR)/BuildNumber.c",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "mkdir -p \"${PROJECT_TEMP_DIR}\"\nprintf '#define BUILD_NUMBER_VALUE %s\\n' \"$(date '+%Y%m%d.%H%M%S')\" > \"${PROJECT_TEMP_DIR}/BuildNumber.c\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -399,6 +449,16 @@
 			isa = PBXTargetDependency;
 			target = B50000000000000000000001 /* iPS2PDFShare */;
 			targetProxy = B30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		C90000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C50000000000000000000001 /* Generate Build Number */;
+			targetProxy = C30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		C90000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C50000000000000000000001 /* Generate Build Number */;
+			targetProxy = C30000000000000000000002 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -457,6 +517,8 @@
 				);
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = iPS2PDF;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
+				INFOPLIST_PREPROCESS = YES;
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)";
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
@@ -489,6 +551,8 @@
 				);
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = iPS2PDF;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
+				INFOPLIST_PREPROCESS = YES;
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)";
 				MARKETING_VERSION = 1.0;
 				OTHER_LDFLAGS = (
@@ -520,6 +584,8 @@
 					"$(SRCROOT)/Vendor/Ghostscript/upstream/base",
 				);
 				INFOPLIST_FILE = iPS2PDFShare/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
+				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)";
@@ -555,6 +621,8 @@
 					"$(SRCROOT)/Vendor/Ghostscript/upstream/base",
 				);
 				INFOPLIST_FILE = iPS2PDFShare/Info.plist;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
+				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
 				LIBRARY_SEARCH_PATHS = "$(SRCROOT)/Vendor/Ghostscript/upstream/ios/build/$(PLATFORM_NAME)";
@@ -574,6 +642,18 @@
 				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/GhostscriptIntegration/GhostscriptBridge.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		CA00000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		CA00000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
 			};
 			name = Release;
 		};
@@ -603,6 +683,15 @@
 			buildConfigurations = (
 				BA0000000000000000000001 /* Debug */,
 				BA0000000000000000000002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C80000000000000000000001 /* Build configuration list for PBXAggregateTarget "Generate Build Number" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA00000000000000000000001 /* Debug */,
+				CA00000000000000000000002 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
