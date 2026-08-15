@@ -2,11 +2,12 @@
 set -euo pipefail
 
 # This is a patcher, not a patched copy of Ghostscript's iOS script. It makes
-# a disposable working copy under upstream/ios/build and applies only the
-# deterministic changes required for current, single-architecture SDK builds.
+# a disposable working copy in Xcode's project temporary directory and applies
+# only the deterministic changes required for current, single-architecture SDK
+# builds.
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: build_ghostscript.sh <iphonesimulator|iphoneos> <architecture> <deployment-target>" >&2
+if [ "$#" -ne 4 ] || [ -z "$4" ]; then
+    echo "Usage: build_ghostscript.sh <iphonesimulator|iphoneos> <architecture> <deployment-target> <project-temp-dir>" >&2
     exit 64
 fi
 
@@ -37,8 +38,11 @@ esac
 
 project_root="$(cd "$(dirname "$0")/.." && pwd)"
 vendor_root="$project_root/Vendor/Ghostscript"
-upstream_root="$vendor_root/upstream"
+derived_ghostscript_root="$4/Ghostscript"
+upstream_root="$derived_ghostscript_root/upstream"
 official_script="$upstream_root/ios/build_ios_gslib.sh"
+
+mkdir -p "$derived_ghostscript_root"
 
 if [ -e "$upstream_root" ] && [ ! -d "$upstream_root" ]; then
     echo "error: $upstream_root exists but is not a directory." >&2
@@ -71,7 +75,7 @@ if [ "$needs_extraction" -eq 1 ]; then
         exit 70
     fi
 
-    extraction_root="$(mktemp -d "$vendor_root/.upstream-extract.XXXXXX")"
+    extraction_root="$(mktemp -d "$derived_ghostscript_root/.upstream-extract.XXXXXX")"
     cleanup_extraction() {
         if [ -n "${extraction_root:-}" ] && [ -d "$extraction_root" ]; then
             rm -rf -- "$extraction_root"

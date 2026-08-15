@@ -11,6 +11,7 @@ final class ShareViewController: UIViewController {
     override func loadView() {
         let view = UIView()
         view.backgroundColor = .systemBackground
+        view.tintColor = AppTint.uiColor
 
         activityIndicator.translatesAutoresizingMaskIntoConstraints = false
         activityIndicator.startAnimating()
@@ -112,6 +113,7 @@ final class ShareViewController: UIViewController {
                 onShareStarted: {},
                 onShareFinished: {}
             )
+            .tint(AppTint.color)
         )
         addChild(viewer)
         viewer.view.translatesAutoresizingMaskIntoConstraints = false

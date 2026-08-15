@@ -18,7 +18,7 @@ For example, the tested archive is:
 Vendor/Ghostscript/ghostscript-10.07.1.tar.gz
 ```
 
-The archive does not need to be unpacked manually. When `Vendor/Ghostscript/upstream/` is missing or empty, the Xcode build phase finds the archive, extracts its top-level source directory as `upstream`, creates a patched working copy of Ghostscript's official iOS build script, and builds the required static library. Simulator and device artifacts are kept separate and are reused based on their existence.
+The archive does not need to be unpacked manually. When `$(PROJECT_TEMP_DIR)/Ghostscript/upstream/` is missing or empty, the Xcode build phase finds the archive, extracts its top-level source directory there, creates a patched working copy of Ghostscript's official iOS build script, and builds the required static library. The extracted sources and artifacts therefore stay in Xcode's Derived Data instead of the project directory. Simulator and device artifacts are kept separate and are reused based on their existence. Deleting the build folder forces a complete rebuild.
 
 Open `iPS2PDF.xcodeproj`, select the `iPS2PDF` scheme and the desired iOS destination, then build with **Command-B**. The first build takes longer because it compiles Ghostscript; subsequent builds reuse the generated library.
 

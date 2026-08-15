@@ -54,6 +54,18 @@ actor WorkingDirectoryService {
         }
     }
 
+    func removeDropStagingDirectory(_ stagingDirectoryURL: URL) {
+        let expectedParent = fileManager.temporaryDirectory
+            .appendingPathComponent("Incoming drops", isDirectory: true)
+            .standardizedFileURL
+
+        guard stagingDirectoryURL.standardizedFileURL.deletingLastPathComponent() == expectedParent else {
+            return
+        }
+
+        try? fileManager.removeItem(at: stagingDirectoryURL)
+    }
+
     func outputURL(for localSourceURL: URL) -> URL {
         var outputURL = localSourceURL
         let extensionValue = outputURL.pathExtension

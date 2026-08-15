@@ -11,6 +11,3 @@
 xcuserdata/
 *.xcuserstate
 xcschememanagement.plist
-
-# Ghostscript expanded source files
-Vendor/Ghostscript/upstream/*

@@ -55,6 +55,21 @@ final class ConversionViewModel: ObservableObject {
         acceptFiles(urls)
     }
 
+    func handleDroppedFile(_ url: URL) {
+        let cleanupDirectory = url.deletingLastPathComponent()
+        guard acceptFiles([url], cleanupDirectory: cleanupDirectory) else {
+            Task { [workingDirectoryService] in
+                await workingDirectoryService.removeDropStagingDirectory(cleanupDirectory)
+            }
+            return
+        }
+    }
+
+    func handleDroppedFileLoadFailure() {
+        guard !controlsAreDisabled else { return }
+        alert = makeErrorAlert(for: .inputCannotBeRead)
+    }
+
     func dismissAlert() {
         alert = nil
         presentDeferredNoticeIfPossible()
@@ -92,13 +107,14 @@ final class ConversionViewModel: ObservableObject {
         }
     }
 
-    private func acceptFiles(_ urls: [URL]) {
+    @discardableResult
+    private func acceptFiles(_ urls: [URL], cleanupDirectory: URL? = nil) -> Bool {
         guard urls.count == 1, let url = urls.first else {
             presentNotice(
                 title: String(localized: "notice_multiple_files_title"),
                 message: String(localized: "notice_multiple_files_message")
             )
-            return
+            return false
         }
 
         guard !controlsAreDisabled else {
@@ -106,7 +122,7 @@ final class ConversionViewModel: ObservableObject {
                 title: String(localized: "notice_busy_title"),
                 message: String(localized: "notice_busy_message")
             )
-            return
+            return false
         }
 
         let versionSnapshot = selectedPDFVersion
@@ -114,9 +130,13 @@ final class ConversionViewModel: ObservableObject {
         showsProgressOverlay = false
         startProgressDelay()
 
-        Task { [weak self] in
+        Task { [weak self, workingDirectoryService] in
             await self?.runConversion(sourceURL: url, version: versionSnapshot)
+            if let cleanupDirectory {
+                await workingDirectoryService.removeDropStagingDirectory(cleanupDirectory)
+            }
         }
+        return true
     }
 
     private func runConversion(sourceURL: URL, version: PDFVersion) async {

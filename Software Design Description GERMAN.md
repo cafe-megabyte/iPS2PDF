@@ -64,6 +64,8 @@ Der Hauptscreen enthält dauerhaft:
 1. einen Button zum Öffnen einer Datei;
 2. einen Segmented Controller zur Auswahl der PDF-Version.
 
+Der Segmented Controller hat eine feste Breite und wird nicht auf die gesamte verfügbare Bildschirmbreite gestreckt.
+
 Unterstützte PDF-Versionen:
 
 - PDF 1.2
@@ -98,6 +100,8 @@ Insbesondere sind auch Dateien ohne Dateiendung zulässig.
 Verzeichnisse bzw. Ordner sind keine gültigen Eingaben.
 
 Der Datei-Picker erlaubt ausschließlich **Einzelauswahl**.
+
+Auf dem Mac, wenn die iPad-Version der App ausgeführt wird, kann eine einzelne Datei auch aus dem Finder in das App-Fenster gezogen werden. Sie durchläuft anschließend denselben Verarbeitungsworkflow wie eine über den Datei-Picker ausgewählte Datei.
 
 ---
 
@@ -722,13 +726,19 @@ Er darf technisch bzw. kryptisch sein, da er primär der Diagnose dient.
 
 ## 16.1 Upstream-Code
 
-Der Ghostscript-Sourcecode liegt vollständig unter:
+Das Ghostscript-Archiv liegt im Projekt unter:
 
 ```text
-Vendor/Ghostscript/upstream/
+Vendor/Ghostscript/*.tar.gz
 ```
 
-Dieser Bereich wird als austauschbarer Upstream-Bereich behandelt.
+Beim Build wird der Sourcecode temporär nach:
+
+```text
+$(PROJECT_TEMP_DIR)/Ghostscript/upstream/
+```
+
+entpackt. Dieser Bereich liegt standardmäßig in Xcodes Derived Data und wird als austauschbarer Upstream-Bereich behandelt.
 
 Eigener App-Code wird dort nicht dauerhaft gepflegt.
 
@@ -754,7 +764,7 @@ als Grundlage für einen manuell zusammengestellten Ghostscript-Build.
 Grundlage für den Ghostscript-Build ist das mit der jeweiligen Ghostscript-Version gelieferte offizielle Script:
 
 ```text
-Vendor/Ghostscript/upstream/ios/build_ios_gslib.sh
+$(PROJECT_TEMP_DIR)/Ghostscript/upstream/ios/build_ios_gslib.sh
 ```
 
 Das aktuelle Upstream-Script enthält noch historische Architektur- und Universal-Library-Annahmen und wird daher nicht zwingend unverändert ausgeführt.
@@ -803,7 +813,7 @@ Device und Simulator verwenden getrennte Ghostscript-Artefakte.
 Konzeptionell:
 
 ```text
-Vendor/Ghostscript/upstream/ios/build/
+$(PROJECT_TEMP_DIR)/Ghostscript/upstream/ios/build/
 ├── iphoneos/
 │   └── libgs.a
 └── iphonesimulator/
@@ -843,13 +853,13 @@ Es werden ausdrücklich keine zusätzlichen Mechanismen verwendet wie:
 
 ## 16.8 Ghostscript-Update
 
-Ein Ghostscript-Update erfolgt konzeptionell durch vollständiges Ersetzen von:
+Ein Ghostscript-Update erfolgt konzeptionell durch Ersetzen des Archivs unter:
 
 ```text
-Vendor/Ghostscript/upstream/
+Vendor/Ghostscript/*.tar.gz
 ```
 
-Da die erzeugten Ghostscript-Buildartefakte innerhalb dieses austauschbaren Upstream-Bereichs liegen, verschwinden sie beim Ersetzen automatisch.
+Danach wird der Build-Ordner beziehungsweise Derived Data gelöscht. Da die erzeugten Ghostscript-Buildartefakte dort liegen, verschwinden sie dabei automatisch.
 
 Der nächste Xcode-Build stellt dadurch über die Existenzprüfung fest, dass `libgs.a` fehlt, und baut Ghostscript erneut.
 
@@ -1067,10 +1077,9 @@ Die PDF-Darstellung basiert auf PDFKit.
 
 Anforderungen:
 
-- automatische initiale Skalierung (`autoScales`)
+- Die erste Seite wird initial vollständig im verfügbaren Viewer-Bereich dargestellt.
 - normales Scrollen mehrseitiger PDFs
 - Pinch-to-Zoom
-- automatische Anpassung an Orientierungsänderungen
 - keine PDF-Bearbeitung
 - keine Annotationen
 - keine Thumbnail-Navigation
@@ -1362,9 +1371,10 @@ und:
 ```text
 Vendor/
 └── Ghostscript/
-    └── upstream/
-        └── <unmodified Ghostscript source tree>
+    └── <Ghostscript source archive>.tar.gz
 ```
+
+Der entpackte, unveränderte Ghostscript-Sourcecode liegt nur temporär unter `$(PROJECT_TEMP_DIR)/Ghostscript/upstream/`.
 
 Die konkrete Xcode-Gruppenstruktur darf abweichen, sofern die beschriebenen Verantwortlichkeiten erhalten bleiben.
 
@@ -1418,11 +1428,11 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 - Eine Arbeitskopie darf für moderne Xcode-Ziele gepatcht werden.
 - Device und Simulator verwenden getrennte `libgs.a`-Artefakte.
 - Die Entscheidung über einen Ghostscript-Rebuild erfolgt allein per Existenzprüfung.
-- Das Ersetzen des Upstream-Ordners entfernt auch die darin liegenden Buildartefakte.
+- Nach einem Austausch des Ghostscript-Archivs wird der Build-Ordner beziehungsweise Derived Data gelöscht, damit die dort liegenden Buildartefakte neu erzeugt werden.
 - `libgs.a` wird statisch in die App gelinkt.
 - Eine erfolgreiche Konvertierung erzeugt eine existierende, nicht leere und von PDFKit lesbare PDF-Datei.
 - Das PDF wird anschließend automatisch vollflächig angezeigt.
-- PDFKit unterstützt Scrollen, Auto-Scaling und Pinch-to-Zoom.
+- Die erste PDF-Seite wird initial vollständig angezeigt; PDFKit unterstützt anschließend Scrollen und Pinch-to-Zoom.
 - Der Viewer bietet keine Bearbeitungs- oder Annotationsfunktionen.
 - Share befindet sich oben links.
 - Close befindet sich oben rechts.
