@@ -42,6 +42,29 @@ derived_ghostscript_root="$4/Ghostscript"
 upstream_root="$derived_ghostscript_root/upstream"
 official_script="$upstream_root/ios/build_ios_gslib.sh"
 
+copy_pdfa_resources() {
+    if [ -z "${TARGET_BUILD_DIR:-}" ] || [ -z "${UNLOCALIZED_RESOURCES_FOLDER_PATH:-}" ]; then
+        return
+    fi
+
+    local pdfa_definition="$upstream_root/lib/PDFA_def.ps"
+    local srgb_profile="$upstream_root/iccprofiles/srgb.icc"
+    local resource_directory="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Ghostscript"
+
+    if [ ! -f "$pdfa_definition" ]; then
+        echo "error: Missing Ghostscript PDF/A definition file: $pdfa_definition" >&2
+        exit 73
+    fi
+    if [ ! -f "$srgb_profile" ]; then
+        echo "error: Missing Ghostscript sRGB ICC profile: $srgb_profile" >&2
+        exit 74
+    fi
+
+    mkdir -p "$resource_directory"
+    cp "$pdfa_definition" "$resource_directory/PDFA_def.ps"
+    cp "$srgb_profile" "$resource_directory/srgb.icc"
+}
+
 mkdir -p "$derived_ghostscript_root"
 
 if [ -e "$upstream_root" ] && [ ! -d "$upstream_root" ]; then
@@ -114,6 +137,8 @@ working_script="$build_root/build_ios_gslib.$platform.patched.sh"
 # simulator runtime environment.
 unset DYLD_ROOT_PATH DYLD_LIBRARY_PATH DYLD_FRAMEWORK_PATH DYLD_INSERT_LIBRARIES
 unset SDKROOT SDK_NAME SDK_DIR IPHONEOS_DEPLOYMENT_TARGET
+
+copy_pdfa_resources
 
 if [ -f "$artifact" ]; then
     exit 0

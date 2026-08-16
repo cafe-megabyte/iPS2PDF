@@ -337,6 +337,134 @@
         }
       }
     },
+    "pdfa_compatibility" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A Kompatibilität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A Compatibility"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_1b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.4 · ohne Transparenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.4 · without transparency"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_1b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-1b"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-1b"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_2b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · mit Transparenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · with transparency"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_2b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-2b"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-2b"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_3b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · erlaubt eingebettete Dateien"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · allows embedded files"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_3b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-3b"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-3b"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_none_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "none"
+          }
+        }
+      }
+    },
     "pdf_version" : {
       "localizations" : {
         "de" : {

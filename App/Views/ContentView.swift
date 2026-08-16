@@ -15,15 +15,29 @@ struct ContentView: View {
                 .controlSize(.large)
                 .disabled(viewModel.controlsAreDisabled)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: "pdf_version"))
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(String(localized: "pdf_version"))
+                            .font(.headline)
 
-                    PDFVersionDropdown(
-                        selectedVersion: viewModel.selectedPDFVersion,
-                        isDisabled: viewModel.controlsAreDisabled
-                    ) { version in
-                        viewModel.setPDFVersion(version)
+                        PDFVersionDropdown(
+                            selectedVersion: viewModel.selectedPDFVersion,
+                            isDisabled: viewModel.controlsAreDisabled
+                        ) { version in
+                            viewModel.setPDFVersion(version)
+                        }
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(String(localized: "pdfa_compatibility"))
+                            .font(.headline)
+
+                        PDFACompatibilityDropdown(
+                            selectedCompatibility: viewModel.selectedPDFACompatibility,
+                            isDisabled: viewModel.controlsAreDisabled
+                        ) { compatibility in
+                            viewModel.setPDFACompatibility(compatibility)
+                        }
                     }
                 }
                 .frame(width: 320, alignment: .leading)
@@ -194,6 +208,75 @@ private struct PDFVersionOptionRow: View {
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.tint)
             }
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+private struct PDFACompatibilityDropdown: View {
+    let selectedCompatibility: PDFACompatibility
+    let isDisabled: Bool
+    let onSelect: (PDFACompatibility) -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(PDFACompatibility.allCases.reversed()) { compatibility in
+                Button {
+                    onSelect(compatibility)
+                } label: {
+                    menuItemTitle(for: compatibility)
+                    if let detail = compatibility.detail {
+                        Text(detail)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                PDFACompatibilityOptionRow(compatibility: selectedCompatibility)
+
+                Image(systemName: "chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.bordered)
+        .disabled(isDisabled)
+    }
+
+    @ViewBuilder
+    private func menuItemTitle(for compatibility: PDFACompatibility) -> some View {
+        if compatibility.isHighlighted {
+            Label(compatibility.title, systemImage: "star.fill")
+        } else {
+            Text(compatibility.title)
+        }
+    }
+}
+
+private struct PDFACompatibilityOptionRow: View {
+    let compatibility: PDFACompatibility
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: compatibility.isHighlighted ? "star.fill" : "star")
+                .foregroundStyle(compatibility.isHighlighted ? .red : .clear)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(compatibility.title)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.primary)
+
+                if let detail = compatibility.detail {
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                }
+            }
+
+            Spacer(minLength: 8)
         }
         .contentShape(Rectangle())
     }

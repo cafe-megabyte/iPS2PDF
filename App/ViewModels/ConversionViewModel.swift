@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class ConversionViewModel: ObservableObject {
     @Published var selectedPDFVersion: PDFVersion
+    @Published var selectedPDFACompatibility: PDFACompatibility
     @Published var isFileImporterPresented = false
     @Published private(set) var isProcessing = false
     @Published private(set) var showsProgressOverlay = false
@@ -31,6 +32,7 @@ final class ConversionViewModel: ObservableObject {
         self.workingDirectoryService = workingDirectoryService
         self.converter = converter
         selectedPDFVersion = settingsStore.pdfVersion
+        selectedPDFACompatibility = settingsStore.pdfaCompatibility
         startupCleanupTask = Task.detached(priority: .utility) {
             try await workingDirectoryService.clearWorkingDirectory()
         }
@@ -44,6 +46,23 @@ final class ConversionViewModel: ObservableObject {
         guard !controlsAreDisabled else { return }
         selectedPDFVersion = version
         settingsStore.pdfVersion = version
+
+        if selectedPDFACompatibility.requiredPDFVersion != version {
+            selectedPDFACompatibility = .none
+            settingsStore.pdfaCompatibility = .none
+        }
+    }
+
+    func setPDFACompatibility(_ compatibility: PDFACompatibility) {
+        guard !controlsAreDisabled else { return }
+        selectedPDFACompatibility = compatibility
+        settingsStore.pdfaCompatibility = compatibility
+
+        if let requiredPDFVersion = compatibility.requiredPDFVersion,
+           selectedPDFVersion != requiredPDFVersion {
+            selectedPDFVersion = requiredPDFVersion
+            settingsStore.pdfVersion = requiredPDFVersion
+        }
     }
 
     func handleSelectedFile(_ url: URL) {
@@ -126,12 +145,17 @@ final class ConversionViewModel: ObservableObject {
         }
 
         let versionSnapshot = selectedPDFVersion
+        let pdfaCompatibilitySnapshot = selectedPDFACompatibility
         isProcessing = true
         showsProgressOverlay = false
         startProgressDelay()
 
         Task { [weak self, workingDirectoryService] in
-            await self?.runConversion(sourceURL: url, version: versionSnapshot)
+            await self?.runConversion(
+                sourceURL: url,
+                version: versionSnapshot,
+                pdfaCompatibility: pdfaCompatibilitySnapshot
+            )
             if let cleanupDirectory {
                 await workingDirectoryService.removeDropStagingDirectory(cleanupDirectory)
             }
@@ -139,7 +163,11 @@ final class ConversionViewModel: ObservableObject {
         return true
     }
 
-    private func runConversion(sourceURL: URL, version: PDFVersion) async {
+    private func runConversion(
+        sourceURL: URL,
+        version: PDFVersion,
+        pdfaCompatibility: PDFACompatibility
+    ) async {
         do {
             await dismissViewerForReplacementIfNeeded()
 
@@ -156,7 +184,8 @@ final class ConversionViewModel: ObservableObject {
             try await converter.convert(
                 sourceURL: localSourceURL,
                 outputURL: outputURL,
-                pdfVersion: version
+                pdfVersion: version,
+                pdfaCompatibility: pdfaCompatibility
             )
             try await workingDirectoryService.validatePDF(at: outputURL)
 

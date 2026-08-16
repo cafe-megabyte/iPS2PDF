@@ -147,7 +147,8 @@ final class ShareViewController: UIViewController {
         try await GhostscriptConverter().convert(
             sourceURL: sourceURL,
             outputURL: outputURL,
-            pdfVersion: .v13
+            pdfVersion: .v13,
+            pdfaCompatibility: .none
         )
 
         guard PDFDocument(url: outputURL) != nil else {

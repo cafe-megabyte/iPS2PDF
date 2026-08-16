@@ -8,7 +8,8 @@
 
 enum {
     kMaximumDiagnosticBytes = 300,
-    kOutputArgumentCapacity = 8192
+    kOutputArgumentCapacity = 8192,
+    kMaximumGhostscriptArguments = 100
 };
 
 typedef struct BridgeCapture {
@@ -115,10 +116,74 @@ static int is_pdf_version(const char *version, const char *expected)
     return version != NULL && strcmp(version, expected) == 0;
 }
 
+static int is_pdfa_version(const char *version, const char *expected)
+{
+    return version != NULL && strcmp(version, expected) == 0;
+}
+
+static void append_argument(const char **arguments, int *argument_count, const char *argument)
+{
+    arguments[(*argument_count)++] = argument;
+}
+
+static void append_common_pdfwrite_options(
+    const char **arguments,
+    int *argument_count,
+    int pdfa_enabled,
+    int supports_transparency,
+    int allow_postscript_transparency
+)
+{
+    static const char *options[] = {
+        "-dAutoRotatePages=/None",
+        "-dPreserveOverprintSettings=true",
+        "-dTransferFunctionInfo=/Apply",
+        "-dUCRandBGInfo=/Remove",
+        "-dDownsampleColorImages=false",
+        "-dDownsampleGrayImages=false",
+        "-dDownsampleMonoImages=false",
+        "-dPassThroughJPEGImages=true",
+        "-dPassThroughJPXImages=false",
+        "-dEncodeColorImages=true",
+        "-dEncodeGrayImages=true",
+        "-dEncodeMonoImages=true",
+        "-dAutoFilterColorImages=true",
+        "-dAutoFilterGrayImages=true",
+        "-dColorImageFilter=/DCTEncode",
+        "-dGrayImageFilter=/DCTEncode",
+        "-dMonoImageFilter=/CCITTFaxEncode",
+        "-dEmbedAllFonts=true",
+        "-dEmbedSubstituteFonts=true",
+        "-dSubsetFonts=true",
+        "-dMaxSubsetPct=100",
+        "-dCompressPages=true",
+        "-dCompressStreams=true",
+        "-dFastWebView=false",
+        "-r2400"
+    };
+
+    if (!pdfa_enabled) {
+        append_argument(arguments, argument_count, "-sColorConversionStrategy=LeaveColorUnchanged");
+    }
+    if (supports_transparency) {
+        append_argument(arguments, argument_count, "-dHaveTransparency=true");
+        if (allow_postscript_transparency) {
+            append_argument(arguments, argument_count, "-dALLOWPSTRANSPARENCY");
+        }
+    }
+
+    for (size_t index = 0; index < sizeof(options) / sizeof(options[0]); index++) {
+        append_argument(arguments, argument_count, options[index]);
+    }
+}
+
 int gs_convert_to_pdf(
     const char *input_path,
     const char *output_path,
     const char *pdf_version,
+    const char *pdfa_version,
+    const char *pdfa_definition_path,
+    const char *pdfa_resource_directory,
     char *diagnostics,
     size_t diagnostics_capacity,
     int *ghostscript_return_code,
@@ -131,6 +196,10 @@ int gs_convert_to_pdf(
     int initialized = 0;
     int current_stage = GS_BRIDGE_STAGE_NEW_INSTANCE;
     char output_argument[kOutputArgumentCapacity];
+    char pdfa_option[32];
+    char pdfa_include_argument[kOutputArgumentCapacity];
+    char pdfa_permit_read_argument[kOutputArgumentCapacity];
+    char transparency_prolog[kOutputArgumentCapacity];
 
     if (diagnostics != NULL && diagnostics_capacity > 0) {
         diagnostics[0] = '\0';
@@ -153,6 +222,40 @@ int gs_convert_to_pdf(
     const char *compatibility_option = NULL;
     const char *xref_option = NULL;
     const char *object_stream_option = NULL;
+    const char *pdfa_policy_option = NULL;
+    const char *pdfa_color_conversion_option = NULL;
+    const char *pdfa_blend_conversion_option = NULL;
+    const int pdfa_enabled = pdfa_version != NULL && pdfa_version[0] != '\0';
+    int supports_transparency = 0;
+    int permits_pdfa_transparency = 0;
+    int allow_postscript_transparency = 0;
+    const char *distiller_parameters =
+        "<<"
+        " /NeverEmbed []"
+        " /ColorImageDict <<"
+        " /QFactor 0.15"
+        " /HSamples [1 1 1 1]"
+        " /VSamples [1 1 1 1]"
+        " >>"
+        " /ColorACSImageDict <<"
+        " /QFactor 0.15"
+        " /HSamples [1 1 1 1]"
+        " /VSamples [1 1 1 1]"
+        " >>"
+        " /GrayImageDict <<"
+        " /QFactor 0.15"
+        " /HSamples [1 1 1 1]"
+        " /VSamples [1 1 1 1]"
+        " >>"
+        " /GrayACSImageDict <<"
+        " /QFactor 0.15"
+        " /HSamples [1 1 1 1]"
+        " /VSamples [1 1 1 1]"
+        " >>"
+        " /MonoImageDict <<"
+        " /K -1"
+        " >>"
+        " >> setdistillerparams";
 
     if (is_pdf_version(pdf_version, "1.1")) {
         compatibility_option = "-dCompatibilityLevel=1.1";
@@ -168,23 +271,96 @@ int gs_convert_to_pdf(
         compatibility_option = "-dCompatibilityLevel=1.4";
         xref_option = "-dWriteXRefStm=false";
         object_stream_option = "-dWriteObjStms=false";
+        supports_transparency = 1;
     } else if (is_pdf_version(pdf_version, "1.5")) {
         compatibility_option = "-dCompatibilityLevel=1.5";
         xref_option = "-dWriteXRefStm=true";
         object_stream_option = "-dWriteObjStms=true";
+        supports_transparency = 1;
+        permits_pdfa_transparency = 1;
     } else if (is_pdf_version(pdf_version, "1.6")) {
         compatibility_option = "-dCompatibilityLevel=1.6";
         xref_option = "-dWriteXRefStm=true";
         object_stream_option = "-dWriteObjStms=true";
+        supports_transparency = 1;
+        permits_pdfa_transparency = 1;
     } else if (is_pdf_version(pdf_version, "1.7")) {
         compatibility_option = "-dCompatibilityLevel=1.7";
         xref_option = "-dWriteXRefStm=true";
         object_stream_option = "-dWriteObjStms=true";
+        supports_transparency = 1;
+        permits_pdfa_transparency = 1;
     } else if (is_pdf_version(pdf_version, "2.0")) {
         compatibility_option = "-dCompatibilityLevel=2.0";
         xref_option = "-dWriteXRefStm=true";
         object_stream_option = "-dWriteObjStms=true";
+        supports_transparency = 1;
+        permits_pdfa_transparency = 1;
     } else {
+        if (stage != NULL) {
+            *stage = GS_BRIDGE_STAGE_CONVERSION;
+        }
+        return -1;
+    }
+
+    if (pdfa_enabled) {
+        if (!is_pdfa_version(pdfa_version, "1") &&
+            !is_pdfa_version(pdfa_version, "2") &&
+            !is_pdfa_version(pdfa_version, "3")) {
+            if (stage != NULL) {
+                *stage = GS_BRIDGE_STAGE_CONVERSION;
+            }
+            return -1;
+        }
+        if (pdfa_definition_path == NULL || pdfa_resource_directory == NULL ||
+            snprintf(pdfa_option, sizeof(pdfa_option), "-dPDFA=%s", pdfa_version) >= (int)sizeof(pdfa_option) ||
+            snprintf(pdfa_include_argument, sizeof(pdfa_include_argument), "-I%s", pdfa_resource_directory) >= (int)sizeof(pdfa_include_argument) ||
+            snprintf(pdfa_permit_read_argument, sizeof(pdfa_permit_read_argument), "--permit-file-read=%s", pdfa_resource_directory) >= (int)sizeof(pdfa_permit_read_argument)) {
+            if (stage != NULL) {
+                *stage = GS_BRIDGE_STAGE_CONVERSION;
+            }
+            return -1;
+        }
+        pdfa_policy_option = "-dPDFACompatibilityPolicy=2";
+        pdfa_color_conversion_option = "-sColorConversionStrategy=RGB";
+        if (is_pdfa_version(pdfa_version, "2") || is_pdfa_version(pdfa_version, "3")) {
+            pdfa_blend_conversion_option = "-sBlendConversionStrategy=Simple";
+        }
+    }
+
+    allow_postscript_transparency = supports_transparency && (!pdfa_enabled || permits_pdfa_transparency);
+    if (allow_postscript_transparency &&
+        snprintf(
+            transparency_prolog,
+            sizeof(transparency_prolog),
+            "<<"
+            " /PageUsesTransparency true"
+            " /CompatibilityLevel %s"
+            " /PageSpotColors 0"
+            " >> setpagedevice"
+            " 0 .pushpdf14devicefilter"
+            " /.origshowpage /showpage load def"
+            " /showpage {"
+            " .poppdf14devicefilter"
+            " .origshowpage"
+            " } bind def"
+            " /.origpdfmark /pdfmark load def"
+            " /pdfmark {"
+            " dup /SetTransparency eq {"
+            " pop"
+            " counttomark 2 idiv dict begin"
+            " counttomark 2 idiv { def } repeat"
+            " ca .setfillconstantalpha"
+            " CA .setstrokeconstantalpha"
+            " BM .setblendmode"
+            " end"
+            " pop"
+            " } {"
+            " .origpdfmark"
+            " } ifelse"
+            " } bind def",
+            pdf_version
+        ) >= (int)sizeof(transparency_prolog)) {
         if (stage != NULL) {
             *stage = GS_BRIDGE_STAGE_CONVERSION;
         }
@@ -213,11 +389,28 @@ int gs_convert_to_pdf(
      * ps2pdfwr deliberately supplies OPTIONS before and after pdfwrite's
      * core arguments, so the order is retained exactly here.
      */
-    const char *arguments[24];
+    const char *arguments[kMaximumGhostscriptArguments];
     int argument_count = 0;
     arguments[argument_count++] = "iPS2PDF";
     arguments[argument_count++] = "-P-";
     arguments[argument_count++] = "-dSAFER";
+    if (pdfa_enabled) {
+        arguments[argument_count++] = pdfa_include_argument;
+        arguments[argument_count++] = pdfa_permit_read_argument;
+        arguments[argument_count++] = pdfa_option;
+        arguments[argument_count++] = pdfa_policy_option;
+        arguments[argument_count++] = pdfa_color_conversion_option;
+        if (pdfa_blend_conversion_option != NULL) {
+            arguments[argument_count++] = pdfa_blend_conversion_option;
+        }
+    }
+    append_common_pdfwrite_options(
+        arguments,
+        &argument_count,
+        pdfa_enabled,
+        supports_transparency,
+        allow_postscript_transparency
+    );
     arguments[argument_count++] = compatibility_option;
     if (xref_option != NULL) {
         arguments[argument_count++] = xref_option;
@@ -232,11 +425,38 @@ int gs_convert_to_pdf(
     arguments[argument_count++] = output_argument;
     arguments[argument_count++] = "-P-";
     arguments[argument_count++] = "-dSAFER";
+    if (pdfa_enabled) {
+        arguments[argument_count++] = pdfa_include_argument;
+        arguments[argument_count++] = pdfa_permit_read_argument;
+        arguments[argument_count++] = pdfa_option;
+        arguments[argument_count++] = pdfa_policy_option;
+        arguments[argument_count++] = pdfa_color_conversion_option;
+        if (pdfa_blend_conversion_option != NULL) {
+            arguments[argument_count++] = pdfa_blend_conversion_option;
+        }
+    }
+    append_common_pdfwrite_options(
+        arguments,
+        &argument_count,
+        pdfa_enabled,
+        supports_transparency,
+        allow_postscript_transparency
+    );
     arguments[argument_count++] = compatibility_option;
     if (xref_option != NULL) {
         arguments[argument_count++] = xref_option;
         arguments[argument_count++] = object_stream_option;
     }
+    if (pdfa_enabled) {
+        arguments[argument_count++] = pdfa_definition_path;
+    }
+    arguments[argument_count++] = "-c";
+    arguments[argument_count++] = distiller_parameters;
+    if (allow_postscript_transparency) {
+        arguments[argument_count++] = "-c";
+        arguments[argument_count++] = transparency_prolog;
+    }
+    arguments[argument_count++] = "-f";
     arguments[argument_count++] = input_path;
 
     return_code = gsapi_init_with_args(instance, argument_count, (char **)arguments);

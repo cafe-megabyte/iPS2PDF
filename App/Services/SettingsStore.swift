@@ -3,6 +3,7 @@ import Foundation
 final class SettingsStore {
     private enum Key {
         static let pdfVersion = "pdfVersion"
+        static let pdfaCompatibility = "pdfaCompatibility"
     }
 
     private let defaults: UserDefaults
@@ -23,6 +24,21 @@ final class SettingsStore {
         }
         set {
             defaults.set(newValue.rawValue, forKey: Key.pdfVersion)
+        }
+    }
+
+    var pdfaCompatibility: PDFACompatibility {
+        get {
+            guard let rawValue = defaults.string(forKey: Key.pdfaCompatibility),
+                  let compatibility = PDFACompatibility(rawValue: rawValue)
+            else {
+                defaults.set(PDFACompatibility.none.rawValue, forKey: Key.pdfaCompatibility)
+                return .none
+            }
+            return compatibility
+        }
+        set {
+            defaults.set(newValue.rawValue, forKey: Key.pdfaCompatibility)
         }
     }
 }
