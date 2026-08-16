@@ -732,13 +732,15 @@ Das Ghostscript-Archiv liegt im Projekt unter:
 Vendor/Ghostscript/*.tar.gz
 ```
 
-Beim Build wird der Sourcecode temporär nach:
+Die Build-Einstellung `GHOSTSCRIPT_ARCHIVE_PATH` des Aggregate-Targets verweist auf das konkrete Archiv. Ändert sich bei einem Update dessen Dateiname, wird diese Einstellung entsprechend angepasst.
+
+Beim Build wird der Sourcecode in ein nur für diesen Build erzeugtes Arbeitsverzeichnis nach folgendem Muster entpackt:
 
 ```text
-$(PROJECT_TEMP_DIR)/Ghostscript/upstream/
+$(PROJECT_TEMP_DIR)/GhostscriptBuild.<variant>.<zufall>/
 ```
 
-entpackt. Dieser Bereich liegt standardmäßig in Xcodes Derived Data und wird als austauschbarer Upstream-Bereich behandelt.
+Dieser Bereich liegt standardmäßig in Xcodes Derived Data und wird nach Abschluss oder Abbruch des Ghostscript-Builds entfernt. Nur die benötigten Build-Artefakte bleiben erhalten.
 
 Eigener App-Code wird dort nicht dauerhaft gepflegt.
 
@@ -764,7 +766,7 @@ als Grundlage für einen manuell zusammengestellten Ghostscript-Build.
 Grundlage für den Ghostscript-Build ist das mit der jeweiligen Ghostscript-Version gelieferte offizielle Script:
 
 ```text
-$(PROJECT_TEMP_DIR)/Ghostscript/upstream/ios/build_ios_gslib.sh
+<temporäres Upstream-Verzeichnis>/ios/build_ios_gslib.sh
 ```
 
 Das aktuelle Upstream-Script enthält noch historische Architektur- und Universal-Library-Annahmen und wird daher nicht zwingend unverändert ausgeführt.
@@ -808,68 +810,68 @@ schlägt der App-Build regulär fehl.
 
 ## 16.6 Getrennte Build-Artefakte
 
-Device und Simulator verwenden getrennte Ghostscript-Artefakte.
+Device und Simulator sowie unterschiedliche SDK-, Architektur- und Deployment-Target-Varianten verwenden getrennte Ghostscript-Artefakte.
 
 Konzeptionell:
 
 ```text
-$(PROJECT_TEMP_DIR)/Ghostscript/upstream/ios/build/
-├── iphoneos/
-│   └── libgs.a
-└── iphonesimulator/
-    └── libgs.a
+$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/
+└── <SDK>-<Architektur>-ios<Deployment-Target>/
+    ├── lib/
+    │   └── libgs.a
+    ├── include/
+    │   ├── iapi.h
+    │   └── gserrors.h
+    ├── resources/
+    │   ├── PDFA_def.ps
+    │   └── srgb.icc
+    └── build.stamp
 ```
 
-Die genaue interne Pfadstruktur darf technisch angepasst werden, solange die Trennung zwischen Device und Simulator erhalten bleibt.
+Die genaue interne Pfadstruktur darf technisch angepasst werden, solange inkompatible Varianten getrennt bleiben.
 
 ---
 
-## 16.7 Einfache Existenzprüfung
+## 16.7 Inkrementeller Aggregate-Build
 
-Der App-Build entscheidet ausschließlich anhand der Existenz des für das aktuelle Ziel benötigten Ghostscript-Artefakts, ob Ghostscript gebaut werden muss.
+Ein gemeinsames Xcode-Aggregate-Target `Build Ghostscript` ist eine Dependency sowohl des App-Targets als auch der Share Extension. Dadurch wird eine Ghostscript-Variante innerhalb eines Build-Graphen höchstens einmal gebaut, auch wenn Xcode die beiden nativen Targets parallel verarbeitet.
 
-Beispiel:
+Das Build-Script deklariert mindestens folgende Inputs:
 
 ```text
-Build target: iphoneos
-        |
-        v
-iphoneos/libgs.a exists?
-   |              |
-  yes             no
-   |              |
- reuse      run Ghostscript build
+Scripts/build_ghostscript.sh
+Vendor/Ghostscript/<Ghostscript source archive>.tar.gz
 ```
 
-Es werden ausdrücklich keine zusätzlichen Mechanismen verwendet wie:
+Als Outputs werden die statische Library, benötigte Header, PDF/A-Ressourcen und ein erst nach vollständigem Erfolg erzeugter Build-Stamp deklariert.
 
-- Source-Hashes
-- Verzeichnis-Hashes
-- Zeitstempelvergleich
-- Versionsdatenbank
-- automatische Source-Change-Erkennung
+Die Xcode-Dependency-Analysis entscheidet anhand dieser Inputs und Outputs, ob das Aggregate-Build-Script ausgeführt werden muss. Unveränderte Artefakte werden ohne erneuten Scriptaufruf wiederverwendet. Der Build-Stamp enthält zusätzlich Diagnoseinformationen und Prüfsummen, ist jedoch keine separate Versionsdatenbank.
+
+Das Aggregate-Target ist ausdrücklich auf `arm64` konfiguriert, da die integrierte Patchlogik nur diese Architektur unterstützt.
 
 ---
 
 ## 16.8 Ghostscript-Update
 
-Ein Ghostscript-Update erfolgt konzeptionell durch Ersetzen des Archivs unter:
+Ein Ghostscript-Update erfolgt durch Ersetzen des Archivs unter:
 
 ```text
 Vendor/Ghostscript/*.tar.gz
 ```
 
-Danach wird der Build-Ordner beziehungsweise Derived Data gelöscht. Da die erzeugten Ghostscript-Buildartefakte dort liegen, verschwinden sie dabei automatisch.
+Ändert sich der Dateiname, wird zusätzlich `GHOSTSCRIPT_ARCHIVE_PATH` im Aggregate-Target angepasst. Da das konkrete Archiv als Build-Input deklariert ist, baut Xcode die betroffene Ghostscript-Variante beim nächsten Build automatisch neu. Das manuelle Löschen von Derived Data ist dafür nicht erforderlich.
 
-Der nächste Xcode-Build stellt dadurch über die Existenzprüfung fest, dass `libgs.a` fehlt, und baut Ghostscript erneut.
+Ein Clean oder das Löschen von Derived Data entfernt die erzeugten Artefakte weiterhin vollständig und erzwingt beim nächsten Build einen Neuaufbau.
 
 ---
 
 ## 16.9 Statisches Linken
 
-Die erzeugte `libgs.a` wird vor dem Linken der App bereitgestellt und statisch in das App-Executable gelinkt.
+Die erzeugte `libgs.a` wird vor dem Linken bereitgestellt und aus demselben gemeinsamen Artefaktverzeichnis statisch in das App-Executable und das Executable der Share Extension gelinkt.
 
 Die statische Library wird nicht nachträglich als ungenutzte `.a`-Datei in das fertige App-Bundle kopiert.
+
+Die beiden nativen Targets besitzen jeweils eine kleine, inkrementelle Build-Phase `Install Ghostscript Resources`. Sie kopiert ausschließlich `PDFA_def.ps` und `srgb.icc` aus dem gemeinsamen Artefaktverzeichnis in das jeweilige Bundle. Der ressourcenspezifische Kopiervorgang ist vom Ghostscript-Compiler-Build getrennt.
 
 ---
 
@@ -1374,7 +1376,7 @@ Vendor/
     └── <Ghostscript source archive>.tar.gz
 ```
 
-Der entpackte, unveränderte Ghostscript-Sourcecode liegt nur temporär unter `$(PROJECT_TEMP_DIR)/Ghostscript/upstream/`.
+Der entpackte, unveränderte Ghostscript-Sourcecode liegt nur in einem temporären Arbeitsverzeichnis unter `$(PROJECT_TEMP_DIR)` und wird nach dem Build entfernt. Die benötigten Ergebnisse liegen unter `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`.
 
 Die konkrete Xcode-Gruppenstruktur darf abweichen, sofern die beschriebenen Verantwortlichkeiten erhalten bleiben.
 
@@ -1426,10 +1428,12 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 - Die App besitzt kein separates eigenes Ghostscript-Buildsystem.
 - Das Originalscript im Upstream wird nicht dauerhaft verändert.
 - Eine Arbeitskopie darf für moderne Xcode-Ziele gepatcht werden.
-- Device und Simulator verwenden getrennte `libgs.a`-Artefakte.
-- Die Entscheidung über einen Ghostscript-Rebuild erfolgt allein per Existenzprüfung.
-- Nach einem Austausch des Ghostscript-Archivs wird der Build-Ordner beziehungsweise Derived Data gelöscht, damit die dort liegenden Buildartefakte neu erzeugt werden.
-- `libgs.a` wird statisch in die App gelinkt.
+- Device, Simulator und inkompatible Build-Varianten verwenden getrennte `libgs.a`-Artefakte.
+- Ein gemeinsames Aggregate-Target baut jede benötigte Ghostscript-Variante innerhalb eines Build-Graphen höchstens einmal.
+- Xcodes Input-/Output-Dependency-Analysis entscheidet über einen Ghostscript-Rebuild.
+- Ein Austausch des deklarierten Ghostscript-Archivs löst automatisch einen Neuaufbau aus.
+- `libgs.a` wird aus einem gemeinsamen Artefaktverzeichnis statisch in App und Share Extension gelinkt.
+- PDF/A-Ressourcen werden durch getrennte, inkrementelle Installationsphasen in beide Bundles kopiert.
 - Eine erfolgreiche Konvertierung erzeugt eine existierende, nicht leere und von PDFKit lesbare PDF-Datei.
 - Das PDF wird anschließend automatisch vollflächig angezeigt.
 - Die erste PDF-Seite wird initial vollständig angezeigt; PDFKit unterstützt anschließend Scrollen und Pinch-to-Zoom.

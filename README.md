@@ -18,7 +18,11 @@ For example, the tested archive is:
 Vendor/Ghostscript/ghostscript-10.07.1.tar.gz
 ```
 
-The archive does not need to be unpacked manually. When `$(PROJECT_TEMP_DIR)/Ghostscript/upstream/` is missing or empty, the Xcode build phase finds the archive, extracts its top-level source directory there, creates a patched working copy of Ghostscript's official iOS build script, and builds the required static library. The extracted sources and artifacts therefore stay in Xcode's Derived Data instead of the project directory. Simulator and device artifacts are kept separate and are reused based on their existence. Deleting the build folder forces a complete rebuild.
+The `GHOSTSCRIPT_ARCHIVE_PATH` build setting of the `Build Ghostscript` target must point to that file. Update the setting when an upgrade changes the archive filename.
+
+The archive does not need to be unpacked manually. The `Build Ghostscript` aggregate target extracts it into a disposable directory, creates a patched working copy of Ghostscript's official iOS build script, and publishes the static library, public headers, and PDF/A resources under `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`. App and share-extension targets depend on that aggregate target, so a given SDK/architecture/deployment-target variant is compiled only once per build graph. Xcode input/output dependency analysis reuses unchanged artifacts on subsequent builds; changing the source archive or build script rebuilds them automatically. Simulator and device variants remain separate. Deleting the build folder still forces a complete rebuild.
+
+Each native target has a lightweight `Install Ghostscript Resources` phase that copies `PDFA_def.ps` and `srgb.icc` into its own bundle. Both executables link against the same generated `libgs.a`; the library itself is not copied into either bundle.
 
 Open `iPS2PDF.xcodeproj`, select the `iPS2PDF` scheme and the desired iOS destination, then build with **Command-B**. The first build takes longer because it compiles Ghostscript; subsequent builds reuse the generated library.
 

@@ -1,19 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
-# This is a patcher, not a patched copy of Ghostscript's iOS script. It makes
-# a disposable working copy in Xcode's project temporary directory and applies
-# only the deterministic changes required for current, single-architecture SDK
-# builds.
+# Build one Ghostscript variant into a shared, immutable artifact directory.
+# Xcode's dependency analysis decides whether this script needs to run. When it
+# does run, the build happens in disposable directories and the completed
+# artifact set is published only after every required file is available.
 
-if [ "$#" -ne 4 ] || [ -z "$4" ]; then
-    echo "Usage: build_ghostscript.sh <iphonesimulator|iphoneos> <architecture> <deployment-target> <project-temp-dir>" >&2
+if [ "$#" -ne 6 ]; then
+    echo "Usage: build_ghostscript.sh <iphonesimulator|iphoneos> <architecture> <deployment-target> <sdk-name> <project-temp-dir> <source-archive>" >&2
     exit 64
 fi
 
 platform="$1"
 architecture="$2"
 deployment_target="$3"
+sdk_name="$4"
+project_temp_dir="$5"
+source_archive="$6"
 
 case "$platform" in
     iphonesimulator)
@@ -36,100 +39,75 @@ case "$architecture" in
         ;;
 esac
 
-project_root="$(cd "$(dirname "$0")/.." && pwd)"
-vendor_root="$project_root/Vendor/Ghostscript"
-derived_ghostscript_root="$4/Ghostscript"
-upstream_root="$derived_ghostscript_root/upstream"
-official_script="$upstream_root/ios/build_ios_gslib.sh"
+case "$sdk_name" in
+    *[!A-Za-z0-9._-]* | "")
+        echo "Invalid SDK name: $sdk_name" >&2
+        exit 67
+        ;;
+esac
 
-copy_pdfa_resources() {
-    if [ -z "${TARGET_BUILD_DIR:-}" ] || [ -z "${UNLOCALIZED_RESOURCES_FOLDER_PATH:-}" ]; then
-        return
-    fi
+case "$deployment_target" in
+    *[!0-9.]* | "")
+        echo "Invalid deployment target: $deployment_target" >&2
+        exit 68
+        ;;
+esac
 
-    local pdfa_definition="$upstream_root/lib/PDFA_def.ps"
-    local srgb_profile="$upstream_root/iccprofiles/srgb.icc"
-    local resource_directory="$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Ghostscript"
-
-    if [ ! -f "$pdfa_definition" ]; then
-        echo "error: Missing Ghostscript PDF/A definition file: $pdfa_definition" >&2
-        exit 73
-    fi
-    if [ ! -f "$srgb_profile" ]; then
-        echo "error: Missing Ghostscript sRGB ICC profile: $srgb_profile" >&2
-        exit 74
-    fi
-
-    mkdir -p "$resource_directory"
-    cp "$pdfa_definition" "$resource_directory/PDFA_def.ps"
-    cp "$srgb_profile" "$resource_directory/srgb.icc"
-}
-
-mkdir -p "$derived_ghostscript_root"
-
-if [ -e "$upstream_root" ] && [ ! -d "$upstream_root" ]; then
-    echo "error: $upstream_root exists but is not a directory." >&2
+if [ -z "$project_temp_dir" ]; then
+    echo "Project temporary directory must not be empty." >&2
     exit 69
 fi
 
-needs_extraction=0
-if [ ! -d "$upstream_root" ]; then
-    needs_extraction=1
-elif [ ! -f "$official_script" ]; then
-    # Xcode may pre-create the declared libgs.a output path before this build
-    # phase runs. Remove that directory-only scaffold, but never replace an
-    # upstream directory that already contains files or symbolic links.
-    unexpected_entry="$(find "$upstream_root" -mindepth 1 ! -type d -print -quit)"
-    if [ -n "$unexpected_entry" ]; then
-        echo "error: $upstream_root is incomplete and contains existing data: $unexpected_entry" >&2
-        exit 72
-    fi
-    find "$upstream_root" -depth -type d -exec rmdir {} \;
-    needs_extraction=1
+if [ ! -f "$source_archive" ]; then
+    echo "Ghostscript source archive is missing: $source_archive" >&2
+    exit 70
 fi
 
-if [ "$needs_extraction" -eq 1 ]; then
-    shopt -s nullglob
-    source_archives=("$vendor_root"/*.tar.gz)
-    shopt -u nullglob
+artifact_key="$sdk_name-$architecture-ios$deployment_target"
+artifact_parent="$project_temp_dir/GhostscriptArtifacts"
+artifact_directory="$artifact_parent/$artifact_key"
 
-    if [ "${#source_archives[@]}" -ne 1 ]; then
-        echo "error: Expected exactly one *.tar.gz in $vendor_root, found ${#source_archives[@]}." >&2
-        exit 70
+mkdir -p "$artifact_parent"
+work_directory="$(mktemp -d "$project_temp_dir/GhostscriptBuild.$artifact_key.XXXXXX")"
+staged_artifact_directory="$(mktemp -d "$artifact_parent/.$artifact_key.stage.XXXXXX")"
+
+cleanup() {
+    if [ -n "${work_directory:-}" ] && [ -d "$work_directory" ]; then
+        rm -rf -- "$work_directory"
     fi
-
-    extraction_root="$(mktemp -d "$derived_ghostscript_root/.upstream-extract.XXXXXX")"
-    cleanup_extraction() {
-        if [ -n "${extraction_root:-}" ] && [ -d "$extraction_root" ]; then
-            rm -rf -- "$extraction_root"
-        fi
-    }
-    trap cleanup_extraction EXIT
-
-    if ! tar -xzf "${source_archives[0]}" -C "$extraction_root"; then
-        echo "error: Could not extract ${source_archives[0]}." >&2
-        exit 71
+    if [ -n "${staged_artifact_directory:-}" ] && [ -d "$staged_artifact_directory" ]; then
+        rm -rf -- "$staged_artifact_directory"
     fi
+}
+trap cleanup EXIT
 
-    shopt -s dotglob nullglob
-    extracted_entries=("$extraction_root"/*)
-    shopt -u dotglob nullglob
+extraction_directory="$work_directory/extracted"
+mkdir -p "$extraction_directory"
 
-    if [ "${#extracted_entries[@]}" -eq 1 ] && [ -d "${extracted_entries[0]}" ]; then
-        mv "${extracted_entries[0]}" "$upstream_root"
-        rmdir "$extraction_root"
-    else
-        mv "$extraction_root" "$upstream_root"
-    fi
+if ! tar -xzf "$source_archive" -C "$extraction_directory"; then
+    echo "Could not extract $source_archive." >&2
+    exit 71
+fi
 
-    extraction_root=""
-    trap - EXIT
-    echo "Extracted ${source_archives[0]} as $upstream_root"
+shopt -s dotglob nullglob
+extracted_entries=("$extraction_directory"/*)
+shopt -u dotglob nullglob
+
+if [ "${#extracted_entries[@]}" -eq 1 ] && [ -d "${extracted_entries[0]}" ]; then
+    upstream_root="${extracted_entries[0]}"
+else
+    upstream_root="$extraction_directory"
+fi
+
+official_script="$upstream_root/ios/build_ios_gslib.sh"
+if [ ! -f "$official_script" ]; then
+    echo "Missing official Ghostscript iOS script: $official_script" >&2
+    exit 72
 fi
 
 build_root="$upstream_root/ios/build"
-artifact_directory="$build_root/$platform"
-artifact="$artifact_directory/libgs.a"
+upstream_artifact_directory="$build_root/$platform"
+upstream_artifact="$upstream_artifact_directory/libgs.a"
 working_script="$build_root/build_ios_gslib.$platform.patched.sh"
 
 # Xcode exports simulator DYLD variables to build phases. Ghostscript's build
@@ -138,22 +116,10 @@ working_script="$build_root/build_ios_gslib.$platform.patched.sh"
 unset DYLD_ROOT_PATH DYLD_LIBRARY_PATH DYLD_FRAMEWORK_PATH DYLD_INSERT_LIBRARIES
 unset SDKROOT SDK_NAME SDK_DIR IPHONEOS_DEPLOYMENT_TARGET
 
-copy_pdfa_resources
-
-if [ -f "$artifact" ]; then
-    exit 0
-fi
-
-if [ ! -f "$official_script" ]; then
-    echo "error: Missing official Ghostscript iOS script: $official_script" >&2
-    exit 67
-fi
-
-mkdir -p "$artifact_directory"
+mkdir -p "$upstream_artifact_directory"
 
 # The known 10.07.1 script has the historical x86/i386 and armv7 universal
-# library setup. Unknown versions still receive this best-effort patch, as
-# required by the design description.
+# library setup. Unknown versions still receive this best-effort patch.
 if ! grep -q 'BUILDDIRPREFIX=ios_x86-' "$official_script"; then
     echo "warning: Unknown Ghostscript iOS script version; applying compatibility patch anyway." >&2
 fi
@@ -179,13 +145,52 @@ sed -i '' \
     -e "s/libgs_x86/libgs_$platform/g" \
     -e "s/conflog_x86/conflog_$platform/g" \
     -e "s/buildlog_x86/buildlog_$platform/g" \
-    -e "s#^mv Makefile Makefile.x86\$#mkdir -p \"$artifact_directory\"; cp \"./ios_${platform}-bin/libgs_${platform}.a\" \"$artifact\"; exit 0#" \
+    -e "s#^mv Makefile Makefile.x86\$#mkdir -p \"$upstream_artifact_directory\"; cp \"./ios_${platform}-bin/libgs_${platform}.a\" \"$upstream_artifact\"; exit 0#" \
     "$working_script"
 
 chmod +x "$working_script"
 (cd "$upstream_root/ios" && "$working_script")
 
-if [ ! -s "$artifact" ]; then
-    echo "error: Ghostscript did not create $artifact" >&2
-    exit 68
+if [ ! -s "$upstream_artifact" ]; then
+    echo "Ghostscript did not create $upstream_artifact" >&2
+    exit 73
 fi
+
+pdfa_definition="$upstream_root/lib/PDFA_def.ps"
+srgb_profile="$upstream_root/iccprofiles/srgb.icc"
+iapi_header="$upstream_root/psi/iapi.h"
+gserrors_header="$upstream_root/base/gserrors.h"
+
+for required_file in "$pdfa_definition" "$srgb_profile" "$iapi_header" "$gserrors_header"; do
+    if [ ! -f "$required_file" ]; then
+        echo "Missing required Ghostscript artifact: $required_file" >&2
+        exit 74
+    fi
+done
+
+mkdir -p \
+    "$staged_artifact_directory/lib" \
+    "$staged_artifact_directory/include" \
+    "$staged_artifact_directory/resources"
+
+install -m 0644 "$upstream_artifact" "$staged_artifact_directory/lib/libgs.a"
+install -m 0644 "$iapi_header" "$staged_artifact_directory/include/iapi.h"
+install -m 0644 "$gserrors_header" "$staged_artifact_directory/include/gserrors.h"
+install -m 0644 "$pdfa_definition" "$staged_artifact_directory/resources/PDFA_def.ps"
+install -m 0644 "$srgb_profile" "$staged_artifact_directory/resources/srgb.icc"
+
+{
+    printf 'platform=%s\n' "$platform"
+    printf 'architecture=%s\n' "$architecture"
+    printf 'deployment_target=%s\n' "$deployment_target"
+    printf 'sdk_name=%s\n' "$sdk_name"
+    shasum -a 256 "$source_archive" "$0"
+} > "$staged_artifact_directory/build.stamp"
+
+if [ -e "$artifact_directory" ]; then
+    rm -rf -- "$artifact_directory"
+fi
+mv "$staged_artifact_directory" "$artifact_directory"
+staged_artifact_directory=""
+
+echo "Built Ghostscript artifacts at $artifact_directory"
