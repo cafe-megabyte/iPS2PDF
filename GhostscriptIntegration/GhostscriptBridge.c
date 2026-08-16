@@ -154,7 +154,11 @@ int gs_convert_to_pdf(
     const char *xref_option = NULL;
     const char *object_stream_option = NULL;
 
-    if (is_pdf_version(pdf_version, "1.2")) {
+    if (is_pdf_version(pdf_version, "1.1")) {
+        compatibility_option = "-dCompatibilityLevel=1.1";
+        xref_option = "-dWriteXRefStm=false";
+        object_stream_option = "-dWriteObjStms=false";
+    } else if (is_pdf_version(pdf_version, "1.2")) {
         compatibility_option = "-dCompatibilityLevel=1.2";
         xref_option = "-dWriteXRefStm=false";
         object_stream_option = "-dWriteObjStms=false";
@@ -164,6 +168,22 @@ int gs_convert_to_pdf(
         compatibility_option = "-dCompatibilityLevel=1.4";
         xref_option = "-dWriteXRefStm=false";
         object_stream_option = "-dWriteObjStms=false";
+    } else if (is_pdf_version(pdf_version, "1.5")) {
+        compatibility_option = "-dCompatibilityLevel=1.5";
+        xref_option = "-dWriteXRefStm=true";
+        object_stream_option = "-dWriteObjStms=true";
+    } else if (is_pdf_version(pdf_version, "1.6")) {
+        compatibility_option = "-dCompatibilityLevel=1.6";
+        xref_option = "-dWriteXRefStm=true";
+        object_stream_option = "-dWriteObjStms=true";
+    } else if (is_pdf_version(pdf_version, "1.7")) {
+        compatibility_option = "-dCompatibilityLevel=1.7";
+        xref_option = "-dWriteXRefStm=true";
+        object_stream_option = "-dWriteObjStms=true";
+    } else if (is_pdf_version(pdf_version, "2.0")) {
+        compatibility_option = "-dCompatibilityLevel=2.0";
+        xref_option = "-dWriteXRefStm=true";
+        object_stream_option = "-dWriteObjStms=true";
     } else {
         if (stage != NULL) {
             *stage = GS_BRIDGE_STAGE_CONVERSION;

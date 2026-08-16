@@ -19,16 +19,14 @@ struct ContentView: View {
                     Text(String(localized: "pdf_version"))
                         .font(.headline)
 
-                    Picker(String(localized: "pdf_version"), selection: pdfVersionBinding) {
-                        ForEach(PDFVersion.allCases) { version in
-                            Text(version.rawValue).tag(version)
-                        }
+                    PDFVersionDropdown(
+                        selectedVersion: viewModel.selectedPDFVersion,
+                        isDisabled: viewModel.controlsAreDisabled
+                    ) { version in
+                        viewModel.setPDFVersion(version)
                     }
-                    .pickerStyle(.segmented)
-                    .frame(maxWidth: .infinity)
-                    .disabled(viewModel.controlsAreDisabled)
                 }
-                .frame(width: 280, alignment: .leading)
+                .frame(width: 320, alignment: .leading)
                 .frame(maxWidth: .infinity, alignment: .center)
             }
             .padding(32)
@@ -78,13 +76,6 @@ struct ContentView: View {
         }
     }
 
-    private var pdfVersionBinding: Binding<PDFVersion> {
-        Binding(
-            get: { viewModel.selectedPDFVersion },
-            set: { viewModel.setPDFVersion($0) }
-        )
-    }
-
     private func receiveDroppedItems(_ providers: [NSItemProvider]) -> Bool {
         guard !providers.isEmpty, !viewModel.controlsAreDisabled else {
             return false
@@ -129,6 +120,82 @@ struct ContentView: View {
             }
         }
         return true
+    }
+}
+
+private struct PDFVersionDropdown: View {
+    let selectedVersion: PDFVersion
+    let isDisabled: Bool
+    let onSelect: (PDFVersion) -> Void
+
+    var body: some View {
+        Menu {
+            ForEach(PDFVersion.allCases.reversed()) { version in
+                Button {
+                    onSelect(version)
+                } label: {
+                    menuItemTitle(for: version)
+                    if let detail = version.detail {
+                        Text(detail)
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                PDFVersionOptionRow(version: selectedVersion, showsSelection: false)
+
+                Image(systemName: "chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.bordered)
+        .disabled(isDisabled)
+    }
+
+    @ViewBuilder
+    private func menuItemTitle(for version: PDFVersion) -> some View {
+        if version.isHighlighted {
+            Label(version.title, systemImage: "star.fill")
+        } else {
+            Text(version.title)
+        }
+    }
+}
+
+private struct PDFVersionOptionRow: View {
+    let version: PDFVersion
+    let showsSelection: Bool
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: version.isHighlighted ? "star.fill" : "star")
+                .foregroundStyle(version.isHighlighted ? .red : .clear)
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(version.title)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.primary)
+
+                if let detail = version.detail {
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                }
+            }
+
+            Spacer(minLength: 8)
+
+            if showsSelection {
+                Image(systemName: "checkmark")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.tint)
+            }
+        }
+        .contentShape(Rectangle())
     }
 }
 
