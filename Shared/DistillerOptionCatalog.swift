@@ -47,35 +47,24 @@ enum DistillerOptionKind: Sendable {
 
 struct DistillerOptionDefinition: Identifiable, Sendable {
     let key: String
-    let title: String
+    let title: LocalizedStringResource
     let category: DistillerCategory
     let kind: DistillerOptionKind
     let help: String
-    let compatibilityNote: String?
+    let compatibilityNote: LocalizedStringResource?
 
     var id: String { key }
 
     var localizedTitle: String {
-        NSLocalizedString(title, bundle: .main, comment: "Distiller option title")
+        String(localized: title)
     }
 
     var localizedHelp: String {
-        String(
-            format: NSLocalizedString(
-                "Ghostscript %@ pdfwrite setting /%@.",
-                bundle: .main,
-                comment: "Distiller option help"
-            ),
-            locale: .current,
-            DistillerOptionCatalog.ghostscriptVersion,
-            key
-        )
+        "/\(key)."
     }
 
     var localizedCompatibilityNote: String? {
-        compatibilityNote.map {
-            NSLocalizedString($0, bundle: .main, comment: "Ghostscript compatibility note")
-        }
+        compatibilityNote.map { String(localized: $0) }
     }
 }
 
@@ -208,19 +197,62 @@ enum DistillerOptionCatalog {
         options.filter { $0.category == category }
     }
 
+    static func localizedChoice(_ choice: String) -> String {
+        switch choice {
+        case "AbsoluteColorimetric": String(localized: "AbsoluteColorimetric")
+        case "All": String(localized: "All")
+        case "Average": String(localized: "Average")
+        case "Bicubic": String(localized: "Bicubic")
+        case "CCITTFaxEncode": String(localized: "CCITTFaxEncode")
+        case "CMYK": String(localized: "CMYK")
+        case "DCTEncode": String(localized: "DCTEncode")
+        case "Default": String(localized: "Default")
+        case "DeviceCMYK": String(localized: "DeviceCMYK")
+        case "DeviceGray": String(localized: "DeviceGray")
+        case "DeviceRGB": String(localized: "DeviceRGB")
+        case "Error": String(localized: "Error")
+        case "False": String(localized: "False")
+        case "FlateEncode": String(localized: "FlateEncode")
+        case "Gray": String(localized: "Gray")
+        case "Ignore": String(localized: "Ignore")
+        case "JPXEncode": String(localized: "JPXEncode")
+        case "LeaveColorUnchanged": String(localized: "LeaveColorUnchanged")
+        case "Left": String(localized: "Left")
+        case "None": String(localized: "None")
+        case "Off": String(localized: "Off")
+        case "PageByPage": String(localized: "PageByPage")
+        case "Perceptual": String(localized: "Perceptual")
+        case "Preserve": String(localized: "Preserve")
+        case "RGB": String(localized: "RGB")
+        case "RelativeColorimetric": String(localized: "RelativeColorimetric")
+        case "Remove": String(localized: "Remove")
+        case "Right": String(localized: "Right")
+        case "RunLengthEncode": String(localized: "RunLengthEncode")
+        case "Saturation": String(localized: "Saturation")
+        case "sRGB": String(localized: "sRGB")
+        case "Subsample": String(localized: "Subsample")
+        case "Tags": String(localized: "Tags")
+        case "True": String(localized: "True")
+        case "Unknown": String(localized: "Unknown")
+        case "UseDeviceIndependentColor": String(localized: "UseDeviceIndependentColor")
+        case "Warning": String(localized: "Warning")
+        default: choice
+        }
+    }
+
     private static func option(
         _ key: String,
-        _ title: String,
+        _ title: LocalizedStringResource,
         _ category: DistillerCategory,
         _ kind: DistillerOptionKind,
-        compatibility: String? = nil
+        compatibility: LocalizedStringResource? = nil
     ) -> DistillerOptionDefinition {
         DistillerOptionDefinition(
             key: key,
             title: title,
             category: category,
             kind: kind,
-            help: "Ghostscript \(ghostscriptVersion) pdfwrite setting /\(key).",
+            help: "/\(key).",
             compatibilityNote: compatibility
         )
     }

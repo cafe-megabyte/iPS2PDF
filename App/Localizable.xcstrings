@@ -32,7 +32,6 @@
       }
     },
     "Abort nonconforming PDF/A or PDF/X jobs" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -43,7 +42,6 @@
       }
     },
     "AbsoluteColorimetric" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -73,6 +71,22 @@
         }
       }
     },
+    "Active Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktive Joboptions"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active Joboptions"
+          }
+        }
+      }
+    },
     "Additional" : {
       "localizations" : {
         "de" : {
@@ -94,7 +108,6 @@
       }
     },
     "All" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -105,7 +118,6 @@
       }
     },
     "Allow transparency operators" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -116,7 +128,6 @@
       }
     },
     "Anti-alias color images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -127,7 +138,6 @@
       }
     },
     "Anti-alias grayscale images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -138,7 +148,6 @@
       }
     },
     "Anti-alias monochrome images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -165,7 +174,6 @@
       }
     },
     "ASCII85-encode page streams" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -176,7 +184,6 @@
       }
     },
     "Auto-position EPS files" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -187,7 +194,6 @@
       }
     },
     "Auto-rotate pages" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -198,7 +204,6 @@
       }
     },
     "Automatic color compression" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -209,7 +214,6 @@
       }
     },
     "Automatic grayscale compression" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -230,7 +234,6 @@
       }
     },
     "Average" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -241,7 +244,6 @@
       }
     },
     "Bicubic" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -252,7 +254,6 @@
       }
     },
     "Binding" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -273,7 +274,6 @@
       }
     },
     "Bundled · read-only" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -293,19 +293,10 @@
         }
       }
     },
-    "Cannot embed font policy" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vorgehen bei nicht einbettbaren Schriften"
-          }
-        }
-      }
+    "CCITTFaxEncode" : {
+      "shouldTranslate" : false
     },
     "Check PDF/X-1" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -316,7 +307,6 @@
       }
     },
     "Check PDF/X-3" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -352,6 +342,9 @@
         }
       }
     },
+    "CMYK" : {
+      "shouldTranslate" : false
+    },
     "Color" : {
       "localizations" : {
         "de" : {
@@ -363,7 +356,6 @@
       }
     },
     "Color compression" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -374,7 +366,6 @@
       }
     },
     "Color conversion strategy" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -385,7 +376,6 @@
       }
     },
     "Color downsample threshold" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -396,7 +386,6 @@
       }
     },
     "Color downsampling" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -407,7 +396,6 @@
       }
     },
     "Color image resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -417,8 +405,17 @@
         }
       }
     },
+    "Compatibility adjustments" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompatibilitätsanpassungen"
+          }
+        }
+      }
+    },
     "Compress color images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -429,7 +426,6 @@
       }
     },
     "Compress grayscale images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -440,7 +436,6 @@
       }
     },
     "Compress monochrome images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -451,7 +446,6 @@
       }
     },
     "Compress object streams" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -462,7 +456,6 @@
       }
     },
     "Compress page streams" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -519,7 +512,6 @@
       }
     },
     "Convert CMYK images to RGB" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -530,7 +522,6 @@
       }
     },
     "Convert suitable images to indexed color" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -561,7 +552,6 @@
       }
     },
     "Create job ticket" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -572,7 +562,6 @@
       }
     },
     "Crop color images to frames" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -583,7 +572,6 @@
       }
     },
     "Crop grayscale images to frames" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -594,7 +582,6 @@
       }
     },
     "Crop monochrome images to frames" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -605,7 +592,6 @@
       }
     },
     "Curve detection tolerance" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -615,8 +601,23 @@
         }
       }
     },
+    "DCTEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG"
+          }
+        }
+      }
+    },
     "Default" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -627,7 +628,6 @@
       }
     },
     "Default page size" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -638,7 +638,6 @@
       }
     },
     "Default rendering intent" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -669,7 +668,6 @@
       }
     },
     "Detect blends" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -680,7 +678,6 @@
       }
     },
     "Device resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -689,6 +686,15 @@
           }
         }
       }
+    },
+    "DeviceCMYK" : {
+      "shouldTranslate" : false
+    },
+    "DeviceGray" : {
+      "shouldTranslate" : false
+    },
+    "DeviceRGB" : {
+      "shouldTranslate" : false
     },
     "Diagnostics" : {
       "localizations" : {
@@ -717,7 +723,6 @@
       }
     },
     "Document permissions" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -738,7 +743,6 @@
       }
     },
     "Downsample 16-bit images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -749,7 +753,6 @@
       }
     },
     "Downsample color images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -760,7 +763,6 @@
       }
     },
     "Downsample grayscale images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -771,7 +773,6 @@
       }
     },
     "Downsample monochrome images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -782,7 +783,6 @@
       }
     },
     "DSC reporting level" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -803,7 +803,6 @@
       }
     },
     "Embed all fonts" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -814,7 +813,6 @@
       }
     },
     "Embed Joboptions" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -825,7 +823,6 @@
       }
     },
     "Embed OpenType fonts" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -836,7 +833,6 @@
       }
     },
     "Embed page thumbnails" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -847,7 +843,6 @@
       }
     },
     "Embed substitute fonts" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -858,7 +853,6 @@
       }
     },
     "Enable transparency device" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -879,7 +873,6 @@
       }
     },
     "Encrypt PDF" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -890,7 +883,6 @@
       }
     },
     "Encryption revision" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -901,7 +893,6 @@
       }
     },
     "Error" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1156,23 +1147,43 @@
       }
     },
     "False" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Falsch"
+            "value" : "Nein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No"
           }
         }
       }
     },
     "First page" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erste Seite"
+          }
+        }
+      }
+    },
+    "FlateEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZIP"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZIP"
           }
         }
       }
@@ -1197,35 +1208,7 @@
         }
       }
     },
-    "Ghostscript %@ pdfwrite setting /%@." : {
-      "comment" : "Distiller option help",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ghostscript-%1$@-pdfwrite-Einstellung /%2$@."
-          }
-        }
-      }
-    },
-    "Ghostscript compatibility adjustments" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ghostscript-Kompatibilitätsanpassungen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ghostscript compatibility adjustments"
-          }
-        }
-      }
-    },
     "Graphics ICC profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1236,7 +1219,6 @@
       }
     },
     "Gray" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1247,7 +1229,6 @@
       }
     },
     "Grayscale compression" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1258,7 +1239,6 @@
       }
     },
     "Grayscale downsample threshold" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1269,7 +1249,6 @@
       }
     },
     "Grayscale downsampling" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1280,7 +1259,6 @@
       }
     },
     "Grayscale image resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1291,7 +1269,6 @@
       }
     },
     "Honor ICC profiles in comments" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1312,7 +1289,6 @@
       }
     },
     "Ignore" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1323,7 +1299,6 @@
       }
     },
     "Image ICC profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1383,8 +1358,23 @@
         }
       }
     },
+    "JPXEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG2000"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG2000"
+          }
+        }
+      }
+    },
     "Last page" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1395,7 +1385,6 @@
       }
     },
     "LeaveColorUnchanged" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1406,7 +1395,6 @@
       }
     },
     "Left" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1417,7 +1405,6 @@
       }
     },
     "Lock Distiller parameters" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1428,7 +1415,6 @@
       }
     },
     "Low color resolution policy" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1439,7 +1425,6 @@
       }
     },
     "Low grayscale resolution policy" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1450,12 +1435,27 @@
       }
     },
     "Low monochrome resolution policy" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vorgehen bei niedriger Schwarzweißauflösung"
+          }
+        }
+      }
+    },
+    "Manage …" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwalten …"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage …"
           }
         }
       }
@@ -1466,17 +1466,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joboptions verwalten"
-          }
-        }
-      }
-    },
-    "Manage Joboptions…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Joboptions verwalten…"
           }
         }
       }
@@ -1492,7 +1481,6 @@
       }
     },
     "Map device gray to black" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1503,7 +1491,6 @@
       }
     },
     "Minimum color resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1514,7 +1501,6 @@
       }
     },
     "Minimum grayscale resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1525,7 +1511,6 @@
       }
     },
     "Minimum monochrome resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1536,7 +1521,6 @@
       }
     },
     "Monochrome compression" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1547,7 +1531,6 @@
       }
     },
     "Monochrome downsample threshold" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1558,7 +1541,6 @@
       }
     },
     "Monochrome downsampling" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1569,7 +1551,6 @@
       }
     },
     "Monochrome image resolution" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1674,7 +1655,6 @@
       }
     },
     "Object compression" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1685,7 +1665,6 @@
       }
     },
     "Off" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1722,7 +1701,6 @@
       }
     },
     "Optimize for fast web view" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1743,7 +1721,6 @@
       }
     },
     "Output ICC profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1754,7 +1731,6 @@
       }
     },
     "Overprint mode" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1765,7 +1741,6 @@
       }
     },
     "Owner password" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1776,7 +1751,6 @@
       }
     },
     "PageByPage" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1787,7 +1761,6 @@
       }
     },
     "Pass through JPEG 2000 images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1798,7 +1771,6 @@
       }
     },
     "Pass through JPEG images" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1809,7 +1781,6 @@
       }
     },
     "PDF compatibility" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2086,7 +2057,6 @@
       }
     },
     "PDF/A compatibility policy" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2097,7 +2067,6 @@
       }
     },
     "PDF/X condition identifier" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2108,7 +2077,6 @@
       }
     },
     "PDF/X output condition" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2119,7 +2087,6 @@
       }
     },
     "PDF/X output intent profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2130,7 +2097,6 @@
       }
     },
     "PDF/X registry" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2141,7 +2107,6 @@
       }
     },
     "PDF/X trapped state" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2280,7 +2245,6 @@
       }
     },
     "Perceptual" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2311,7 +2275,6 @@
       }
     },
     "Preserve" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2322,7 +2285,6 @@
       }
     },
     "Preserve black" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2333,7 +2295,6 @@
       }
     },
     "Preserve copy-page semantics" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2344,7 +2305,6 @@
       }
     },
     "Preserve DeviceN colorants" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2355,7 +2315,6 @@
       }
     },
     "Preserve EPS information" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2366,7 +2325,6 @@
       }
     },
     "Preserve flatness" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2377,7 +2335,6 @@
       }
     },
     "Preserve halftone information" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2388,7 +2345,6 @@
       }
     },
     "Preserve OPI comments" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2399,7 +2355,6 @@
       }
     },
     "Preserve overprint settings" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2410,7 +2365,6 @@
       }
     },
     "Preserve separations" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2431,7 +2385,6 @@
       }
     },
     "Preserved; ignored by Ghostscript." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2442,7 +2395,6 @@
       }
     },
     "Preserved; not interpreted by Ghostscript pdfwrite." : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2453,7 +2405,6 @@
       }
     },
     "Process color model" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2464,7 +2415,6 @@
       }
     },
     "Process DSC comments" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2491,7 +2441,6 @@
       }
     },
     "RelativeColorimetric" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2502,7 +2451,6 @@
       }
     },
     "Remove" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2513,7 +2461,6 @@
       }
     },
     "Report DSC warnings" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2523,8 +2470,10 @@
         }
       }
     },
+    "RGB" : {
+      "shouldTranslate" : false
+    },
     "Right" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2534,8 +2483,17 @@
         }
       }
     },
+    "RunLengthEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RunLengthEncode"
+          }
+        }
+      }
+    },
     "Saturation" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2621,8 +2579,10 @@
         }
       }
     },
+    "sRGB" : {
+      "shouldTranslate" : false
+    },
     "sRGB profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2643,7 +2603,6 @@
       }
     },
     "Subsample" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2654,7 +2613,6 @@
       }
     },
     "Subset embedded fonts" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2665,7 +2623,6 @@
       }
     },
     "Subset fonts below" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2676,7 +2633,6 @@
       }
     },
     "Tags" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2687,7 +2643,6 @@
       }
     },
     "Text ICC profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2824,7 +2779,6 @@
       }
     },
     "Transfer functions" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2835,12 +2789,17 @@
       }
     },
     "True" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wahr"
+            "value" : "Ja"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes"
           }
         }
       }
@@ -2856,7 +2815,6 @@
       }
     },
     "Undercolor removal and black generation" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2867,7 +2825,6 @@
       }
     },
     "Unknown" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2878,7 +2835,6 @@
       }
     },
     "Use DSC comments for document info" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2889,7 +2845,6 @@
       }
     },
     "Use prologue" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2900,7 +2855,6 @@
       }
     },
     "UseDeviceIndependentColor" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2921,7 +2875,6 @@
       }
     },
     "User · editable" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2932,7 +2885,6 @@
       }
     },
     "User password" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2953,7 +2905,6 @@
       }
     },
     "Warning" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2964,7 +2915,6 @@
       }
     },
     "When embedding fails" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2975,7 +2925,6 @@
       }
     },
     "Working CMYK profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2986,7 +2935,6 @@
       }
     },
     "Working grayscale profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2997,7 +2945,6 @@
       }
     },
     "Working RGB profile" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3008,7 +2955,6 @@
       }
     },
     "Write cross-reference streams" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3019,7 +2965,6 @@
       }
     },
     "Write object streams" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

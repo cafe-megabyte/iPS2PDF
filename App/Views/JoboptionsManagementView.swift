@@ -177,9 +177,15 @@ private struct JoboptionsRecordLabel: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.name)
                     .foregroundStyle(.primary)
-                Text(LocalizedStringKey(record.isBundled ? "Bundled · read-only" : "User · editable"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if record.isBundled {
+                    Text("Bundled · read-only")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("User · editable")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             if isActive {

@@ -12,7 +12,7 @@ struct AdvancedSettingsView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Joboptions")
+                    Text("Active Joboptions")
                         .font(.headline)
                     Text(repository.activeName)
                         .font(.caption)
@@ -47,9 +47,14 @@ struct AdvancedSettingsView: View {
                     NavigationLink {
                         JoboptionsManagementView(viewModel: viewModel)
                     } label: {
-                        SettingsNavigationLabel("Manage Joboptions…", systemImage: "folder")
-                            .font(.headline)
-                            .padding(.vertical, 6)
+                        Label {
+                            Text("Manage …")
+                        } icon: {
+                            Image(systemName: "folder")
+                                .foregroundStyle(AppTint.color)
+                        }
+                        .font(.headline)
+                        .padding(.vertical, 6)
                     }
                 }
 
@@ -58,12 +63,12 @@ struct AdvancedSettingsView: View {
                         NavigationLink {
                             SettingsCategoryView(category: category, viewModel: viewModel)
                         } label: {
-                            SettingsNavigationLabel(category.title, systemImage: category.systemImage)
+                            SettingsNavigationLabel(verbatim: category.title, systemImage: category.systemImage)
                         }
                     }
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Joboptions")
         }
     }
 
@@ -71,20 +76,25 @@ struct AdvancedSettingsView: View {
         NavigationSplitView {
             List(selection: $selection) {
                 Section {
-                    SettingsNavigationLabel("Manage Joboptions…", systemImage: "folder")
-                        .font(.headline)
-                        .tag(BackSelection.management)
-                        .padding(.vertical, 6)
+                    Label {
+                        Text("Manage …")
+                    } icon: {
+                        Image(systemName: "folder")
+                            .foregroundStyle(AppTint.color)
+                    }
+                    .font(.headline)
+                    .tag(BackSelection.management)
+                    .padding(.vertical, 6)
                 }
 
                 Section("Settings") {
                     ForEach(DistillerCategory.allCases) { category in
-                        SettingsNavigationLabel(category.title, systemImage: category.systemImage)
+                        SettingsNavigationLabel(verbatim: category.title, systemImage: category.systemImage)
                             .tag(BackSelection.category(category))
                     }
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Joboptions")
         } detail: {
             switch selection ?? .category(.general) {
             case .management:
@@ -106,9 +116,9 @@ private struct GhostscriptCompatibilityBanner: View {
                 Image(systemName: "wrench.and.screwdriver.fill")
                     .foregroundStyle(AppTint.color)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(String(localized: "Ghostscript compatibility adjustments"))
+                    Text("Compatibility adjustments")
                         .font(.subheadline.weight(.semibold))
-                    Text(String(localized: "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them."))
+                    Text("The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Text(issueSummary)
@@ -116,7 +126,7 @@ private struct GhostscriptCompatibilityBanner: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 8)
-                Button(String(localized: "Apply")) {
+                Button("Apply") {
                     do {
                         try repository.applyGhostscriptCompatibilityAdjustments()
                     } catch {
@@ -145,17 +155,22 @@ private enum BackSelection: Hashable {
 }
 
 private struct SettingsNavigationLabel: View {
-    let title: String
+    let title: Text
     let systemImage: String
 
-    init(_ title: String, systemImage: String) {
-        self.title = title
+    init(_ titleKey: LocalizedStringKey, systemImage: String) {
+        self.title = Text(titleKey)
+        self.systemImage = systemImage
+    }
+
+    init(verbatim title: String, systemImage: String) {
+        self.title = Text(title)
         self.systemImage = systemImage
     }
 
     var body: some View {
         Label {
-            Text(title)
+            title
         } icon: {
             Image(systemName: systemImage)
                 .foregroundStyle(AppTint.color)
@@ -397,7 +412,7 @@ private struct DistillerOptionEditor: View {
     }
 
     private func localizedChoice(_ choice: String) -> String {
-        NSLocalizedString(choice, bundle: .main, comment: "Distiller option value")
+        DistillerOptionCatalog.localizedChoice(choice)
     }
 
     private var currentText: String { currentValue?.textualValue ?? "" }

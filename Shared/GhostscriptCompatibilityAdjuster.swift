@@ -9,7 +9,19 @@ struct GhostscriptCompatibilityIssue: Identifiable, Equatable, Sendable {
     var id: String { key }
 
     var summary: String {
-        "/\(key): \(currentValue) -> \(adjustedValue)"
+        "\(localizedKey): \(localizedValue(currentValue)) → \(localizedValue(adjustedValue))"
+    }
+
+    private var localizedKey: String {
+        DistillerOptionCatalog.byKey[key]?.localizedTitle ?? "/\(key)"
+    }
+
+    private func localizedValue(_ value: String) -> String {
+        switch value {
+        case "true": DistillerOptionCatalog.localizedChoice("True")
+        case "false": DistillerOptionCatalog.localizedChoice("False")
+        default: DistillerOptionCatalog.localizedChoice(value)
+        }
     }
 }
 
