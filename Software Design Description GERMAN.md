@@ -649,18 +649,6 @@ Swift importiert nicht direkt große Mengen Ghostscript-interner Header.
 
 Zwischen Swift und Ghostscript liegt eine kleine eigene C-Bridge.
 
-Konzeptionell:
-
-```c
-int gs_convert_to_pdf(
-    const char *input_path,
-    const char *output_path,
-    const char *pdf_version
-);
-```
-
-Die endgültige Bridge darf zusätzlich strukturierte Diagnoseinformationen zurückgeben.
-
 ---
 
 ## 14.2 Ghostscript-C-API
