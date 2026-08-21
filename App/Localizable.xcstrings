@@ -1,6 +1,326 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "/%@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/%@"
+          }
+        }
+      }
+    },
+    "%@ · %@ → %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "%lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
+          }
+        }
+      }
+    },
+    "Abort nonconforming PDF/A or PDF/X jobs" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht konforme PDF/A- oder PDF/X-Aufträge abbrechen"
+          }
+        }
+      }
+    },
+    "AbsoluteColorimetric" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absolut farbmetrisch"
+          }
+        }
+      }
+    },
+    "Actions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktionen"
+          }
+        }
+      }
+    },
+    "Active" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv"
+          }
+        }
+      }
+    },
+    "Additional" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusätzlich"
+          }
+        }
+      }
+    },
+    "Advanced" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweitert"
+          }
+        }
+      }
+    },
+    "All" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle"
+          }
+        }
+      }
+    },
+    "Allow transparency operators" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenzoperatoren zulassen"
+          }
+        }
+      }
+    },
+    "Anti-alias color images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kantenglättung für Farbbilder"
+          }
+        }
+      }
+    },
+    "Anti-alias grayscale images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kantenglättung für Graustufenbilder"
+          }
+        }
+      }
+    },
+    "Anti-alias monochrome images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kantenglättung für Schwarzweißbilder"
+          }
+        }
+      }
+    },
+    "Apply" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anwenden"
+          }
+        }
+      }
+    },
+    "ASCII85-encode page streams" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenströme mit ASCII85 codieren"
+          }
+        }
+      }
+    },
+    "Auto-position EPS files" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPS-Dateien automatisch positionieren"
+          }
+        }
+      }
+    },
+    "Auto-rotate pages" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seiten automatisch drehen"
+          }
+        }
+      }
+    },
+    "Automatic color compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische Farbbildkomprimierung"
+          }
+        }
+      }
+    },
+    "Automatic grayscale compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische Graustufenkomprimierung"
+          }
+        }
+      }
+    },
+    "Available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verfügbar"
+          }
+        }
+      }
+    },
+    "Average" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittelwert"
+          }
+        }
+      }
+    },
+    "Bicubic" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bikubisch"
+          }
+        }
+      }
+    },
+    "Binding" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bindung"
+          }
+        }
+      }
+    },
+    "Bundled" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitgeliefert"
+          }
+        }
+      }
+    },
+    "Bundled · read-only" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitgeliefert · schreibgeschützt"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbrechen"
+          }
+        }
+      }
+    },
+    "Cannot embed font policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei nicht einbettbaren Schriften"
+          }
+        }
+      }
+    },
+    "Check PDF/X-1" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-1 prüfen"
+          }
+        }
+      }
+    },
+    "Check PDF/X-3" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-3 prüfen"
+          }
+        }
+      }
+    },
     "close" : {
       "localizations" : {
         "de" : {
@@ -13,6 +333,166 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
+        }
+      }
+    },
+    "Color" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe"
+          }
+        }
+      }
+    },
+    "Color compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbildkomprimierung"
+          }
+        }
+      }
+    },
+    "Color conversion strategy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbkonvertierungsstrategie"
+          }
+        }
+      }
+    },
+    "Color downsample threshold" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellenwert für Farbbild-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Color downsampling" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbild-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Color image resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbildauflösung"
+          }
+        }
+      }
+    },
+    "Compress color images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder komprimieren"
+          }
+        }
+      }
+    },
+    "Compress grayscale images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder komprimieren"
+          }
+        }
+      }
+    },
+    "Compress monochrome images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbilder komprimieren"
+          }
+        }
+      }
+    },
+    "Compress object streams" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektströme komprimieren"
+          }
+        }
+      }
+    },
+    "Compress page streams" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenströme komprimieren"
+          }
+        }
+      }
+    },
+    "Conformance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konformität"
+          }
+        }
+      }
+    },
+    "Conversion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung"
+          }
+        }
+      }
+    },
+    "Conversion failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung fehlgeschlagen"
           }
         }
       }
@@ -33,6 +513,188 @@
         }
       }
     },
+    "Convert CMYK images to RGB" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CMYK-Bilder in RGB konvertieren"
+          }
+        }
+      }
+    },
+    "Convert suitable images to indexed color" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geeignete Bilder in indizierte Farben konvertieren"
+          }
+        }
+      }
+    },
+    "Copied" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiert"
+          }
+        }
+      }
+    },
+    "Copy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieren"
+          }
+        }
+      }
+    },
+    "Create job ticket" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Job-Ticket erstellen"
+          }
+        }
+      }
+    },
+    "Crop color images to frames" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder auf Rahmen beschneiden"
+          }
+        }
+      }
+    },
+    "Crop grayscale images to frames" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder auf Rahmen beschneiden"
+          }
+        }
+      }
+    },
+    "Crop monochrome images to frames" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbilder auf Rahmen beschneiden"
+          }
+        }
+      }
+    },
+    "Curve detection tolerance" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toleranz der Kurvenerkennung"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "Default page size" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardseitengröße"
+          }
+        }
+      }
+    },
+    "Default rendering intent" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard-Wiedergabeabsicht"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
+          }
+        }
+      }
+    },
+    "Details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        }
+      }
+    },
+    "Detect blends" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verläufe erkennen"
+          }
+        }
+      }
+    },
+    "Device resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteauflösung"
+          }
+        }
+      }
+    },
+    "Diagnostics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostik"
+          }
+        }
+      }
+    },
     "dismiss" : {
       "localizations" : {
         "de" : {
@@ -45,6 +707,201 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dismiss"
+          }
+        }
+      }
+    },
+    "Document permissions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentberechtigungen"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
+          }
+        }
+      }
+    },
+    "Downsample 16-bit images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16-Bit-Bilder neu berechnen"
+          }
+        }
+      }
+    },
+    "Downsample color images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder neu berechnen"
+          }
+        }
+      }
+    },
+    "Downsample grayscale images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder neu berechnen"
+          }
+        }
+      }
+    },
+    "Downsample monochrome images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbilder neu berechnen"
+          }
+        }
+      }
+    },
+    "DSC reporting level" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Berichtsstufe"
+          }
+        }
+      }
+    },
+    "Duplicate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplizieren"
+          }
+        }
+      }
+    },
+    "Embed all fonts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Schriften einbetten"
+          }
+        }
+      }
+    },
+    "Embed Joboptions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions einbetten"
+          }
+        }
+      }
+    },
+    "Embed OpenType fonts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenType-Schriften einbetten"
+          }
+        }
+      }
+    },
+    "Embed page thumbnails" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenminiaturen einbetten"
+          }
+        }
+      }
+    },
+    "Embed substitute fonts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersatzschriften einbetten"
+          }
+        }
+      }
+    },
+    "Enable transparency device" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenzgerät aktivieren"
+          }
+        }
+      }
+    },
+    "Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardmäßig aktiviert: 15 Minuten, 1 GB PostScript-Eingabe und 2 GB PDF-Ausgabe. Prozessisolierung, SAFER, Diagnose, Abbruch und PDF-Validierung bleiben immer aktiv."
+          }
+        }
+      }
+    },
+    "Encrypt PDF" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF verschlüsseln"
+          }
+        }
+      }
+    },
+    "Encryption revision" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselungsrevision"
+          }
+        }
+      }
+    },
+    "Error" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler"
           }
         }
       }
@@ -177,6 +1034,22 @@
         }
       }
     },
+    "error_joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions konnten nicht importiert oder validiert werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Joboptions could not be imported or validated."
+          }
+        }
+      }
+    },
     "error_output_empty" : {
       "localizations" : {
         "de" : {
@@ -257,6 +1130,463 @@
         }
       }
     },
+    "Export with Save Dialog…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Sichern-Dialog exportieren…"
+          }
+        }
+      }
+    },
+    "Export with Share Sheet…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Teilen exportieren…"
+          }
+        }
+      }
+    },
+    "False" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Falsch"
+          }
+        }
+      }
+    },
+    "First page" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erste Seite"
+          }
+        }
+      }
+    },
+    "Fonts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriften"
+          }
+        }
+      }
+    },
+    "General" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allgemein"
+          }
+        }
+      }
+    },
+    "Ghostscript %@ pdfwrite setting /%@." : {
+      "comment" : "Distiller option help",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript-%1$@-pdfwrite-Einstellung /%2$@."
+          }
+        }
+      }
+    },
+    "Graphics ICC profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil für Grafiken"
+          }
+        }
+      }
+    },
+    "Gray" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grau"
+          }
+        }
+      }
+    },
+    "Grayscale compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenkomprimierung"
+          }
+        }
+      }
+    },
+    "Grayscale downsample threshold" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellenwert für Graustufen-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Grayscale downsampling" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufen-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Grayscale image resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbildauflösung"
+          }
+        }
+      }
+    },
+    "Honor ICC profiles in comments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profile in Kommentaren berücksichtigen"
+          }
+        }
+      }
+    },
+    "ICC profiles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profile"
+          }
+        }
+      }
+    },
+    "Ignore" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorieren"
+          }
+        }
+      }
+    },
+    "Image ICC profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil für Bilder"
+          }
+        }
+      }
+    },
+    "Images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder"
+          }
+        }
+      }
+    },
+    "Import ICC Profile…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil importieren…"
+          }
+        }
+      }
+    },
+    "Import…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren…"
+          }
+        }
+      }
+    },
+    "iPS2PDF" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPS2PDF"
+          }
+        }
+      }
+    },
+    "Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions"
+          }
+        }
+      }
+    },
+    "Last page" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Seite"
+          }
+        }
+      }
+    },
+    "LeaveColorUnchanged" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe unverändert lassen"
+          }
+        }
+      }
+    },
+    "Left" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links"
+          }
+        }
+      }
+    },
+    "Lock Distiller parameters" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distiller-Parameter sperren"
+          }
+        }
+      }
+    },
+    "Low color resolution policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei niedriger Farbauflösung"
+          }
+        }
+      }
+    },
+    "Low grayscale resolution policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei niedriger Graustufenauflösung"
+          }
+        }
+      }
+    },
+    "Low monochrome resolution policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei niedriger Schwarzweißauflösung"
+          }
+        }
+      }
+    },
+    "Manage Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions verwalten"
+          }
+        }
+      }
+    },
+    "Manage Joboptions…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions verwalten…"
+          }
+        }
+      }
+    },
+    "Mandatory PDF version, encryption, font embedding, output intent and color-space dependencies are locked by the selected standard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erforderliche PDF-Version sowie Verschlüsselung, Schrifteinbettung, Ausgabeprofil und Farbraumabhängigkeiten werden durch den gewählten Standard gesperrt."
+          }
+        }
+      }
+    },
+    "Map device gray to black" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerätegrau auf Schwarz abbilden"
+          }
+        }
+      }
+    },
+    "Minimum color resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale Farbauflösung"
+          }
+        }
+      }
+    },
+    "Minimum grayscale resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale Graustufenauflösung"
+          }
+        }
+      }
+    },
+    "Minimum monochrome resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale Schwarzweißauflösung"
+          }
+        }
+      }
+    },
+    "Monochrome compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißkomprimierung"
+          }
+        }
+      }
+    },
+    "Monochrome downsample threshold" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellenwert für Schwarzweiß-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Monochrome downsampling" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweiß-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Monochrome image resolution" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbildauflösung"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
+          }
+        }
+      }
+    },
+    "No text was provided to iPS2PDF." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für iPS2PDF wurde kein Text bereitgestellt."
+          }
+        }
+      }
+    },
+    "None" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine"
+          }
+        }
+      }
+    },
     "notice_busy_message" : {
       "localizations" : {
         "de" : {
@@ -321,6 +1651,38 @@
         }
       }
     },
+    "Object compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektkomprimierung"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
+          }
+        }
+      }
+    },
     "open_file" : {
       "localizations" : {
         "de" : {
@@ -337,130 +1699,110 @@
         }
       }
     },
-    "pdfa_compatibility" : {
+    "Optimize for fast web view" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF/A Kompatibilität"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF/A Compatibility"
+            "value" : "Für schnelle Webanzeige optimieren"
           }
         }
       }
     },
-    "pdfa_compatibility_1b_detail" : {
+    "Original source" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF 1.4 · ohne Transparenz"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF 1.4 · without transparency"
+            "value" : "Originalquelle"
           }
         }
       }
     },
-    "pdfa_compatibility_1b_title" : {
+    "Output ICC profile" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF/A-1b"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF/A-1b"
+            "value" : "Ausgabe-ICC-Profil"
           }
         }
       }
     },
-    "pdfa_compatibility_2b_detail" : {
+    "Overprint mode" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF 1.7 · mit Transparenz"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF 1.7 · with transparency"
+            "value" : "Überdrucken-Modus"
           }
         }
       }
     },
-    "pdfa_compatibility_2b_title" : {
+    "Owner password" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF/A-2b"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF/A-2b"
+            "value" : "Eigentümerpasswort"
           }
         }
       }
     },
-    "pdfa_compatibility_3b_detail" : {
+    "PageByPage" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF 1.7 · erlaubt eingebettete Dateien"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF 1.7 · allows embedded files"
+            "value" : "Seitenweise"
           }
         }
       }
     },
-    "pdfa_compatibility_3b_title" : {
+    "Pass through JPEG 2000 images" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "PDF/A-3b"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF/A-3b"
+            "value" : "JPEG-2000-Bilder unverändert übernehmen"
           }
         }
       }
     },
-    "pdfa_compatibility_none_title" : {
+    "Pass through JPEG images" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "keine"
+            "value" : "JPEG-Bilder unverändert übernehmen"
           }
-        },
-        "en" : {
+        }
+      }
+    },
+    "PDF compatibility" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "none"
+            "value" : "PDF-Kompatibilität"
+          }
+        }
+      }
+    },
+    "PDF standard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Standard"
           }
         }
       }
@@ -721,6 +2063,395 @@
         }
       }
     },
+    "PDF/A compatibility policy" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-Kompatibilitätsrichtlinie"
+          }
+        }
+      }
+    },
+    "PDF/X condition identifier" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabebedingungskennung"
+          }
+        }
+      }
+    },
+    "PDF/X output condition" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabebedingung"
+          }
+        }
+      }
+    },
+    "PDF/X output intent profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabeprofil"
+          }
+        }
+      }
+    },
+    "PDF/X registry" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Registrierung"
+          }
+        }
+      }
+    },
+    "PDF/X trapped state" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Überfüllungsstatus"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A Kompatibilität"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A Compatibility"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_1b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.4 · ohne Transparenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.4 · without transparency"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_1b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-1b"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-1b"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_2b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · mit Transparenz"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · with transparency"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_2b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-2b"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-2b"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_3b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · erlaubt eingebettete Dateien"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · allows embedded files"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_3b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-3b"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-3b"
+          }
+        }
+      }
+    },
+    "pdfa_compatibility_none_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "none"
+          }
+        }
+      }
+    },
+    "Perceptual" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perzeptiv"
+          }
+        }
+      }
+    },
+    "PostScript value" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Wert"
+          }
+        }
+      }
+    },
+    "Preparing PostScript…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript wird vorbereitet…"
+          }
+        }
+      }
+    },
+    "Preserve" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve black" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarz beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve copy-page semantics" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "copy-page-Semantik beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve DeviceN colorants" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeviceN-Farbmittel beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve EPS information" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPS-Informationen beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve flatness" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurvenglättung beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve halftone information" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rasterinformationen beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve OPI comments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OPI-Kommentare beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve overprint settings" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überdruckeinstellungen beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve separations" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separationen beibehalten"
+          }
+        }
+      }
+    },
+    "Preserved settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beibehaltene Einstellungen"
+          }
+        }
+      }
+    },
+    "Preserved; ignored by Ghostscript." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird beibehalten, von Ghostscript jedoch ignoriert."
+          }
+        }
+      }
+    },
+    "Preserved; not interpreted by Ghostscript pdfwrite." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird beibehalten, von Ghostscript pdfwrite jedoch nicht ausgewertet."
+          }
+        }
+      }
+    },
+    "Process color model" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozessfarbmodell"
+          }
+        }
+      }
+    },
+    "Process DSC comments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Kommentare verarbeiten"
+          }
+        }
+      }
+    },
     "processing" : {
       "localizations" : {
         "de" : {
@@ -737,6 +2468,111 @@
         }
       }
     },
+    "RelativeColorimetric" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relativ farbmetrisch"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen"
+          }
+        }
+      }
+    },
+    "Report DSC warnings" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Warnungen melden"
+          }
+        }
+      }
+    },
+    "Right" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechts"
+          }
+        }
+      }
+    },
+    "Saturation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sättigung"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern"
+          }
+        }
+      }
+    },
+    "Save As…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern unter…"
+          }
+        }
+      }
+    },
+    "Save Joboptions As" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions sichern unter"
+          }
+        }
+      }
+    },
+    "Security limits" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherheitsgrenzen"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen"
+          }
+        }
+      }
+    },
     "share" : {
       "localizations" : {
         "de" : {
@@ -749,6 +2585,408 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Share"
+          }
+        }
+      }
+    },
+    "Show preserved PostScript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beibehaltenes PostScript anzeigen"
+          }
+        }
+      }
+    },
+    "sRGB profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sRGB-Profil"
+          }
+        }
+      }
+    },
+    "Standards" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standards"
+          }
+        }
+      }
+    },
+    "Subsample" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterabtastung"
+          }
+        }
+      }
+    },
+    "Subset embedded fonts" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingebettete Schriften als Untergruppen"
+          }
+        }
+      }
+    },
+    "Subset fonts below" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriften unterhalb dieses Werts unterteilen"
+          }
+        }
+      }
+    },
+    "Tags" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags"
+          }
+        }
+      }
+    },
+    "Text ICC profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil für Text"
+          }
+        }
+      }
+    },
+    "The catalogue targets Ghostscript %@. Missing settings are inserted into the active user Joboptions; unrelated source bytes stay unchanged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Katalog gilt für Ghostscript %@. Fehlende Einstellungen werden in die aktiven Benutzer-Joboptions eingefügt; nicht betroffene Quelldaten bleiben unverändert."
+          }
+        }
+      }
+    },
+    "The file does not contain a static Distiller parameter dictionary." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei enthält kein statisches Distiller-Parameterwörterbuch."
+          }
+        }
+      }
+    },
+    "The file does not contain a valid ICC profile header." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei enthält keinen gültigen ICC-Profil-Header."
+          }
+        }
+      }
+    },
+    "The Joboptions encoding is not supported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Codierung der Joboptions wird nicht unterstützt."
+          }
+        }
+      }
+    },
+    "The Joboptions file cannot be read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei kann nicht gelesen werden."
+          }
+        }
+      }
+    },
+    "The Joboptions file could not be saved." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei konnte nicht gesichert werden."
+          }
+        }
+      }
+    },
+    "The Joboptions file is empty." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei ist leer."
+          }
+        }
+      }
+    },
+    "The Joboptions file is larger than 16 MB." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei ist größer als 16 MB."
+          }
+        }
+      }
+    },
+    "The Joboptions structure is malformed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Struktur ist fehlerhaft: %@"
+          }
+        }
+      }
+    },
+    "The shared item could not be read as text." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das geteilte Element konnte nicht als Text gelesen werden."
+          }
+        }
+      }
+    },
+    "These recognizable keys are preserved even though they have no dedicated Distiller control." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese erkannten Schlüssel bleiben erhalten, obwohl sie kein eigenes Distiller-Bedienelement besitzen."
+          }
+        }
+      }
+    },
+    "Transfer functions" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transferfunktionen"
+          }
+        }
+      }
+    },
+    "True" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wahr"
+          }
+        }
+      }
+    },
+    "Unclassified PostScript fragments are read-only and are preserved byte-for-byte." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht klassifizierte PostScript-Fragmente sind schreibgeschützt und bleiben bytegenau erhalten."
+          }
+        }
+      }
+    },
+    "Undercolor removal and black generation" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterfarbenreduzierung und Schwarzaufbau"
+          }
+        }
+      }
+    },
+    "Unknown" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannt"
+          }
+        }
+      }
+    },
+    "Use DSC comments for document info" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Kommentare für Dokumentinformationen verwenden"
+          }
+        }
+      }
+    },
+    "Use prologue" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prolog verwenden"
+          }
+        }
+      }
+    },
+    "UseDeviceIndependentColor" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteunabhängige Farbe verwenden"
+          }
+        }
+      }
+    },
+    "User" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzer"
+          }
+        }
+      }
+    },
+    "User · editable" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzer · bearbeitbar"
+          }
+        }
+      }
+    },
+    "User password" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzerpasswort"
+          }
+        }
+      }
+    },
+    "Value" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wert"
+          }
+        }
+      }
+    },
+    "Warning" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warnung"
+          }
+        }
+      }
+    },
+    "When embedding fails" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn das Einbetten fehlschlägt"
+          }
+        }
+      }
+    },
+    "Working CMYK profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CMYK-Arbeitsprofil"
+          }
+        }
+      }
+    },
+    "Working grayscale profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufen-Arbeitsprofil"
+          }
+        }
+      }
+    },
+    "Working RGB profile" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RGB-Arbeitsprofil"
+          }
+        }
+      }
+    },
+    "Write cross-reference streams" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Querverweisströme schreiben"
+          }
+        }
+      }
+    },
+    "Write object streams" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektströme schreiben"
           }
         }
       }

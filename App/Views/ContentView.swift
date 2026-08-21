@@ -1,49 +1,40 @@
 import Foundation
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 struct ContentView: View {
     @ObservedObject var viewModel: ConversionViewModel
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var showsBack = false
 
     var body: some View {
         ZStack {
-            VStack(spacing: 32) {
-                Button(String(localized: "open_file")) {
-                    viewModel.isFileImporterPresented = true
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .disabled(viewModel.controlsAreDisabled)
+            FrontConversionView(
+                viewModel: viewModel,
+                onShowSettings: { setBackVisible(true) }
+            )
+            .opacity(showsBack ? 0 : 1)
+            .rotation3DEffect(
+                .degrees(reduceMotion ? 0 : (showsBack ? -180 : 0)),
+                axis: (x: 0, y: 1, z: 0),
+                perspective: 0.65
+            )
+            .allowsHitTesting(!showsBack)
+            .accessibilityHidden(showsBack)
 
-                VStack(alignment: .leading, spacing: 16) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(String(localized: "pdf_version"))
-                            .font(.headline)
-
-                        PDFVersionDropdown(
-                            selectedVersion: viewModel.selectedPDFVersion,
-                            isDisabled: viewModel.controlsAreDisabled
-                        ) { version in
-                            viewModel.setPDFVersion(version)
-                        }
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(String(localized: "pdfa_compatibility"))
-                            .font(.headline)
-
-                        PDFACompatibilityDropdown(
-                            selectedCompatibility: viewModel.selectedPDFACompatibility,
-                            isDisabled: viewModel.controlsAreDisabled
-                        ) { compatibility in
-                            viewModel.setPDFACompatibility(compatibility)
-                        }
-                    }
-                }
-                .frame(width: 320, alignment: .leading)
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .padding(32)
+            AdvancedSettingsView(
+                viewModel: viewModel,
+                onShowFront: { setBackVisible(false) }
+            )
+            .opacity(showsBack ? 1 : 0)
+            .rotation3DEffect(
+                .degrees(reduceMotion ? 0 : (showsBack ? 0 : 180)),
+                axis: (x: 0, y: 1, z: 0),
+                perspective: 0.65
+            )
+            .allowsHitTesting(showsBack)
+            .accessibilityHidden(!showsBack)
 
             if viewModel.showsProgressOverlay {
                 ProcessingOverlay()
@@ -53,7 +44,7 @@ struct ContentView: View {
         .contentShape(Rectangle())
         .fileImporter(
             isPresented: $viewModel.isFileImporterPresented,
-            allowedContentTypes: [.data],
+            allowedContentTypes: [.data, .joboptions],
             allowsMultipleSelection: false
         ) { result in
             switch result {
@@ -68,6 +59,9 @@ struct ContentView: View {
         .onOpenURL { url in
             viewModel.handleIncomingFiles([url])
         }
+        .onChange(of: viewModel.settingsPresentationToken) { _, _ in
+            setBackVisible(true)
+        }
         .onDrop(of: [.item], isTargeted: nil) { providers in
             receiveDroppedItems(providers)
         }
@@ -79,14 +73,36 @@ struct ContentView: View {
                 onShareFinished: viewModel.endSharing
             )
         }
+        .sheet(item: $viewModel.diagnosticDetails, onDismiss: viewModel.diagnosticDetailsDidDismiss) { presentation in
+            DiagnosticDetailsView(presentation: presentation)
+        }
         .alert(item: $viewModel.alert) { alert in
-            Alert(
-                title: Text(alert.title),
-                message: Text(alert.message),
-                dismissButton: .default(Text(String(localized: "dismiss"))) {
-                    viewModel.dismissAlert()
-                }
-            )
+            if alert.details != nil {
+                Alert(
+                    title: Text(alert.title),
+                    message: Text(alert.message),
+                    primaryButton: .default(Text("Details")) {
+                        viewModel.showDetails(for: alert)
+                    },
+                    secondaryButton: .cancel(Text(String(localized: "dismiss"))) {
+                        viewModel.dismissAlert()
+                    }
+                )
+            } else {
+                Alert(
+                    title: Text(alert.title),
+                    message: Text(alert.message),
+                    dismissButton: .default(Text(String(localized: "dismiss"))) {
+                        viewModel.dismissAlert()
+                    }
+                )
+            }
+        }
+    }
+
+    private func setBackVisible(_ visible: Bool) {
+        withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .easeInOut(duration: 0.62)) {
+            showsBack = visible
         }
     }
 
@@ -134,6 +150,153 @@ struct ContentView: View {
             }
         }
         return true
+    }
+}
+
+private struct DiagnosticDetailsView: View {
+    let presentation: DiagnosticPresentation
+    @Environment(\.dismiss) private var dismiss
+    @State private var copied = false
+
+    var body: some View {
+        NavigationStack {
+            ScrollView([.horizontal, .vertical]) {
+                Text(presentation.text)
+                    .font(.system(.caption, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+            }
+            .navigationTitle("Diagnostics")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(copied ? "Copied" : "Copy") {
+                        UIPasteboard.general.string = presentation.text
+                        copied = true
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+private struct FrontConversionView: View {
+    @ObservedObject var viewModel: ConversionViewModel
+    let onShowSettings: () -> Void
+
+    var body: some View {
+        VStack(spacing: 32) {
+            HStack {
+                Spacer()
+                Button(action: onShowSettings) {
+                    Label("Settings", systemImage: "slider.horizontal.3")
+                }
+                .buttonStyle(.bordered)
+                .disabled(viewModel.controlsAreDisabled)
+            }
+
+            Spacer(minLength: 0)
+
+            Button(String(localized: "open_file")) {
+                viewModel.isFileImporterPresented = true
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(viewModel.controlsAreDisabled)
+
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Joboptions")
+                        .font(.headline)
+
+                    JoboptionsDropdown(
+                        repository: viewModel.joboptionsRepository,
+                        isDisabled: viewModel.controlsAreDisabled
+                    )
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(localized: "pdf_version"))
+                        .font(.headline)
+
+                    PDFVersionDropdown(
+                        selectedVersion: viewModel.selectedPDFVersion,
+                        isDisabled: viewModel.controlsAreDisabled || viewModel.joboptionsRepository.activeStandard != .none
+                    ) { version in
+                        viewModel.setPDFVersion(version)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(String(localized: "pdfa_compatibility"))
+                        .font(.headline)
+
+                    PDFACompatibilityDropdown(
+                        selectedCompatibility: viewModel.selectedPDFACompatibility,
+                        isDisabled: viewModel.controlsAreDisabled
+                    ) { compatibility in
+                        viewModel.setPDFACompatibility(compatibility)
+                    }
+                }
+            }
+            .frame(maxWidth: 360, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
+
+            Spacer(minLength: 0)
+        }
+        .padding(32)
+    }
+}
+
+private struct JoboptionsDropdown: View {
+    @ObservedObject var repository: JoboptionsRepository
+    let isDisabled: Bool
+
+    var body: some View {
+        Menu {
+            Section("Bundled") {
+                ForEach(repository.records.filter(\.isBundled)) { record in
+                    recordButton(record)
+                }
+            }
+            Section("User") {
+                ForEach(repository.records.filter { !$0.isBundled }) { record in
+                    recordButton(record)
+                }
+            }
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: repository.activeRecord?.isBundled == true ? "shippingbox.fill" : "person.crop.circle")
+                    .frame(width: 22)
+                Text(repository.activeName)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .buttonStyle(.bordered)
+        .disabled(isDisabled || !repository.isReady)
+    }
+
+    private func recordButton(_ record: JoboptionsRecord) -> some View {
+        Button {
+            do { try repository.activate(record) }
+            catch { repository.lastError = error.localizedDescription }
+        } label: {
+            if repository.activeRecord?.id == record.id {
+                Label(record.name, systemImage: "checkmark")
+            } else {
+                Text(record.name)
+            }
+        }
     }
 }
 

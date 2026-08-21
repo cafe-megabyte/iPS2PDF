@@ -11,11 +11,16 @@ final class ConversionViewModel: ObservableObject {
     @Published var presentedPDF: PDFPresentation?
     @Published var isShareSheetPresented = false
     @Published var alert: AppAlert?
+    @Published var diagnosticDetails: DiagnosticPresentation?
+    @Published private(set) var settingsPresentationToken = UUID()
 
-    private let settingsStore: SettingsStore
+    let joboptionsRepository: JoboptionsRepository
+
     private let workingDirectoryService: WorkingDirectoryService
     private let converter: any FileConverting
+    private let documentRouter: IncomingDocumentRouter
     private let startupCleanupTask: Task<Void, Error>
+    private var repositoryObservation: AnyCancellable?
 
     private var progressTask: Task<Void, Never>?
     private var deferredNotice: AppAlert?
@@ -24,17 +29,30 @@ final class ConversionViewModel: ObservableObject {
     private var viewerDismissalWaiters: [CheckedContinuation<Void, Never>] = []
 
     init(
-        settingsStore: SettingsStore = SettingsStore(),
+        joboptionsRepository: JoboptionsRepository? = nil,
         workingDirectoryService: WorkingDirectoryService = WorkingDirectoryService(),
-        converter: any FileConverting = GhostscriptConverter()
+        converter: any FileConverting = GhostscriptConverter(),
+        documentRouter: IncomingDocumentRouter = IncomingDocumentRouter()
     ) {
-        self.settingsStore = settingsStore
+        let joboptionsRepository = joboptionsRepository ?? JoboptionsRepository()
+        self.joboptionsRepository = joboptionsRepository
         self.workingDirectoryService = workingDirectoryService
         self.converter = converter
-        selectedPDFVersion = settingsStore.pdfVersion
-        selectedPDFACompatibility = settingsStore.pdfaCompatibility
+        self.documentRouter = documentRouter
+        selectedPDFVersion = .v13
+        selectedPDFACompatibility = .none
         startupCleanupTask = Task.detached(priority: .utility) {
             try await workingDirectoryService.clearWorkingDirectory()
+        }
+        repositoryObservation = joboptionsRepository.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await Task.yield()
+                self?.synchronizeFrontSettings()
+            }
+        }
+        Task { [weak self, joboptionsRepository] in
+            await joboptionsRepository.waitUntilReady()
+            self?.synchronizeFrontSettings()
         }
     }
 
@@ -44,25 +62,40 @@ final class ConversionViewModel: ObservableObject {
 
     func setPDFVersion(_ version: PDFVersion) {
         guard !controlsAreDisabled else { return }
-        selectedPDFVersion = version
-        settingsStore.pdfVersion = version
-
-        if selectedPDFACompatibility.requiredPDFVersion != version {
-            selectedPDFACompatibility = .none
-            settingsStore.pdfaCompatibility = .none
+        do {
+            if selectedPDFACompatibility.requiredPDFVersion != version,
+               selectedPDFACompatibility != .none {
+                try joboptionsRepository.setStandard(.none)
+            }
+            try joboptionsRepository.update(
+                key: "CompatibilityLevel",
+                value: .number(Double(version.rawValue) ?? 1.3, original: version.rawValue)
+            )
+            synchronizeFrontSettings()
+        } catch {
+            joboptionsRepository.lastError = error.localizedDescription
         }
     }
 
     func setPDFACompatibility(_ compatibility: PDFACompatibility) {
         guard !controlsAreDisabled else { return }
-        selectedPDFACompatibility = compatibility
-        settingsStore.pdfaCompatibility = compatibility
-
-        if let requiredPDFVersion = compatibility.requiredPDFVersion,
-           selectedPDFVersion != requiredPDFVersion {
-            selectedPDFVersion = requiredPDFVersion
-            settingsStore.pdfVersion = requiredPDFVersion
+        do {
+            let standard: PDFStandard
+            switch compatibility {
+            case .none: standard = .none
+            case .pdfa1b: standard = .pdfa1b
+            case .pdfa2b: standard = .pdfa2b
+            case .pdfa3b: standard = .pdfa3b
+            }
+            try joboptionsRepository.setStandard(standard)
+            synchronizeFrontSettings()
+        } catch {
+            joboptionsRepository.lastError = error.localizedDescription
         }
+    }
+
+    func importJoboptions(_ url: URL) {
+        acceptFiles([url])
     }
 
     func handleSelectedFile(_ url: URL) {
@@ -91,6 +124,16 @@ final class ConversionViewModel: ObservableObject {
 
     func dismissAlert() {
         alert = nil
+        presentDeferredNoticeIfPossible()
+    }
+
+    func showDetails(for alert: AppAlert) {
+        guard let details = alert.details else { return }
+        self.alert = nil
+        diagnosticDetails = DiagnosticPresentation(title: alert.title, text: details)
+    }
+
+    func diagnosticDetailsDidDismiss() {
         presentDeferredNoticeIfPossible()
     }
 
@@ -144,17 +187,13 @@ final class ConversionViewModel: ObservableObject {
             return false
         }
 
-        let versionSnapshot = selectedPDFVersion
-        let pdfaCompatibilitySnapshot = selectedPDFACompatibility
         isProcessing = true
         showsProgressOverlay = false
         startProgressDelay()
 
         Task { [weak self, workingDirectoryService] in
             await self?.runConversion(
-                sourceURL: url,
-                version: versionSnapshot,
-                pdfaCompatibility: pdfaCompatibilitySnapshot
+                sourceURL: url
             )
             if let cleanupDirectory {
                 await workingDirectoryService.removeDropStagingDirectory(cleanupDirectory)
@@ -163,11 +202,7 @@ final class ConversionViewModel: ObservableObject {
         return true
     }
 
-    private func runConversion(
-        sourceURL: URL,
-        version: PDFVersion,
-        pdfaCompatibility: PDFACompatibility
-    ) async {
+    private func runConversion(sourceURL: URL) async {
         do {
             await dismissViewerForReplacementIfNeeded()
 
@@ -179,22 +214,39 @@ final class ConversionViewModel: ObservableObject {
 
             try await workingDirectoryService.clearWorkingDirectory()
             let localSourceURL = try await workingDirectoryService.copySourceFile(from: sourceURL)
-            let outputURL = await workingDirectoryService.outputURL(for: localSourceURL)
+            await joboptionsRepository.waitUntilReady()
 
-            try await converter.convert(
-                sourceURL: localSourceURL,
-                outputURL: outputURL,
-                pdfVersion: version,
-                pdfaCompatibility: pdfaCompatibility
-            )
-            try await workingDirectoryService.validatePDF(at: outputURL)
+            switch try documentRouter.classify(localSourceURL) {
+            case let .joboptions(joboptionsURL, _):
+                try await converter.validateJoboptions(at: joboptionsURL)
+                _ = try joboptionsRepository.importJoboptions(from: joboptionsURL)
+                finishProcessing()
+                synchronizeFrontSettings()
+                settingsPresentationToken = UUID()
+            case let .postScript(postScriptURL):
+                // Capture only after the readiness gate, and keep this immutable
+                // for the lifetime of the conversion.
+                let settingsSnapshot = try joboptionsRepository.snapshot()
+                let outputURL = await workingDirectoryService.outputURL(for: postScriptURL)
+                let snapshotURL = try await workingDirectoryService.writeJoboptionsSnapshot(
+                    settingsSnapshot.joboptionsData
+                )
+                try await converter.convert(
+                    sourceURL: postScriptURL,
+                    outputURL: outputURL,
+                    joboptionsURL: snapshotURL,
+                    standard: settingsSnapshot.standard,
+                    securityLimitsEnabled: settingsSnapshot.securityLimitsEnabled
+                )
+                try await workingDirectoryService.validatePDF(at: outputURL)
 
-            finishProcessing()
-            presentedPDF = PDFPresentation(url: outputURL)
+                finishProcessing()
+                presentedPDF = PDFPresentation(url: outputURL)
+            }
         } catch let failure as ConversionFailure {
             await finishWithFailure(failure)
         } catch {
-            await finishWithFailure(.ghostscriptConversion(returnCode: 0, diagnostics: ""))
+            await finishWithFailure(.joboptions(diagnostics: error.localizedDescription))
         }
     }
 
@@ -256,19 +308,36 @@ final class ConversionViewModel: ObservableObject {
 
     private func makeErrorAlert(for failure: ConversionFailure) -> AppAlert {
         var messageParts = [failure.localizedMessage]
+        var detailsParts: [String] = []
         if let diagnostics = failure.diagnostics {
             let format = String(localized: "error_diagnostics_format")
-            messageParts.append(String(format: format, diagnostics))
+            let tail = String(diagnostics.suffix(2_000))
+            messageParts.append(String(format: format, tail))
+            detailsParts.append(diagnostics)
         }
         if let returnCode = failure.returnCode {
             let format = String(localized: "error_return_code_format")
             messageParts.append(String(format: format, returnCode))
+            detailsParts.insert(String(format: format, returnCode), at: 0)
         }
 
         return AppAlert(
             kind: .error,
             title: String(localized: "conversion_failed"),
-            message: messageParts.joined(separator: "\n\n")
+            message: messageParts.joined(separator: "\n\n"),
+            details: detailsParts.isEmpty ? nil : detailsParts.joined(separator: "\n\n")
         )
+    }
+
+    private func synchronizeFrontSettings() {
+        selectedPDFVersion = PDFVersion(
+            rawValue: joboptionsRepository.compatibilityLevel
+        ) ?? .v13
+        switch joboptionsRepository.activeStandard {
+        case .pdfa1b: selectedPDFACompatibility = .pdfa1b
+        case .pdfa2b: selectedPDFACompatibility = .pdfa2b
+        case .pdfa3b: selectedPDFACompatibility = .pdfa3b
+        default: selectedPDFACompatibility = .none
+        }
     }
 }

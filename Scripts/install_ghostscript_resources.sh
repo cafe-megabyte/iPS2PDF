@@ -11,7 +11,7 @@ bundle_resource_directory="$2"
 source_directory="$artifact_directory/resources"
 destination_directory="$bundle_resource_directory/Ghostscript"
 
-for resource in PDFA_def.ps srgb.icc; do
+for resource in PDFA_def.ps PDFX_def.ps srgb.icc; do
     if [ ! -f "$source_directory/$resource" ]; then
         echo "Missing Ghostscript resource: $source_directory/$resource" >&2
         exit 65
@@ -20,4 +20,5 @@ done
 
 mkdir -p "$destination_directory"
 install -m 0644 "$source_directory/PDFA_def.ps" "$destination_directory/PDFA_def.ps"
+install -m 0644 "$source_directory/PDFX_def.ps" "$destination_directory/PDFX_def.ps"
 install -m 0644 "$source_directory/srgb.icc" "$destination_directory/srgb.icc"

@@ -82,6 +82,16 @@ actor WorkingDirectoryService {
         return outputURL
     }
 
+    func writeJoboptionsSnapshot(_ data: Data) throws -> URL {
+        let snapshotURL = directoryURL.appendingPathComponent("Active.joboptions")
+        do {
+            try data.write(to: snapshotURL, options: [.atomic])
+            return snapshotURL
+        } catch {
+            throw JoboptionsError.writeFailed
+        }
+    }
+
     func validatePDF(at outputURL: URL) throws {
         guard fileManager.fileExists(atPath: outputURL.path) else {
             throw ConversionFailure.outputMissing

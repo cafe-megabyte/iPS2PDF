@@ -12,6 +12,18 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
+			<string>Joboptions</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>de.cafe-megabyte.joboptions</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
 			<string>Regular files</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
@@ -21,6 +33,27 @@
 			<array>
 				<string>public.data</string>
 			</array>
+		</dict>
+	</array>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Joboptions</string>
+			<key>UTTypeIdentifier</key>
+			<string>de.cafe-megabyte.joboptions</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>joboptions</string>
+				</array>
+			</dict>
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>

@@ -11,3 +11,7 @@
 xcuserdata/
 *.xcuserstate
 xcschememanagement.plist
+
+# ICC profiles are intentionally present in local and distributed builds, but
+# must not be published with the source repository.
+BundledResources/Profiles/*

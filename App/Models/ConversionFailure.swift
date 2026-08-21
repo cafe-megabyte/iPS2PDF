@@ -6,6 +6,7 @@ enum ConversionFailure: Error, Sendable {
     case inputIsNotRegularFile
     case inputCannotBeRead
     case inputCopy
+    case joboptions(diagnostics: String)
     case ghostscriptInstance(returnCode: Int32, diagnostics: String)
     case ghostscriptInitialization(returnCode: Int32, diagnostics: String)
     case ghostscriptConversion(returnCode: Int32, diagnostics: String)
@@ -25,6 +26,8 @@ enum ConversionFailure: Error, Sendable {
             String(localized: "error_input_unreadable")
         case .inputCopy:
             String(localized: "error_input_copy")
+        case .joboptions:
+            String(localized: "error_joboptions")
         case .ghostscriptInstance:
             String(localized: "error_ghostscript_instance")
         case .ghostscriptInitialization:
@@ -53,6 +56,8 @@ enum ConversionFailure: Error, Sendable {
 
     var diagnostics: String? {
         switch self {
+        case let .joboptions(diagnostics):
+            return diagnostics.isEmpty ? nil : diagnostics
         case let .ghostscriptInstance(_, diagnostics),
              let .ghostscriptInitialization(_, diagnostics),
              let .ghostscriptConversion(_, diagnostics):

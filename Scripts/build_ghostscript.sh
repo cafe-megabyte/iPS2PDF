@@ -157,11 +157,12 @@ if [ ! -s "$upstream_artifact" ]; then
 fi
 
 pdfa_definition="$upstream_root/lib/PDFA_def.ps"
+pdfx_definition="$upstream_root/lib/PDFX_def.ps"
 srgb_profile="$upstream_root/iccprofiles/srgb.icc"
 iapi_header="$upstream_root/psi/iapi.h"
 gserrors_header="$upstream_root/base/gserrors.h"
 
-for required_file in "$pdfa_definition" "$srgb_profile" "$iapi_header" "$gserrors_header"; do
+for required_file in "$pdfa_definition" "$pdfx_definition" "$srgb_profile" "$iapi_header" "$gserrors_header"; do
     if [ ! -f "$required_file" ]; then
         echo "Missing required Ghostscript artifact: $required_file" >&2
         exit 74
@@ -177,6 +178,8 @@ install -m 0644 "$upstream_artifact" "$staged_artifact_directory/lib/libgs.a"
 install -m 0644 "$iapi_header" "$staged_artifact_directory/include/iapi.h"
 install -m 0644 "$gserrors_header" "$staged_artifact_directory/include/gserrors.h"
 install -m 0644 "$pdfa_definition" "$staged_artifact_directory/resources/PDFA_def.ps"
+sed 's/ISO Coated sb\.icc/CoatedFOGRA39.icc/g' \
+    "$pdfx_definition" > "$staged_artifact_directory/resources/PDFX_def.ps"
 install -m 0644 "$srgb_profile" "$staged_artifact_directory/resources/srgb.icc"
 
 {

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>EXVersion</key>
+	<integer>2</integer>
+	<key>de.cafe-megabyte.iPS2PDF.Share.enhancedSecurity</key>
+	<dict>
+		<key>EXExtensionPointName</key>
+		<string>enhancedSecurity</string>
+		<key>EXPresentsUserInterface</key>
+		<false/>
+		<key>EXRequiresEnhancedSecurity</key>
+		<true/>
+	</dict>
+</dict>
+</plist>
