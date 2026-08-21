@@ -482,11 +482,11 @@
 			targets = (
 				A50000000000000000000001 /* iPS2PDF */,
 				B50000000000000000000001 /* iPS2PDFShare */,
-				C50000000000000000000001 /* Generate Build Number */,
-				D50000000000000000000001 /* Build Ghostscript */,
 				F50000000000000000000001 /* iPS2PDFSecurity */,
 				F50000000000000000000002 /* iPS2PDFShareSecurity */,
 				T50000000000000000000001 /* iPS2PDFTests */,
+				C50000000000000000000001 /* Generate Build Number */,
+				D50000000000000000000001 /* Build Ghostscript */,
 			);
 		};
 /* End PBXProject section */

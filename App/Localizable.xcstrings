@@ -1450,6 +1450,7 @@
       }
     },
     "Manage Joboptions…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

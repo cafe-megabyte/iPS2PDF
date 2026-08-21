@@ -43,7 +43,7 @@ struct AdvancedSettingsView: View {
                     NavigationLink {
                         JoboptionsManagementView(viewModel: viewModel)
                     } label: {
-                        Label("Manage Joboptions…", systemImage: "folder")
+                        SettingsNavigationLabel("Manage Joboptions…", systemImage: "folder")
                             .font(.headline)
                             .padding(.vertical, 6)
                     }
@@ -54,7 +54,7 @@ struct AdvancedSettingsView: View {
                         NavigationLink {
                             SettingsCategoryView(category: category, viewModel: viewModel)
                         } label: {
-                            Label(category.title, systemImage: category.systemImage)
+                            SettingsNavigationLabel(category.title, systemImage: category.systemImage)
                         }
                     }
                 }
@@ -67,7 +67,7 @@ struct AdvancedSettingsView: View {
         NavigationSplitView {
             List(selection: $selection) {
                 Section {
-                    Label("Manage Joboptions…", systemImage: "folder")
+                    SettingsNavigationLabel("Manage Joboptions…", systemImage: "folder")
                         .font(.headline)
                         .tag(BackSelection.management)
                         .padding(.vertical, 6)
@@ -75,7 +75,7 @@ struct AdvancedSettingsView: View {
 
                 Section("Settings") {
                     ForEach(DistillerCategory.allCases) { category in
-                        Label(category.title, systemImage: category.systemImage)
+                        SettingsNavigationLabel(category.title, systemImage: category.systemImage)
                             .tag(BackSelection.category(category))
                     }
                 }
@@ -96,6 +96,25 @@ struct AdvancedSettingsView: View {
 private enum BackSelection: Hashable {
     case management
     case category(DistillerCategory)
+}
+
+private struct SettingsNavigationLabel: View {
+    let title: String
+    let systemImage: String
+
+    init(_ title: String, systemImage: String) {
+        self.title = title
+        self.systemImage = systemImage
+    }
+
+    var body: some View {
+        Label {
+            Text(title)
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(AppTint.color)
+        }
+    }
 }
 
 struct SettingsCategoryView: View {
