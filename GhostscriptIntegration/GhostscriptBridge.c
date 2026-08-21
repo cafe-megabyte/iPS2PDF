@@ -787,6 +787,7 @@ int gs_run_joboptions_with_fds(
     int journal_fd,
     int validation_only,
     int allow_transparency,
+    const char *compatibility_level,
     const char *standard,
     const char *standard_definition_path,
     const char *ghostscript_resource_directory,
@@ -806,6 +807,7 @@ int gs_run_joboptions_with_fds(
     int file_system_added = 0;
     int current_stage = GS_BRIDGE_STAGE_NEW_INSTANCE;
     int standard_definition_fd = -1;
+    char compatibility_option[32];
     char standard_option[32];
     char ghostscript_include[PATH_MAX + 3];
     char profile_include[PATH_MAX + 3];
@@ -855,6 +857,32 @@ int gs_run_joboptions_with_fds(
     const int has_standard = standard != NULL && strcmp(standard, "none") != 0;
     const int is_pdfa = has_standard && strncmp(standard, "pdfa", 4) == 0;
     const int is_pdfx = has_standard && strncmp(standard, "pdfx", 4) == 0;
+    const int has_compatibility_level =
+        compatibility_level != NULL && compatibility_level[0] != '\0';
+    const int uses_pre_pdf15_layout =
+        is_pdf_version(compatibility_level, "1.1") ||
+        is_pdf_version(compatibility_level, "1.2") ||
+        is_pdf_version(compatibility_level, "1.3") ||
+        is_pdf_version(compatibility_level, "1.4");
+    if (has_compatibility_level) {
+        if (!is_pdf_version(compatibility_level, "1.1") &&
+            !is_pdf_version(compatibility_level, "1.2") &&
+            !is_pdf_version(compatibility_level, "1.3") &&
+            !is_pdf_version(compatibility_level, "1.4") &&
+            !is_pdf_version(compatibility_level, "1.5") &&
+            !is_pdf_version(compatibility_level, "1.6") &&
+            !is_pdf_version(compatibility_level, "1.7") &&
+            !is_pdf_version(compatibility_level, "2.0")) {
+            return_code = -1;
+            goto descriptor_finished;
+        }
+        snprintf(
+            compatibility_option,
+            sizeof(compatibility_option),
+            "-dCompatibilityLevel=%s",
+            compatibility_level
+        );
+    }
     if (has_standard && (standard_definition_path == NULL || ghostscript_resource_directory == NULL || profile_resource_directory == NULL)) {
         return_code = -1;
         goto descriptor_finished;
@@ -895,7 +923,7 @@ int gs_run_joboptions_with_fds(
         );
     }
 
-    const char *arguments[40];
+    const char *arguments[48];
     int argument_count = 0;
     arguments[argument_count++] = "iPS2PDF";
     arguments[argument_count++] = "-P-";
@@ -920,6 +948,13 @@ int gs_run_joboptions_with_fds(
         arguments[argument_count++] = is_pdfa ? "-sColorConversionStrategy=RGB" : "-sColorConversionStrategy=CMYK";
     }
     if (has_profile_override_directory) arguments[argument_count++] = permit_profile_overrides;
+    if (has_compatibility_level) {
+        arguments[argument_count++] = compatibility_option;
+        if (uses_pre_pdf15_layout) {
+            arguments[argument_count++] = "-dWriteXRefStm=false";
+            arguments[argument_count++] = "-dWriteObjStms=false";
+        }
+    }
     arguments[argument_count++] = "-q";
     arguments[argument_count++] = "-dNOPAUSE";
     arguments[argument_count++] = "-sDEVICE=pdfwrite";

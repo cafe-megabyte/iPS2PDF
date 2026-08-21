@@ -40,6 +40,7 @@ int gs_run_joboptions_with_fds(
     int journal_fd,
     int validation_only,
     int allow_transparency,
+    const char *compatibility_level,
     const char *standard,
     const char *standard_definition_path,
     const char *ghostscript_resource_directory,

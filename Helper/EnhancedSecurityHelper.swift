@@ -71,6 +71,7 @@ private enum EnhancedSecurityRequestHandler {
         let deadline: Int64 = request[EnhancedSecurityEnvelope.deadline] ?? Int64(Date().addingTimeInterval(15 * 60).timeIntervalSince1970)
         let maximumOutput: Int64 = request[EnhancedSecurityEnvelope.maximumOutputBytes] ?? 2_147_483_648
         let standard: String = validationOnly ? "none" : (request[EnhancedSecurityEnvelope.standard] ?? "none")
+        let compatibilityLevel = validationOnly ? nil : Self.compatibilityLevel(from: joboptions)
         let ghostscriptDirectory = Bundle.main.resourceURL?.appendingPathComponent("Ghostscript", isDirectory: true)
         let profileDirectory = Bundle.main.resourceURL?.appendingPathComponent("Profiles", isDirectory: true)
         let definitionName = standard.hasPrefix("pdfa") ? "PDFA_def" : "PDFX_def"
@@ -192,20 +193,23 @@ private enum EnhancedSecurityRequestHandler {
         var stage: Int32 = 0
         gs_bridge_reset_cancellation()
         let status = standard.withCString { standardPointer in
-            withOptionalPath(definitionURL) { definitionPointer in
-                withOptionalPath(ghostscriptDirectory) { ghostscriptPointer in
-                    withOptionalPath(profileDirectory) { profilePointer in
-                        withOptionalPath(profileOverrideDirectory) { overridesDirectoryPointer in
-                            withOptionalCString(profileOverrides) { overridesPointer in
-                                gs_run_joboptions_with_fds(
-                                    input, output, joboptions, journal,
-                                    validationOnly ? 1 : 0,
-                                    allowTransparency ? 1 : 0,
-                                    standardPointer, definitionPointer, ghostscriptPointer, profilePointer,
-                                    overridesPointer, overridesDirectoryPointer,
-                                    limitsEnabled ? 1 : 0, deadline, maximumOutput,
-                                    &ghostscriptCode, &stage
-                                )
+            withOptionalCString(compatibilityLevel) { compatibilityPointer in
+                withOptionalPath(definitionURL) { definitionPointer in
+                    withOptionalPath(ghostscriptDirectory) { ghostscriptPointer in
+                        withOptionalPath(profileDirectory) { profilePointer in
+                            withOptionalPath(profileOverrideDirectory) { overridesDirectoryPointer in
+                                withOptionalCString(profileOverrides) { overridesPointer in
+                                    gs_run_joboptions_with_fds(
+                                        input, output, joboptions, journal,
+                                        validationOnly ? 1 : 0,
+                                        allowTransparency ? 1 : 0,
+                                        compatibilityPointer,
+                                        standardPointer, definitionPointer, ghostscriptPointer, profilePointer,
+                                        overridesPointer, overridesDirectoryPointer,
+                                        limitsEnabled ? 1 : 0, deadline, maximumOutput,
+                                        &ghostscriptCode, &stage
+                                    )
+                                }
                             }
                         }
                     }
@@ -217,6 +221,61 @@ private enum EnhancedSecurityRequestHandler {
         reply[EnhancedSecurityEnvelope.stage] = Int64(stage)
         return reply
     }
+
+    private static func compatibilityLevel(from descriptor: Int32) -> String? {
+        let originalOffset = Darwin.lseek(descriptor, 0, SEEK_CUR)
+        defer {
+            if originalOffset >= 0 {
+                Darwin.lseek(descriptor, originalOffset, SEEK_SET)
+            }
+        }
+        guard Darwin.lseek(descriptor, 0, SEEK_SET) >= 0 else { return nil }
+
+        var data = Data()
+        var buffer = [UInt8](repeating: 0, count: 64 * 1024)
+        let bufferSize = buffer.count
+        while data.count <= 16 * 1024 * 1024 {
+            let count = buffer.withUnsafeMutableBytes {
+                Darwin.read(descriptor, $0.baseAddress, bufferSize)
+            }
+            if count < 0 {
+                if errno == EINTR { continue }
+                return nil
+            }
+            if count == 0 { break }
+            data.append(buffer, count: count)
+        }
+
+        guard let text = String(data: data, encoding: .utf8)
+            ?? String(data: data, encoding: .isoLatin1)
+            ?? String(data: data, encoding: .utf16LittleEndian)
+            ?? String(data: data, encoding: .utf16BigEndian)
+        else { return nil }
+        return compatibilityLevel(in: text)
+    }
+
+    private static func compatibilityLevel(in text: String) -> String? {
+        guard let keyRange = text.range(of: "/CompatibilityLevel") else { return nil }
+        var index = keyRange.upperBound
+        while index < text.endIndex, text[index].isWhitespace {
+            index = text.index(after: index)
+        }
+
+        var endIndex = index
+        while endIndex < text.endIndex {
+            let character = text[endIndex]
+            guard character.isNumber || character == "." else { break }
+            endIndex = text.index(after: endIndex)
+        }
+
+        guard index < endIndex else { return nil }
+        let value = String(text[index..<endIndex])
+        return allowedCompatibilityLevels.contains(value) ? value : nil
+    }
+
+    private static let allowedCompatibilityLevels = Set([
+        "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"
+    ])
 
     private static func copyDescriptor(_ descriptor: Int32, to destinationURL: URL) throws {
         guard Darwin.lseek(descriptor, 0, SEEK_SET) >= 0 else {
