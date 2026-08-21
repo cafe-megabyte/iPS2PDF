@@ -504,6 +504,7 @@ finished:
 enum { kMaximumJournalBytes = 1024 * 1024 };
 
 typedef struct DescriptorCapture {
+    int input_fd;
     int journal_fd;
     int output_fd;
     int limits_enabled;
@@ -513,6 +514,7 @@ typedef struct DescriptorCapture {
     int limit_reason;
 } DescriptorCapture;
 
+static const char *kDescriptorInputPDFName = "iPS2PDF-input.pdf";
 static const char *kDescriptorOutputName = "iPS2PDF-output.pdf";
 
 static volatile sig_atomic_t descriptor_cancellation_requested = 0;
@@ -639,6 +641,63 @@ static int descriptor_run_bytes(
     return code == gs_error_NeedInput ? 0 : code;
 }
 
+static int descriptor_run_file(
+    void *instance,
+    const char *filename,
+    DescriptorCapture *capture
+)
+{
+    if (descriptor_poll(capture) != 0) return -1;
+    int exit_code = 0;
+    int code = gsapi_run_file(instance, filename, 0, &exit_code);
+    return code == gs_error_NeedInput ? 0 : code;
+}
+
+static int descriptor_is_pdf(int descriptor)
+{
+    unsigned char header[5];
+    ssize_t count;
+
+    if (lseek(descriptor, 0, SEEK_SET) < 0) return 0;
+    do {
+        count = read(descriptor, header, sizeof(header));
+    } while (count < 0 && errno == EINTR);
+    lseek(descriptor, 0, SEEK_SET);
+
+    return count == (ssize_t)sizeof(header) &&
+        memcmp(header, "%PDF-", sizeof(header)) == 0;
+}
+
+static int descriptor_make_input_file(
+    const gs_memory_t *memory,
+    DescriptorCapture *capture,
+    const char *mode,
+    gp_file **file
+)
+{
+    FILE *stream = NULL;
+    *file = NULL;
+    if (capture->input_fd < 0 || strchr(mode, 'w') != NULL || strchr(mode, 'a') != NULL) {
+        return -1;
+    }
+
+    int duplicate = dup(capture->input_fd);
+    if (duplicate >= 0) {
+        lseek(duplicate, 0, SEEK_SET);
+        stream = fdopen(duplicate, "rb");
+        if (stream == NULL) close(duplicate);
+    }
+    if (stream == NULL) return -1;
+
+    gp_file *result = gp_file_FILE_alloc(memory);
+    if (result == NULL || gp_file_FILE_set(result, stream, fclose) != 0) {
+        fclose(stream);
+        return -1;
+    }
+    *file = result;
+    return 0;
+}
+
 static int descriptor_make_output_file(
     const gs_memory_t *memory,
     DescriptorCapture *capture,
@@ -677,6 +736,14 @@ static int descriptor_open_file(
 )
 {
     *file = NULL;
+    if (strcmp(filename, kDescriptorInputPDFName) == 0) {
+        return descriptor_make_input_file(
+            memory,
+            (DescriptorCapture *)secret,
+            mode,
+            file
+        );
+    }
     if (strcmp(filename, kDescriptorOutputName) != 0) return 0;
     if (strchr(mode, 'w') == NULL && strchr(mode, 'a') == NULL) return -1;
     return descriptor_make_output_file(
@@ -746,6 +813,7 @@ int gs_run_joboptions_with_fds(
     char permit_profiles[PATH_MAX + 24];
     char permit_profile_overrides[PATH_MAX + 24];
     DescriptorCapture capture = {
+        .input_fd = input_fd,
         .journal_fd = journal_fd,
         .output_fd = output_fd,
         .limits_enabled = limits_enabled,
@@ -832,6 +900,7 @@ int gs_run_joboptions_with_fds(
     arguments[argument_count++] = "iPS2PDF";
     arguments[argument_count++] = "-P-";
     arguments[argument_count++] = "-dSAFER";
+    if (!validation_only) arguments[argument_count++] = "--permit-file-read=iPS2PDF-input.pdf";
     arguments[argument_count++] = "--permit-file-write=iPS2PDF-output.pdf";
     if (allow_transparency && !validation_only) {
         arguments[argument_count++] = "-dHaveTransparency=true";
@@ -893,7 +962,11 @@ int gs_run_joboptions_with_fds(
     }
     current_stage = GS_BRIDGE_STAGE_CONVERSION;
     if (!validation_only) {
-        return_code = descriptor_run_stream(instance, input_fd, &capture);
+        if (descriptor_is_pdf(input_fd)) {
+            return_code = descriptor_run_file(instance, kDescriptorInputPDFName, &capture);
+        } else {
+            return_code = descriptor_run_stream(instance, input_fd, &capture);
+        }
         if (return_code == gs_error_Quit) return_code = 0;
     }
 
