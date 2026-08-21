@@ -229,7 +229,7 @@ final class ConversionViewModel: ObservableObject {
                 let settingsSnapshot = try joboptionsRepository.snapshot()
                 let outputURL = await workingDirectoryService.outputURL(for: postScriptURL)
                 let snapshotURL = try await workingDirectoryService.writeJoboptionsSnapshot(
-                    settingsSnapshot.joboptionsData
+                    settingsSnapshot.effectiveJoboptionsData
                 )
                 try await converter.convert(
                     sourceURL: postScriptURL,

@@ -149,12 +149,17 @@
       }
     },
     "Apply" : {
-      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Anwenden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
           }
         }
       }
@@ -1199,6 +1204,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ghostscript-%1$@-pdfwrite-Einstellung /%2$@."
+          }
+        }
+      }
+    },
+    "Ghostscript compatibility adjustments" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript-Kompatibilitätsanpassungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript compatibility adjustments"
           }
         }
       }
@@ -2682,6 +2703,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Katalog gilt für Ghostscript %@. Fehlende Einstellungen werden in die aktiven Benutzer-Joboptions eingefügt; nicht betroffene Quelldaten bleiben unverändert."
+          }
+        }
+      }
+    },
+    "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die aktuelle PDF-Version erfordert temporäre Anpassungen für die Konvertierung. Die aktiven Joboptions bleiben unverändert, solange du sie nicht anwendest."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them."
           }
         }
       }

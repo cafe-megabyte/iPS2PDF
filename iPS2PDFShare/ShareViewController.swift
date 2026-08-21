@@ -119,7 +119,10 @@ final class ShareConversionModel: ObservableObject {
                 securityLimitsEnabled: true
             )
         }
-        try settings.joboptionsData.write(to: joboptionsURL, options: [.atomic])
+        let effectiveJoboptionsData = try GhostscriptCompatibilityAdjuster.adjustedData(
+            from: settings.joboptionsData
+        )
+        try effectiveJoboptionsData.write(to: joboptionsURL, options: [.atomic])
         try await GhostscriptConverter().convert(
             sourceURL: sourceURL,
             outputURL: outputURL,

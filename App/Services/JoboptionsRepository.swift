@@ -2,7 +2,7 @@ import Combine
 import Foundation
 
 struct ConversionSettingsSnapshot: Sendable {
-    let joboptionsData: Data
+    let effectiveJoboptionsData: Data
     let standard: PDFStandard
     let securityLimitsEnabled: Bool
 }
@@ -56,6 +56,11 @@ final class JoboptionsRepository: ObservableObject {
 
     var compatibilityLevel: String {
         activeDocument?.value(forKey: "CompatibilityLevel")?.textualValue ?? "1.3"
+    }
+
+    var compatibilityIssues: [GhostscriptCompatibilityIssue] {
+        guard let activeDocument else { return [] }
+        return GhostscriptCompatibilityAdjuster.issues(in: activeDocument)
     }
 
     func waitUntilReady() async {
@@ -166,11 +171,26 @@ final class JoboptionsRepository: ObservableObject {
 
     func snapshot() throws -> ConversionSettingsSnapshot {
         guard let document = activeDocument else { throw JoboptionsError.unreadable }
+        let effectiveDocument = try GhostscriptCompatibilityAdjuster.adjustedDocument(from: document)
         return ConversionSettingsSnapshot(
-            joboptionsData: document.data,
+            effectiveJoboptionsData: effectiveDocument.data,
             standard: activeStandard,
             securityLimitsEnabled: securityLimitsEnabled
         )
+    }
+
+    func applyGhostscriptCompatibilityAdjustments() throws {
+        guard let document = activeDocument else { throw JoboptionsError.unreadable }
+        let adjusted = try GhostscriptCompatibilityAdjuster.adjustedDocument(from: document)
+        guard adjusted.data != document.data else { return }
+
+        let editable = try editableRecord()
+        try atomicWrite(adjusted.data, to: editable.url)
+        try publishActiveSnapshot(adjusted)
+        activeRecord = editable
+        activeDocument = adjusted
+        defaults.set(editable.id, forKey: DefaultsKey.activeIdentifier)
+        refreshUserRecordsPreservingSelection()
     }
 
     func importProfile(from sourceURL: URL) throws {
