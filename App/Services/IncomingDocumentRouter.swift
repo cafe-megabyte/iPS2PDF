@@ -1,11 +1,6 @@
 import Foundation
 import UniformTypeIdentifiers
 
-enum IncomingDocument {
-    case postScript(URL)
-    case joboptions(URL, LosslessJoboptionsDocument)
-}
-
 struct IncomingDocumentRouter {
     func classify(_ stagedURL: URL) throws -> IncomingDocument {
         let resourceValues = try stagedURL.resourceValues(

@@ -20,13 +20,3 @@ struct AppAlert: Identifiable {
     }
 }
 
-struct DiagnosticPresentation: Identifiable {
-    let id = UUID()
-    let title: String
-    let text: String
-}
-
-struct PDFPresentation: Identifiable {
-    let id = UUID()
-    let url: URL
-}

@@ -1,12 +1,6 @@
 import Combine
 import Foundation
 
-struct ConversionSettingsSnapshot: Sendable {
-    let effectiveJoboptionsData: Data
-    let standard: PDFStandard
-    let securityLimitsEnabled: Bool
-}
-
 @MainActor
 final class JoboptionsRepository: ObservableObject {
     private enum DefaultsKey {

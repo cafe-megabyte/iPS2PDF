@@ -2689,6 +2689,7 @@
       }
     },
     "The file does not contain a valid ICC profile header." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
