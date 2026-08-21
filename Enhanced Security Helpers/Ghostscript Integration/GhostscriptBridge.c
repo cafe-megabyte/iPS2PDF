@@ -325,6 +325,7 @@ int gs_run_joboptions_with_fds(
     const char *profile_resource_directory,
     const char *profile_overrides,
     const char *profile_override_directory,
+    const char *blend_conversion_strategy,
     int limits_enabled,
     long long deadline_epoch_seconds,
     long long maximum_output_bytes,
@@ -340,6 +341,7 @@ int gs_run_joboptions_with_fds(
     int standard_definition_fd = -1;
     char compatibility_option[32];
     char standard_option[32];
+    char blend_conversion_option[40];
     char ghostscript_include[PATH_MAX + 3];
     char profile_include[PATH_MAX + 3];
     char permit_ghostscript[PATH_MAX + 24];
@@ -390,6 +392,8 @@ int gs_run_joboptions_with_fds(
     const int is_pdfx = has_standard && strncmp(standard, "pdfx", 4) == 0;
     const int has_compatibility_level =
         compatibility_level != NULL && compatibility_level[0] != '\0';
+    const int has_blend_conversion_strategy =
+        blend_conversion_strategy != NULL && blend_conversion_strategy[0] != '\0';
     const int uses_pre_pdf15_layout =
         is_pdf_version(compatibility_level, "1.1") ||
         is_pdf_version(compatibility_level, "1.2") ||
@@ -414,6 +418,19 @@ int gs_run_joboptions_with_fds(
             compatibility_level
         );
     }
+    if (has_blend_conversion_strategy &&
+        strcmp(blend_conversion_strategy, "None") != 0 &&
+        strcmp(blend_conversion_strategy, "Simple") != 0 &&
+        strcmp(blend_conversion_strategy, "Managed") != 0) {
+        return_code = -1;
+        goto descriptor_finished;
+    }
+    snprintf(
+        blend_conversion_option,
+        sizeof(blend_conversion_option),
+        "-sBlendConversionStrategy=%s",
+        has_blend_conversion_strategy ? blend_conversion_strategy : "Simple"
+    );
     if (has_standard && (standard_definition_path == NULL || ghostscript_resource_directory == NULL || profile_resource_directory == NULL)) {
         return_code = -1;
         goto descriptor_finished;
@@ -477,6 +494,9 @@ int gs_run_joboptions_with_fds(
         arguments[argument_count++] = standard_option;
         arguments[argument_count++] = is_pdfa ? "-dPDFACompatibilityPolicy=1" : "-dPDFXNoTrimBoxError=false";
         arguments[argument_count++] = is_pdfa ? "-sColorConversionStrategy=RGB" : "-sColorConversionStrategy=CMYK";
+        if (is_pdfa && allow_transparency && !validation_only) {
+            arguments[argument_count++] = blend_conversion_option;
+        }
     }
     if (has_profile_override_directory) arguments[argument_count++] = permit_profile_overrides;
     if (has_compatibility_level) {

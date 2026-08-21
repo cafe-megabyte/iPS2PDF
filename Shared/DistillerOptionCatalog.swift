@@ -68,6 +68,7 @@ enum DistillerOptionCatalog {
         option("CannotEmbedFontPolicy", "When embedding fails", .fonts, .name(["Ignore", "Warning", "Error"])),
 
         option("ColorConversionStrategy", "Color conversion strategy", .color, .name(["LeaveColorUnchanged", "RGB", "sRGB", "CMYK", "Gray", "UseDeviceIndependentColor"])),
+        option("BlendConversionStrategy", "Blend conversion strategy", .color, .name(["None", "Simple", "Managed"])),
         option("ConvertCMYKImagesToRGB", "Convert CMYK images to RGB", .color, .boolean),
         option("ProcessColorModel", "Process color model", .color, .name(["DeviceGray", "DeviceRGB", "DeviceCMYK"])),
         option("DefaultRenderingIntent", "Default rendering intent", .color, .name(["Default", "Perceptual", "RelativeColorimetric", "Saturation", "AbsoluteColorimetric"])),

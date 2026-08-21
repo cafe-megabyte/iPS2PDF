@@ -72,6 +72,7 @@ private enum EnhancedSecurityRequestHandler {
         let maximumOutput: Int64 = request[EnhancedSecurityEnvelope.maximumOutputBytes] ?? 2_147_483_648
         let standard: String = validationOnly ? "none" : (request[EnhancedSecurityEnvelope.standard] ?? "none")
         let compatibilityLevel = validationOnly ? nil : Self.compatibilityLevel(from: joboptions)
+        let blendConversionStrategy = validationOnly ? nil : Self.blendConversionStrategy(from: joboptions)
         let ghostscriptDirectory = Bundle.main.resourceURL?.appendingPathComponent("Ghostscript", isDirectory: true)
         let profileDirectory = Bundle.main.resourceURL?.appendingPathComponent("Profiles", isDirectory: true)
         let definitionName = standard.hasPrefix("pdfa") ? "PDFA_def" : "PDFX_def"
@@ -199,16 +200,18 @@ private enum EnhancedSecurityRequestHandler {
                         withOptionalPath(profileDirectory) { profilePointer in
                             withOptionalPath(profileOverrideDirectory) { overridesDirectoryPointer in
                                 withOptionalCString(profileOverrides) { overridesPointer in
-                                    gs_run_joboptions_with_fds(
-                                        input, output, joboptions, journal,
-                                        validationOnly ? 1 : 0,
-                                        allowTransparency ? 1 : 0,
-                                        compatibilityPointer,
-                                        standardPointer, definitionPointer, ghostscriptPointer, profilePointer,
-                                        overridesPointer, overridesDirectoryPointer,
-                                        limitsEnabled ? 1 : 0, deadline, maximumOutput,
-                                        &ghostscriptCode, &stage
-                                    )
+                                    withOptionalCString(blendConversionStrategy) { blendConversionPointer in
+                                        gs_run_joboptions_with_fds(
+                                            input, output, joboptions, journal,
+                                            validationOnly ? 1 : 0,
+                                            allowTransparency ? 1 : 0,
+                                            compatibilityPointer,
+                                            standardPointer, definitionPointer, ghostscriptPointer, profilePointer,
+                                            overridesPointer, overridesDirectoryPointer, blendConversionPointer,
+                                            limitsEnabled ? 1 : 0, deadline, maximumOutput,
+                                            &ghostscriptCode, &stage
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -223,6 +226,26 @@ private enum EnhancedSecurityRequestHandler {
     }
 
     private static func compatibilityLevel(from descriptor: Int32) -> String? {
+        distillerNameValue(
+            from: descriptor,
+            key: "CompatibilityLevel",
+            allowedValues: allowedCompatibilityLevels
+        )
+    }
+
+    private static func blendConversionStrategy(from descriptor: Int32) -> String? {
+        distillerNameValue(
+            from: descriptor,
+            key: "BlendConversionStrategy",
+            allowedValues: allowedBlendConversionStrategies
+        )
+    }
+
+    private static func distillerNameValue(
+        from descriptor: Int32,
+        key: String,
+        allowedValues: Set<String>
+    ) -> String? {
         let originalOffset = Darwin.lseek(descriptor, 0, SEEK_CUR)
         defer {
             if originalOffset >= 0 {
@@ -251,30 +274,41 @@ private enum EnhancedSecurityRequestHandler {
             ?? String(data: data, encoding: .utf16LittleEndian)
             ?? String(data: data, encoding: .utf16BigEndian)
         else { return nil }
-        return compatibilityLevel(in: text)
+        return distillerNameValue(in: text, key: key, allowedValues: allowedValues)
     }
 
-    private static func compatibilityLevel(in text: String) -> String? {
-        guard let keyRange = text.range(of: "/CompatibilityLevel") else { return nil }
+    private static func distillerNameValue(
+        in text: String,
+        key: String,
+        allowedValues: Set<String>
+    ) -> String? {
+        guard let keyRange = text.range(of: "/\(key)") else { return nil }
         var index = keyRange.upperBound
         while index < text.endIndex, text[index].isWhitespace {
+            index = text.index(after: index)
+        }
+        if index < text.endIndex, text[index] == "/" {
             index = text.index(after: index)
         }
 
         var endIndex = index
         while endIndex < text.endIndex {
             let character = text[endIndex]
-            guard character.isNumber || character == "." else { break }
+            guard character.isLetter || character.isNumber || character == "." else { break }
             endIndex = text.index(after: endIndex)
         }
 
         guard index < endIndex else { return nil }
         let value = String(text[index..<endIndex])
-        return allowedCompatibilityLevels.contains(value) ? value : nil
+        return allowedValues.contains(value) ? value : nil
     }
 
     private static let allowedCompatibilityLevels = Set([
         "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"
+    ])
+
+    private static let allowedBlendConversionStrategies = Set([
+        "None", "Simple", "Managed"
     ])
 
     private static func copyDescriptor(_ descriptor: Int32, to destinationURL: URL) throws {
