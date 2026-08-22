@@ -2,8 +2,8 @@ import ExtensionFoundation
 
 extension AppExtensionPoint {
     @Definition
-    static var iPS2PDFEnhancedSecurity: AppExtensionPoint {
-        Name("enhancedSecurity")
-        EnhancedSecurity()
+    static var iPS2PDFGhostscriptHelper: AppExtensionPoint {
+        Name("ghostscriptHelper")
+        UserInterface(false)
     }
 }

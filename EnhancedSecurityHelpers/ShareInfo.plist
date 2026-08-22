@@ -23,7 +23,7 @@
 	<key>EXAppExtensionAttributes</key>
 	<dict>
 		<key>EXExtensionPointIdentifier</key>
-		<string>de.cafe-megabyte.iPS2PDF.Share.enhancedSecurity</string>
+		<string>de.cafe-megabyte.iPS2PDF.Share.ghostscriptHelper</string>
 	</dict>
 </dict>
 </plist>

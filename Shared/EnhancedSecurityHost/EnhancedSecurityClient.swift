@@ -3,54 +3,14 @@ import Darwin
 import Foundation
 import XPC
 
-// ExtensionFoundation may overlap helper processes; Ghostscript work must stay one request at a time.
-private actor EnhancedSecurityRequestSerializer {
-    static let shared = EnhancedSecurityRequestSerializer()
-    private var isAvailable = true
-    private var waiters: [CheckedContinuation<Void, Never>] = []
-
-    func wait() async {
-        if isAvailable {
-            isAvailable = false
-            return
-        }
-
-        await withCheckedContinuation { continuation in
-            waiters.append(continuation)
-        }
-    }
-
-    func signal() {
-        if waiters.isEmpty {
-            isAvailable = true
-        } else {
-            waiters.removeFirst().resume()
-        }
-    }
-}
-
-private struct SendableXPCDictionary: @unchecked Sendable {
-    let value: XPCDictionary
-}
-
-private final class AppExtensionProcessHandle: @unchecked Sendable {
-    private let process: AppExtensionProcess
-
-    init(process: AppExtensionProcess) {
-        self.process = process
-    }
-
-    func invalidate() {
-        process.invalidate()
-    }
-}
-
 final class EnhancedSecurityClient: @unchecked Sendable {
     private let maximumInputBytes: Int64 = 1_073_741_824
     private let maximumOutputBytes: Int64 = 2_147_483_648
+    private let chunkSize = 64 * 1024
     private let timeout: TimeInterval = 15 * 60
 
     func profileMetadata() async throws -> [EnhancedSecurityProfileMetadata] {
+        EnhancedSecurityHostProbeLog.log("profileMetadata request")
         var request = XPCDictionary()
         request[EnhancedSecurityEnvelope.envelopeVersion] = EnhancedSecurityEnvelope.version
         request[EnhancedSecurityEnvelope.operation] = EnhancedSecurityEnvelope.profiles
@@ -69,6 +29,7 @@ final class EnhancedSecurityClient: @unchecked Sendable {
     }
 
     func validate(joboptionsURL: URL) async throws {
+        EnhancedSecurityHostProbeLog.log("validate start joboptions=\(joboptionsURL.path)")
         let diagnosticURL = temporaryDiagnosticURL()
         defer { try? FileManager.default.removeItem(at: diagnosticURL) }
         let descriptors = try openDescriptors(
@@ -79,14 +40,37 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         )
         defer { descriptors.closeAll() }
 
-        var request = XPCDictionary()
-        request[EnhancedSecurityEnvelope.envelopeVersion] = EnhancedSecurityEnvelope.version
-        request[EnhancedSecurityEnvelope.operation] = EnhancedSecurityEnvelope.validate
-        request[EnhancedSecurityEnvelope.allowTransparency] = descriptors.allowTransparency
-        XPCDescriptorBridge.set(descriptors.joboptions, forKey: EnhancedSecurityEnvelope.joboptionsFD, in: request)
-        XPCDescriptorBridge.set(descriptors.journal, forKey: EnhancedSecurityEnvelope.journalFD, in: request)
-        let reply = try await send(request)
-        try requireSuccess(reply, diagnosticURL: diagnosticURL)
+        try await withSession(operation: EnhancedSecurityEnvelope.validate) { session in
+            EnhancedSecurityHostProbeLog.log("validate session ready")
+            var begin = baseRequest(operation: EnhancedSecurityEnvelope.begin)
+            begin[EnhancedSecurityEnvelope.standard] = "none"
+            begin[EnhancedSecurityEnvelope.limitsEnabled] = true
+            begin[EnhancedSecurityEnvelope.allowTransparency] = descriptors.allowTransparency
+            begin[EnhancedSecurityEnvelope.deadline] = Int64(Date().addingTimeInterval(timeout).timeIntervalSince1970)
+            begin[EnhancedSecurityEnvelope.maximumOutputBytes] = maximumOutputBytes
+            begin[EnhancedSecurityEnvelope.profileSelectionCount] = Int64(0)
+            begin[EnhancedSecurityEnvelope.userProfileCount] = Int64(0)
+            EnhancedSecurityHostProbeLog.log("validate sending begin")
+            try requireControlSuccess(try await send(begin, on: session, operation: EnhancedSecurityEnvelope.begin))
+            EnhancedSecurityHostProbeLog.log("validate begin ok")
+
+            try await appendDescriptor(
+                descriptors.joboptions,
+                stream: EnhancedSecurityEnvelope.joboptionsStream,
+                session: session
+            )
+
+            var run = baseRequest(operation: EnhancedSecurityEnvelope.run)
+            run[EnhancedSecurityEnvelope.validate] = true
+            let reply = try await send(run, on: session, operation: EnhancedSecurityEnvelope.run)
+            try await readRemoteFile(
+                stream: EnhancedSecurityEnvelope.journalStream,
+                to: diagnosticURL,
+                session: session
+            )
+            try requireSuccess(reply, diagnosticURL: diagnosticURL)
+            _ = try await send(baseRequest(operation: EnhancedSecurityEnvelope.finish), on: session, operation: EnhancedSecurityEnvelope.finish)
+        }
     }
 
     func convert(
@@ -97,6 +81,7 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         limitsEnabled: Bool,
         postScriptRandomSeed: Int
     ) async throws {
+        EnhancedSecurityHostProbeLog.log("convert start input=\(inputURL.path) output=\(outputURL.path)")
         if limitsEnabled {
             let inputSize = try inputURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             guard inputSize <= maximumInputBytes else {
@@ -117,36 +102,63 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         )
         defer { descriptors.closeAll() }
 
-        var request = XPCDictionary()
-        request[EnhancedSecurityEnvelope.envelopeVersion] = EnhancedSecurityEnvelope.version
-        request[EnhancedSecurityEnvelope.operation] = EnhancedSecurityEnvelope.convert
-        request[EnhancedSecurityEnvelope.limitsEnabled] = limitsEnabled
-        request[EnhancedSecurityEnvelope.allowTransparency] = descriptors.allowTransparency
-        request[EnhancedSecurityEnvelope.standard] = standard.rawValue
-        request[EnhancedSecurityEnvelope.postScriptRandomSeed] = Int64(postScriptRandomSeed)
-        request[EnhancedSecurityEnvelope.deadline] = Int64(Date().addingTimeInterval(timeout).timeIntervalSince1970)
-        request[EnhancedSecurityEnvelope.maximumOutputBytes] = maximumOutputBytes
-        XPCDescriptorBridge.set(descriptors.joboptions, forKey: EnhancedSecurityEnvelope.joboptionsFD, in: request)
-        XPCDescriptorBridge.set(descriptors.input, forKey: EnhancedSecurityEnvelope.inputFD, in: request)
-        XPCDescriptorBridge.set(descriptors.output, forKey: EnhancedSecurityEnvelope.outputFD, in: request)
-        XPCDescriptorBridge.set(descriptors.journal, forKey: EnhancedSecurityEnvelope.journalFD, in: request)
-        request[EnhancedSecurityEnvelope.profileSelectionCount] = Int64(descriptors.profileSelections.count)
-        for (index, selection) in descriptors.profileSelections.enumerated() {
-            request[EnhancedSecurityEnvelope.profileSelectionKey(index)] = selection.key
-            request[EnhancedSecurityEnvelope.profileSelectionName(index)] = selection.name
-        }
-        request[EnhancedSecurityEnvelope.userProfileCount] = Int64(descriptors.userProfiles.count)
-        for (index, profile) in descriptors.userProfiles.enumerated() {
-            request[EnhancedSecurityEnvelope.userProfileKey(index)] = profile.key
-            XPCDescriptorBridge.set(
-                profile.descriptor,
-                forKey: EnhancedSecurityEnvelope.userProfileFD(index),
-                in: request
-            )
-        }
+        try await withSession(operation: EnhancedSecurityEnvelope.convert) { session in
+            EnhancedSecurityHostProbeLog.log("convert session ready")
+            var begin = baseRequest(operation: EnhancedSecurityEnvelope.begin)
+            begin[EnhancedSecurityEnvelope.standard] = standard.rawValue
+            begin[EnhancedSecurityEnvelope.limitsEnabled] = limitsEnabled
+            begin[EnhancedSecurityEnvelope.allowTransparency] = descriptors.allowTransparency
+            begin[EnhancedSecurityEnvelope.postScriptRandomSeed] = Int64(postScriptRandomSeed)
+            begin[EnhancedSecurityEnvelope.deadline] = Int64(Date().addingTimeInterval(timeout).timeIntervalSince1970)
+            begin[EnhancedSecurityEnvelope.maximumOutputBytes] = maximumOutputBytes
+            begin[EnhancedSecurityEnvelope.profileSelectionCount] = Int64(descriptors.profileSelections.count)
+            for (index, selection) in descriptors.profileSelections.enumerated() {
+                begin[EnhancedSecurityEnvelope.profileSelectionKey(index)] = selection.key
+                begin[EnhancedSecurityEnvelope.profileSelectionName(index)] = selection.name
+            }
+            begin[EnhancedSecurityEnvelope.userProfileCount] = Int64(descriptors.userProfiles.count)
+            for (index, profile) in descriptors.userProfiles.enumerated() {
+                begin[EnhancedSecurityEnvelope.userProfileKey(index)] = profile.key
+            }
+            EnhancedSecurityHostProbeLog.log("convert sending begin profiles=\(descriptors.userProfiles.count)")
+            try requireControlSuccess(try await send(begin, on: session, operation: EnhancedSecurityEnvelope.begin))
+            EnhancedSecurityHostProbeLog.log("convert begin ok")
 
-        let reply = try await send(request)
-        try requireSuccess(reply, diagnosticURL: diagnosticURL)
+            try await appendDescriptor(
+                descriptors.joboptions,
+                stream: EnhancedSecurityEnvelope.joboptionsStream,
+                session: session
+            )
+            try await appendDescriptor(
+                descriptors.input,
+                stream: EnhancedSecurityEnvelope.inputStream,
+                session: session
+            )
+            for profile in descriptors.userProfiles {
+                try await appendDescriptor(
+                    profile.descriptor,
+                    stream: EnhancedSecurityEnvelope.userProfileStream,
+                    streamKey: profile.key,
+                    session: session
+                )
+            }
+
+            var run = baseRequest(operation: EnhancedSecurityEnvelope.run)
+            run[EnhancedSecurityEnvelope.validate] = false
+            let reply = try await send(run, on: session, operation: EnhancedSecurityEnvelope.run)
+            try await readRemoteFile(
+                stream: EnhancedSecurityEnvelope.journalStream,
+                to: diagnosticURL,
+                session: session
+            )
+            try requireSuccess(reply, diagnosticURL: diagnosticURL)
+            try await readRemoteFile(
+                stream: EnhancedSecurityEnvelope.outputStream,
+                to: outputURL,
+                session: session
+            )
+            _ = try await send(baseRequest(operation: EnhancedSecurityEnvelope.finish), on: session, operation: EnhancedSecurityEnvelope.finish)
+        }
         if limitsEnabled {
             let outputSize = try outputURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             guard outputSize <= maximumOutputBytes else {
@@ -155,6 +167,81 @@ final class EnhancedSecurityClient: @unchecked Sendable {
                     diagnostics: "The generated PDF exceeds the 2 GB safety limit."
                 )
             }
+        }
+    }
+
+    private func baseRequest(operation: String) -> XPCDictionary {
+        var request = XPCDictionary()
+        request[EnhancedSecurityEnvelope.envelopeVersion] = EnhancedSecurityEnvelope.version
+        request[EnhancedSecurityEnvelope.operation] = operation
+        return request
+    }
+
+    private func appendDescriptor(
+        _ descriptor: Int32,
+        stream: String,
+        streamKey: String? = nil,
+        session: XPCSession
+    ) async throws {
+        guard Darwin.lseek(descriptor, 0, SEEK_SET) >= 0 else {
+            throw POSIXError(.EBADF)
+        }
+        var buffer = [UInt8](repeating: 0, count: chunkSize)
+        let bufferSize = buffer.count
+        while true {
+            let count = buffer.withUnsafeMutableBytes {
+                Darwin.read(descriptor, $0.baseAddress, bufferSize)
+            }
+            if count < 0 {
+                if errno == EINTR { continue }
+                throw POSIXError(.EIO)
+            }
+            if count == 0 { break }
+
+            var request = baseRequest(operation: EnhancedSecurityEnvelope.append)
+            request[EnhancedSecurityEnvelope.stream] = stream
+            if let streamKey {
+                request[EnhancedSecurityEnvelope.userProfileKey(0)] = streamKey
+            }
+            XPCDataBridge.set(Data(buffer.prefix(Int(count))), forKey: EnhancedSecurityEnvelope.chunk, in: request)
+            try requireControlSuccess(try await send(request, on: session, operation: EnhancedSecurityEnvelope.append))
+        }
+        EnhancedSecurityHostProbeLog.log("append complete stream=\(stream)")
+    }
+
+    private func readRemoteFile(
+        stream: String,
+        to destinationURL: URL,
+        session: XPCSession
+    ) async throws {
+        FileManager.default.createFile(atPath: destinationURL.path, contents: nil)
+        let handle = try FileHandle(forWritingTo: destinationURL)
+        defer { try? handle.close() }
+
+        var offset: Int64 = 0
+        while true {
+            var request = baseRequest(operation: EnhancedSecurityEnvelope.read)
+            request[EnhancedSecurityEnvelope.stream] = stream
+            request[EnhancedSecurityEnvelope.offset] = offset
+            request[EnhancedSecurityEnvelope.length] = Int64(chunkSize)
+            let reply = try await send(request, on: session, operation: EnhancedSecurityEnvelope.read)
+            try requireControlSuccess(reply)
+            let data = XPCDataBridge.data(forKey: EnhancedSecurityEnvelope.chunk, from: reply) ?? Data()
+            if !data.isEmpty {
+                try handle.write(contentsOf: data)
+                offset += Int64(data.count)
+            }
+            let hasMore: Bool = reply[EnhancedSecurityEnvelope.hasMore] ?? false
+            if !hasMore { break }
+        }
+        try handle.synchronize()
+    }
+
+    private func requireControlSuccess(_ reply: XPCDictionary) throws {
+        let status: Int64 = reply[EnhancedSecurityEnvelope.status] ?? -1
+        guard status == 0 else {
+            let message: String = reply[EnhancedSecurityEnvelope.message] ?? "Enhanced Security helper request failed."
+            throw ConversionFailure.ghostscriptConversion(returnCode: Int32(status), diagnostics: message)
         }
     }
 
@@ -172,8 +259,30 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         }
     }
 
-    private func sendUnlocked(_ request: XPCDictionary, operation: String) async throws -> XPCDictionary {
-        let monitor = try await AppExtensionPoint.Monitor(appExtensionPoint: .iPS2PDFEnhancedSecurity)
+    private func withSession<Result>(
+        operation: String,
+        _ body: (XPCSession) async throws -> Result
+    ) async throws -> Result {
+        let serializer = EnhancedSecurityRequestSerializer.shared
+        await serializer.wait()
+        do {
+            let result = try await withSessionUnlocked(operation: operation, body)
+            await serializer.signal()
+            return result
+        } catch {
+            EnhancedSecurityHostProbeLog.log("session failed operation=\(operation) error=\(error)")
+            await serializer.signal()
+            throw error
+        }
+    }
+
+    private func withSessionUnlocked<Result>(
+        operation: String,
+        _ body: (XPCSession) async throws -> Result
+    ) async throws -> Result {
+        EnhancedSecurityHostProbeLog.log("starting helper session operation=\(operation)")
+        let monitor = try await AppExtensionPoint.Monitor(appExtensionPoint: .iPS2PDFGhostscriptHelper)
+        EnhancedSecurityHostProbeLog.log("monitor identities count=\(monitor.identities.count) operation=\(operation)")
         guard let identity = monitor.identities.first else {
             throw ConversionFailure.ghostscriptInitialization(
                 returnCode: 0,
@@ -181,12 +290,69 @@ final class EnhancedSecurityClient: @unchecked Sendable {
             )
         }
         let process = try await AppExtensionProcess(
-            configuration: .init(appExtensionIdentity: identity)
+            configuration: .init(appExtensionIdentity: identity) {
+                EnhancedSecurityHostProbeLog.log("helper interrupted operation=\(operation)")
+            }
+        )
+        let session = try process.makeXPCSession()
+        let processHandle = AppExtensionProcessHandle(process: process)
+        try session.activate()
+        EnhancedSecurityHostProbeLog.log("helper session activated operation=\(operation)")
+        defer {
+            EnhancedSecurityHostProbeLog.log("helper session cancelling operation=\(operation)")
+            session.cancel(reason: "Request completed")
+            processHandle.invalidate()
+        }
+        return try await withTaskCancellationHandler {
+            try await body(session)
+        } onCancel: {
+            session.cancel(reason: "Host task cancelled")
+            processHandle.invalidate()
+        }
+    }
+
+    private func send(
+        _ request: XPCDictionary,
+        on session: XPCSession,
+        operation: String
+    ) async throws -> XPCDictionary {
+        let reply = try await withCheckedThrowingContinuation { continuation in
+            session.send(message: request) { result in
+                switch result {
+                case .success(let reply):
+                    let status: Int64 = reply[EnhancedSecurityEnvelope.status] ?? Int64.min
+                    let message: String = reply[EnhancedSecurityEnvelope.message] ?? "<nil>"
+                    EnhancedSecurityHostProbeLog.log("reply operation=\(operation) status=\(status) message=\(message)")
+                    continuation.resume(returning: SendableXPCDictionary(value: reply))
+                case .failure(let error):
+                    EnhancedSecurityHostProbeLog.log("reply failed operation=\(operation) error=\(error)")
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+        return reply.value
+    }
+
+    private func sendUnlocked(_ request: XPCDictionary, operation: String) async throws -> XPCDictionary {
+        EnhancedSecurityHostProbeLog.log("sendUnlocked operation=\(operation)")
+        let monitor = try await AppExtensionPoint.Monitor(appExtensionPoint: .iPS2PDFGhostscriptHelper)
+        EnhancedSecurityHostProbeLog.log("sendUnlocked monitor identities count=\(monitor.identities.count) operation=\(operation)")
+        guard let identity = monitor.identities.first else {
+            throw ConversionFailure.ghostscriptInitialization(
+                returnCode: 0,
+                diagnostics: "The Enhanced Security helper is unavailable."
+            )
+        }
+        let process = try await AppExtensionProcess(
+            configuration: .init(appExtensionIdentity: identity) {
+                EnhancedSecurityHostProbeLog.log("helper interrupted operation=\(operation)")
+            }
         )
         let session = try process.makeXPCSession()
         let processHandle = AppExtensionProcessHandle(process: process)
         try session.activate()
         defer {
+            EnhancedSecurityHostProbeLog.log("sendUnlocked cancelling operation=\(operation)")
             session.cancel(reason: "Request completed")
             processHandle.invalidate()
         }
@@ -195,8 +361,12 @@ final class EnhancedSecurityClient: @unchecked Sendable {
                 session.send(message: request) { result in
                     switch result {
                     case .success(let reply):
+                        let status: Int64 = reply[EnhancedSecurityEnvelope.status] ?? Int64.min
+                        let message: String = reply[EnhancedSecurityEnvelope.message] ?? "<nil>"
+                        EnhancedSecurityHostProbeLog.log("sendUnlocked reply operation=\(operation) status=\(status) message=\(message)")
                         continuation.resume(returning: SendableXPCDictionary(value: reply))
                     case .failure(let error):
+                        EnhancedSecurityHostProbeLog.log("sendUnlocked reply failed operation=\(operation) error=\(error)")
                         continuation.resume(throwing: error)
                     }
                 }

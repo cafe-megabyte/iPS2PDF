@@ -4,14 +4,12 @@
 <dict>
 	<key>EXVersion</key>
 	<integer>2</integer>
-	<key>de.cafe-megabyte.iPS2PDF.Share.enhancedSecurity</key>
+	<key>de.cafe-megabyte.iPS2PDF.Share.ghostscriptHelper</key>
 	<dict>
 		<key>EXExtensionPointName</key>
-		<string>enhancedSecurity</string>
+		<string>ghostscriptHelper</string>
 		<key>EXPresentsUserInterface</key>
 		<false/>
-		<key>EXRequiresEnhancedSecurity</key>
-		<true/>
 	</dict>
 </dict>
 </plist>
