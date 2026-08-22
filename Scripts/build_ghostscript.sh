@@ -121,7 +121,7 @@ mkdir -p "$upstream_artifact_directory"
 # The known 10.07.1 script has the historical x86/i386 and armv7 universal
 # library setup. Unknown versions still receive this best-effort patch.
 if ! grep -q 'BUILDDIRPREFIX=ios_x86-' "$official_script"; then
-    echo "warning: Unknown Ghostscript iOS script version; applying compatibility patch anyway." >&2
+    echo "notice: Unknown Ghostscript iOS script version; applying compatibility patch anyway." >&2
 fi
 
 cp "$official_script" "$working_script"
@@ -149,7 +149,19 @@ sed -i '' \
     "$working_script"
 
 chmod +x "$working_script"
-(cd "$upstream_root/ios" && "$working_script")
+
+# Xcode treats "warning:" in Run Script output as project warnings.
+# Keep upstream diagnostics visible without letting vendored Ghostscript warnings pollute the issue navigator.
+set +e
+(
+    cd "$upstream_root/ios" && "$working_script"
+) 2>&1 | sed -E 's/[Ww]arning:/warn:/g'
+build_status=${PIPESTATUS[0]}
+set -e
+
+if [ "$build_status" -ne 0 ]; then
+    exit "$build_status"
+fi
 
 if [ ! -s "$upstream_artifact" ]; then
     echo "Ghostscript did not create $upstream_artifact" >&2
