@@ -1,5 +1,5 @@
 import Darwin
-import ExtensionFoundation
+@preconcurrency import ExtensionFoundation
 import Foundation
 import XPC
 
@@ -9,19 +9,7 @@ private actor EnhancedSecurityRequestSerializer {
     private var isAvailable = true
     private var waiters: [CheckedContinuation<Void, Never>] = []
 
-    func run<T>(_ operation: () async throws -> T) async throws -> T {
-        await wait()
-        do {
-            let result = try await operation()
-            signal()
-            return result
-        } catch {
-            signal()
-            throw error
-        }
-    }
-
-    private func wait() async {
+    func wait() async {
         if isAvailable {
             isAvailable = false
             return
@@ -32,12 +20,28 @@ private actor EnhancedSecurityRequestSerializer {
         }
     }
 
-    private func signal() {
+    func signal() {
         if waiters.isEmpty {
             isAvailable = true
         } else {
             waiters.removeFirst().resume()
         }
+    }
+}
+
+private struct SendableXPCDictionary: @unchecked Sendable {
+    let value: XPCDictionary
+}
+
+private final class AppExtensionProcessHandle: @unchecked Sendable {
+    private let process: AppExtensionProcess
+
+    init(process: AppExtensionProcess) {
+        self.process = process
+    }
+
+    func invalidate() {
+        process.invalidate()
     }
 }
 
@@ -156,8 +160,15 @@ final class EnhancedSecurityClient: @unchecked Sendable {
 
     private func send(_ request: XPCDictionary) async throws -> XPCDictionary {
         let operation: String = request[EnhancedSecurityEnvelope.operation] ?? "<missing>"
-        return try await EnhancedSecurityRequestSerializer.shared.run {
-            try await sendUnlocked(request, operation: operation)
+        let serializer = EnhancedSecurityRequestSerializer.shared
+        await serializer.wait()
+        do {
+            let reply = try await sendUnlocked(request, operation: operation)
+            await serializer.signal()
+            return reply
+        } catch {
+            await serializer.signal()
+            throw error
         }
     }
 
@@ -173,20 +184,27 @@ final class EnhancedSecurityClient: @unchecked Sendable {
             configuration: .init(appExtensionIdentity: identity)
         )
         let session = try process.makeXPCSession()
+        let processHandle = AppExtensionProcessHandle(process: process)
         try session.activate()
         defer {
             session.cancel(reason: "Request completed")
-            process.invalidate()
+            processHandle.invalidate()
         }
         return try await withTaskCancellationHandler {
-            try await withCheckedThrowingContinuation { continuation in
+            let reply = try await withCheckedThrowingContinuation { continuation in
                 session.send(message: request) { result in
-                    continuation.resume(with: result.mapError { $0 as Error })
+                    switch result {
+                    case .success(let reply):
+                        continuation.resume(returning: SendableXPCDictionary(value: reply))
+                    case .failure(let error):
+                        continuation.resume(throwing: error)
+                    }
                 }
             }
+            return reply.value
         } onCancel: {
             session.cancel(reason: "Host task cancelled")
-            process.invalidate()
+            processHandle.invalidate()
         }
     }
 

@@ -25,13 +25,15 @@ final class ShareConversionModel: ObservableObject {
         } ?? UTType.plainText.identifier
 
         provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { [weak self] item, error in
+            let errorMessage = error?.localizedDescription
+            let text = Self.text(from: item)
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                if let error {
-                    phase = .failed(error.localizedDescription)
+                if let errorMessage {
+                    phase = .failed(errorMessage)
                     return
                 }
-                guard let text = Self.text(from: item) else {
+                guard let text else {
                     phase = .failed(String(localized: "The shared item could not be read as text."))
                     return
                 }
@@ -59,7 +61,7 @@ final class ShareConversionModel: ObservableObject {
             .filter { $0.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) }
     }
 
-    private static func text(from item: NSSecureCoding?) -> String? {
+    private nonisolated static func text(from item: NSSecureCoding?) -> String? {
         switch item {
         case let text as String: return text
         case let attributedText as NSAttributedString: return attributedText.string
