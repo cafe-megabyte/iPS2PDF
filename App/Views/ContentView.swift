@@ -116,7 +116,14 @@ struct ContentView: View {
             return true
         }
 
-        let typeIdentifier = provider.registeredTypeIdentifiers.first { identifier in
+        let preferredTypeIdentifiers = [
+            UTType.joboptions.identifier,
+            "com.adobe.encapsulated-postscript",
+            "com.adobe.postscript"
+        ]
+        let typeIdentifier = preferredTypeIdentifiers.first { identifier in
+            provider.hasItemConformingToTypeIdentifier(identifier)
+        } ?? provider.registeredTypeIdentifiers.first { identifier in
             UTType(identifier)?.conforms(to: .data) == true
         } ?? provider.registeredTypeIdentifiers.first
 

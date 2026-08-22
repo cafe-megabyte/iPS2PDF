@@ -24,6 +24,30 @@
 		</dict>
 		<dict>
 			<key>CFBundleTypeName</key>
+			<string>PostScript</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.adobe.postscript</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Encapsulated PostScript</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.adobe.encapsulated-postscript</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
 			<string>Regular files</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
