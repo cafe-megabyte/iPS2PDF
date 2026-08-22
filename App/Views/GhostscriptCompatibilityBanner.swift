@@ -7,7 +7,7 @@ struct GhostscriptCompatibilityBanner: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 10) {
                 Image(systemName: "wrench.and.screwdriver.fill")
-                    .foregroundStyle(AppTint.color)
+                    .foregroundStyle(Color(uiColor: UIColor.appTint))
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Compatibility adjustments")
                         .font(.subheadline.weight(.semibold))

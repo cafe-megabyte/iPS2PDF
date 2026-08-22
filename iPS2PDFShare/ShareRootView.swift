@@ -33,6 +33,6 @@ struct ShareRootView: View {
                 .padding()
             }
         }
-        .tint(AppTint.color)
+        .tint(Color(uiColor: UIColor.appTint))
     }
 }

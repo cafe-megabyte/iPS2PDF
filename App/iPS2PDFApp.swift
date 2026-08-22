@@ -11,7 +11,7 @@ struct iPS2PDFApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(viewModel: viewModel)
-                .tint(AppTint.color)
+                .tint(Color(uiColor: UIColor.appTint))
         }
     }
 }

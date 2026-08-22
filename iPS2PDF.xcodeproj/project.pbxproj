@@ -193,7 +193,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Localizable.xcstrings,
-				Models/AppTint.swift,
 				Models/DiagnosticPresentation.swift,
 				Models/PDFACompatibility.swift,
 				Models/PDFPresentation.swift,
@@ -272,13 +271,13 @@
 			isa = PBXGroup;
 			children = (
 				28D58F3B3031FAA500668A85 /* App */,
-				E00000000000000000000001 /* Shared */,
 				28D58F673031FAF700668A85 /* iPS2PDFShare */,
+				289E1EDD30390C1900A176CF /* EnhancedSecurityHelpers */,
+				E00000000000000000000001 /* Shared */,
 				28D58F5C3031FAD500668A85 /* Scripts */,
 				E00000000000000000000002 /* BundledResources */,
-				T70000000000000000000001 /* Tests */,
-				289E1EDD30390C1900A176CF /* EnhancedSecurityHelpers */,
 				28D58F593031FACE00668A85 /* Vendor */,
+				T70000000000000000000001 /* Tests */,
 				A70000000000000000000011 /* Frameworks */,
 				A70000000000000000000012 /* Products */,
 			);
