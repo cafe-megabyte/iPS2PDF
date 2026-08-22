@@ -4,6 +4,44 @@ import Foundation
 import XPC
 
 #if !ENHANCED_SECURITY_HELPER
+// ExtensionFoundation may overlap helper processes; Ghostscript work must stay one request at a time.
+private actor EnhancedSecurityRequestSerializer {
+    static let shared = EnhancedSecurityRequestSerializer()
+    private var isAvailable = true
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+
+    func run<T>(_ operation: () async throws -> T) async throws -> T {
+        await wait()
+        do {
+            let result = try await operation()
+            signal()
+            return result
+        } catch {
+            signal()
+            throw error
+        }
+    }
+
+    private func wait() async {
+        if isAvailable {
+            isAvailable = false
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            waiters.append(continuation)
+        }
+    }
+
+    private func signal() {
+        if waiters.isEmpty {
+            isAvailable = true
+        } else {
+            waiters.removeFirst().resume()
+        }
+    }
+}
+
 final class EnhancedSecurityClient: @unchecked Sendable {
     private let maximumInputBytes: Int64 = 1_073_741_824
     private let maximumOutputBytes: Int64 = 2_147_483_648
@@ -118,6 +156,13 @@ final class EnhancedSecurityClient: @unchecked Sendable {
     }
 
     private func send(_ request: XPCDictionary) async throws -> XPCDictionary {
+        let operation: String = request[EnhancedSecurityEnvelope.operation] ?? "<missing>"
+        return try await EnhancedSecurityRequestSerializer.shared.run {
+            try await sendUnlocked(request, operation: operation)
+        }
+    }
+
+    private func sendUnlocked(_ request: XPCDictionary, operation: String) async throws -> XPCDictionary {
         let monitor = try await AppExtensionPoint.Monitor(appExtensionPoint: .iPS2PDFEnhancedSecurity)
         guard let identity = monitor.identities.first else {
             throw ConversionFailure.ghostscriptInitialization(

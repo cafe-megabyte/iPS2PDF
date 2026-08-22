@@ -11,7 +11,7 @@ final class ResourceAndCatalogTests: XCTestCase {
             ["icc", "icm"].contains($0.pathExtension.lowercased())
         }
 
-        XCTAssertEqual(joboptions.count, 13)
+        XCTAssertEqual(joboptions.count, 14)
         XCTAssertEqual(profiles.count, 58)
         XCTAssertTrue(joboptions.contains { $0.deletingPathExtension().lastPathComponent == "Normal" })
 
