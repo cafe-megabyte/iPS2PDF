@@ -41,7 +41,6 @@
 		F10000000000000000000002 /* iPS2PDFShareSecurity.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F20000000000000000000002 /* iPS2PDFShareSecurity.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F10000000000000000000007 /* ExtensionFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* ExtensionFoundation.framework */; };
 		F1000000000000000000000C /* ExtensionFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F20000000000000000000007 /* ExtensionFoundation.framework */; };
-		T10000000000000000000001 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = T20000000000000000000001 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -161,7 +160,6 @@
 		F20000000000000000000001 /* iPS2PDFSecurity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = iPS2PDFSecurity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20000000000000000000002 /* iPS2PDFShareSecurity.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.extensionkit-extension"; includeInIndex = 0; path = iPS2PDFShareSecurity.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		F20000000000000000000007 /* ExtensionFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ExtensionFoundation.framework; path = System/Library/Frameworks/ExtensionFoundation.framework; sourceTree = SDKROOT; };
-		T20000000000000000000001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		T20000000000000000000002 /* iPS2PDFTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iPS2PDFTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -249,7 +247,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				T10000000000000000000001 /* XCTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -278,7 +275,6 @@
 				A20000000000000000000016 /* PDFKit.framework */,
 				A20000000000000000000017 /* UIKit.framework */,
 				F20000000000000000000007 /* ExtensionFoundation.framework */,
-				T20000000000000000000001 /* XCTest.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
