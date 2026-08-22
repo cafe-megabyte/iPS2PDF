@@ -6,6 +6,7 @@ import XPC
 protocol iPS2PDFEnhancedSecurityExtension: AppExtension {}
 
 extension iPS2PDFEnhancedSecurityExtension {
+    @MainActor
     var configuration: some AppExtensionConfiguration {
         ConnectionHandler { request in
             request.accept(

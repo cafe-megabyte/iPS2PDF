@@ -128,17 +128,6 @@
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		F60000000000000000000001 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = Extensions;
-			dstSubfolderSpec = 1;
-			files = (
-				F10000000000000000000002 /* iPS2PDFShareSecurity.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		F6000000000000000000000D /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -146,6 +135,7 @@
 			dstSubfolderSpec = 1;
 			files = (
 				F10000000000000000000001 /* iPS2PDFSecurity.appex in Embed Foundation Extensions */,
+				F10000000000000000000002 /* iPS2PDFShareSecurity.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -344,7 +334,6 @@
 				B60000000000000000000003 /* Resources */,
 				F6000000000000000000000C /* Install Share Host Extension Point */,
 				E00000000000000000000004 /* Install Joboptions */,
-				F60000000000000000000001 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -1059,7 +1048,7 @@
 					"-lc++",
 					"-liconv",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF.Share.Security";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF.ShareSecurity";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
@@ -1093,7 +1082,7 @@
 					"-lc++",
 					"-liconv",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF.Share.Security";
+				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF.ShareSecurity";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
