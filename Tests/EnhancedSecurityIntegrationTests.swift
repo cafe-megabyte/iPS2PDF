@@ -36,7 +36,8 @@ final class EnhancedSecurityIntegrationTests: XCTestCase {
             outputURL: outputURL,
             joboptionsURL: joboptionsURL,
             standard: .none,
-            limitsEnabled: true
+            limitsEnabled: true,
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
         )
 
         return try Data(contentsOf: outputURL)

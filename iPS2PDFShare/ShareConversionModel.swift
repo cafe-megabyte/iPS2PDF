@@ -93,7 +93,8 @@ final class ShareConversionModel: ObservableObject {
             settings = SharedActiveSettings(
                 joboptionsData: try Data(contentsOf: normal),
                 standard: .none,
-                securityLimitsEnabled: true
+                securityLimitsEnabled: true,
+                randomSeedSettings: PostScriptRandomSeedSettings()
             )
         }
         let effectiveJoboptionsData = try GhostscriptCompatibilityAdjuster.adjustedData(
@@ -105,7 +106,8 @@ final class ShareConversionModel: ObservableObject {
             outputURL: outputURL,
             joboptionsURL: joboptionsURL,
             standard: settings.standard,
-            securityLimitsEnabled: settings.securityLimitsEnabled
+            securityLimitsEnabled: settings.securityLimitsEnabled,
+            postScriptRandomSeed: settings.randomSeedSettings.resolvedSeed
         )
         guard PDFDocument(url: outputURL) != nil else { throw ConversionFailure.invalidPDF }
         return outputURL

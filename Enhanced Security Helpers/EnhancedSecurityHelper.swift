@@ -71,6 +71,14 @@ private enum EnhancedSecurityRequestHandler {
         let deadline: Int64 = request[EnhancedSecurityEnvelope.deadline] ?? Int64(Date().addingTimeInterval(15 * 60).timeIntervalSince1970)
         let maximumOutput: Int64 = request[EnhancedSecurityEnvelope.maximumOutputBytes] ?? 2_147_483_648
         let standard: String = validationOnly ? "none" : (request[EnhancedSecurityEnvelope.standard] ?? "none")
+        let postScriptRandomSeed: Int64 = validationOnly
+            ? 1
+            : (request[EnhancedSecurityEnvelope.postScriptRandomSeed] ?? -1)
+        guard validationOnly || (0...2_147_483_647).contains(postScriptRandomSeed) else {
+            reply[EnhancedSecurityEnvelope.status] = Int64(-1)
+            reply[EnhancedSecurityEnvelope.message] = "The PostScript random seed is invalid."
+            return reply
+        }
         let compatibilityLevel = validationOnly ? nil : Self.compatibilityLevel(from: joboptions)
         let blendConversionStrategy = validationOnly ? nil : Self.blendConversionStrategy(from: joboptions)
         let ghostscriptDirectory = Bundle.main.resourceURL?.appendingPathComponent("Ghostscript", isDirectory: true)
@@ -208,6 +216,7 @@ private enum EnhancedSecurityRequestHandler {
                                             compatibilityPointer,
                                             standardPointer, definitionPointer, ghostscriptPointer, profilePointer,
                                             overridesPointer, overridesDirectoryPointer, blendConversionPointer,
+                                            Int32(postScriptRandomSeed),
                                             limitsEnabled ? 1 : 0, deadline, maximumOutput,
                                             &ghostscriptCode, &stage
                                         )

@@ -55,6 +55,27 @@
 				</array>
 			</dict>
 		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>ICC Profile</string>
+			<key>UTTypeIdentifier</key>
+			<string>org.color.icc-profile</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>icc</string>
+					<string>icm</string>
+				</array>
+				<key>public.mime-type</key>
+				<string>application/vnd.iccprofile</string>
+			</dict>
+		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>

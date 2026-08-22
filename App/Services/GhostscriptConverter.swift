@@ -30,7 +30,8 @@ final class GhostscriptConverter: FileConverting, @unchecked Sendable {
         outputURL: URL,
         joboptionsURL: URL,
         standard: PDFStandard,
-        securityLimitsEnabled: Bool
+        securityLimitsEnabled: Bool,
+        postScriptRandomSeed: Int
     ) async throws {
         let document = try LosslessJoboptionsDocument(data: Data(contentsOf: joboptionsURL))
         let effectiveJoboptionsURL = try temporaryAdjustedJoboptionsURL(for: document)
@@ -44,7 +45,8 @@ final class GhostscriptConverter: FileConverting, @unchecked Sendable {
             outputURL: outputURL,
             joboptionsURL: effectiveJoboptionsURL ?? joboptionsURL,
             standard: standard,
-            limitsEnabled: securityLimitsEnabled
+            limitsEnabled: securityLimitsEnabled,
+            postScriptRandomSeed: postScriptRandomSeed
         )
     }
 

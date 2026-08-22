@@ -236,7 +236,8 @@ final class ConversionViewModel: ObservableObject {
                     outputURL: outputURL,
                     joboptionsURL: snapshotURL,
                     standard: settingsSnapshot.standard,
-                    securityLimitsEnabled: settingsSnapshot.securityLimitsEnabled
+                    securityLimitsEnabled: settingsSnapshot.securityLimitsEnabled,
+                    postScriptRandomSeed: settingsSnapshot.postScriptRandomSeed
                 )
                 try await workingDirectoryService.validatePDF(at: outputURL)
 

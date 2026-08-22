@@ -53,7 +53,8 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         outputURL: URL,
         joboptionsURL: URL,
         standard: PDFStandard,
-        limitsEnabled: Bool
+        limitsEnabled: Bool,
+        postScriptRandomSeed: Int
     ) async throws {
         if limitsEnabled {
             let inputSize = try inputURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
@@ -81,6 +82,7 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         request[EnhancedSecurityEnvelope.limitsEnabled] = limitsEnabled
         request[EnhancedSecurityEnvelope.allowTransparency] = descriptors.allowTransparency
         request[EnhancedSecurityEnvelope.standard] = standard.rawValue
+        request[EnhancedSecurityEnvelope.postScriptRandomSeed] = Int64(postScriptRandomSeed)
         request[EnhancedSecurityEnvelope.deadline] = Int64(Date().addingTimeInterval(timeout).timeIntervalSince1970)
         request[EnhancedSecurityEnvelope.maximumOutputBytes] = maximumOutputBytes
         XPCDescriptorBridge.set(descriptors.joboptions, forKey: EnhancedSecurityEnvelope.joboptionsFD, in: request)

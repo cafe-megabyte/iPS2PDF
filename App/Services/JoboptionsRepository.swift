@@ -7,6 +7,8 @@ final class JoboptionsRepository: ObservableObject {
         static let activeIdentifier = "activeJoboptionsIdentifier"
         static let securityLimitsEnabled = "securityLimitsEnabled"
         static let initializedSecurityLimits = "initializedSecurityLimits"
+        static let automaticRandomSeed = "automaticRandomSeed"
+        static let manualRandomSeed = "manualRandomSeed"
     }
 
     @Published private(set) var records: [JoboptionsRecord] = []
@@ -18,6 +20,8 @@ final class JoboptionsRepository: ObservableObject {
     @Published var securityLimitsEnabled: Bool {
         didSet { defaults.set(securityLimitsEnabled, forKey: DefaultsKey.securityLimitsEnabled) }
     }
+    @Published private(set) var automaticRandomSeed: Bool
+    @Published private(set) var manualRandomSeed: Int
 
     private let fileManager: FileManager
     private let defaults: UserDefaults
@@ -33,6 +37,12 @@ final class JoboptionsRepository: ObservableObject {
             defaults.set(true, forKey: DefaultsKey.initializedSecurityLimits)
             defaults.set(true, forKey: DefaultsKey.securityLimitsEnabled)
         }
+        automaticRandomSeed = defaults.object(forKey: DefaultsKey.automaticRandomSeed) == nil
+            ? true
+            : defaults.bool(forKey: DefaultsKey.automaticRandomSeed)
+        manualRandomSeed = defaults.object(forKey: DefaultsKey.manualRandomSeed) == nil
+            ? PostScriptRandomSeedSettings.defaultManualSeed
+            : PostScriptRandomSeedSettings.clampedSeed(defaults.integer(forKey: DefaultsKey.manualRandomSeed))
 
         Task { [weak self] in
             await self?.load()
@@ -120,6 +130,17 @@ final class JoboptionsRepository: ObservableObject {
         }
     }
 
+    func setAutomaticRandomSeed(_ enabled: Bool) {
+        automaticRandomSeed = enabled
+        defaults.set(enabled, forKey: DefaultsKey.automaticRandomSeed)
+    }
+
+    func setManualRandomSeed(_ seed: Int) {
+        let clampedSeed = PostScriptRandomSeedSettings.clampedSeed(seed)
+        manualRandomSeed = clampedSeed
+        defaults.set(clampedSeed, forKey: DefaultsKey.manualRandomSeed)
+    }
+
     func duplicate(_ record: JoboptionsRecord) throws -> JoboptionsRecord {
         let data = try Data(contentsOf: record.url)
         let name = uniqueName(record.name)
@@ -169,7 +190,11 @@ final class JoboptionsRepository: ObservableObject {
         return ConversionSettingsSnapshot(
             effectiveJoboptionsData: effectiveDocument.data,
             standard: activeStandard,
-            securityLimitsEnabled: securityLimitsEnabled
+            securityLimitsEnabled: securityLimitsEnabled,
+            postScriptRandomSeed: PostScriptRandomSeedSettings(
+                usesAutomaticSeed: automaticRandomSeed,
+                manualSeed: manualRandomSeed
+            ).resolvedSeed
         )
     }
 

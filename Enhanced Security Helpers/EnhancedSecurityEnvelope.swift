@@ -14,6 +14,7 @@ enum EnhancedSecurityEnvelope {
     static let limitsEnabled = "limitsEnabled"
     static let allowTransparency = "allowTransparency"
     static let standard = "standard"
+    static let postScriptRandomSeed = "postScriptRandomSeed"
     static let deadline = "deadline"
     static let maximumOutputBytes = "maximumOutputBytes"
     static let status = "status"

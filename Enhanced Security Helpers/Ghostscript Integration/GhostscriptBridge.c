@@ -326,6 +326,7 @@ int gs_run_joboptions_with_fds(
     const char *profile_overrides,
     const char *profile_override_directory,
     const char *blend_conversion_strategy,
+    int postscript_random_seed,
     int limits_enabled,
     long long deadline_epoch_seconds,
     long long maximum_output_bytes,
@@ -342,6 +343,7 @@ int gs_run_joboptions_with_fds(
     char compatibility_option[32];
     char standard_option[32];
     char blend_conversion_option[40];
+    char random_seed_prolog[32];
     char ghostscript_include[PATH_MAX + 3];
     char profile_include[PATH_MAX + 3];
     char permit_ghostscript[PATH_MAX + 24];
@@ -361,6 +363,9 @@ int gs_run_joboptions_with_fds(
     if (ghostscript_return_code != NULL) *ghostscript_return_code = 0;
     if (stage != NULL) *stage = GS_BRIDGE_STAGE_NONE;
     if (joboptions_fd < 0 || journal_fd < 0 || (!validation_only && (input_fd < 0 || output_fd < 0))) {
+        return -1;
+    }
+    if (!validation_only && (postscript_random_seed < 0 || postscript_random_seed > 2147483647)) {
         return -1;
     }
 
@@ -515,6 +520,17 @@ int gs_run_joboptions_with_fds(
     return_code = gsapi_init_with_args(instance, argument_count, (char **)arguments);
     initialized = 1;
     if (return_code != 0) goto descriptor_finished;
+
+    if (!validation_only) {
+        snprintf(
+            random_seed_prolog,
+            sizeof(random_seed_prolog),
+            "%d srand\n",
+            postscript_random_seed
+        );
+        return_code = descriptor_run_bytes(instance, random_seed_prolog, &capture);
+        if (return_code != 0) goto descriptor_finished;
+    }
 
     return_code = descriptor_run_stream(instance, joboptions_fd, &capture);
     if (return_code != 0) goto descriptor_finished;

@@ -28,6 +28,7 @@ int gs_run_joboptions_with_fds(
     const char *profile_overrides,
     const char *profile_override_directory,
     const char *blend_conversion_strategy,
+    int postscript_random_seed,
     int limits_enabled,
     long long deadline_epoch_seconds,
     long long maximum_output_bytes,

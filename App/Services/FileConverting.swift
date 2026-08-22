@@ -8,6 +8,7 @@ protocol FileConverting: Sendable {
         outputURL: URL,
         joboptionsURL: URL,
         standard: PDFStandard,
-        securityLimitsEnabled: Bool
+        securityLimitsEnabled: Bool,
+        postScriptRandomSeed: Int
     ) async throws
 }

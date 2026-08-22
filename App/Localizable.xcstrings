@@ -117,6 +117,22 @@
         }
       }
     },
+    "Allowed range: %@ - %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zulässiger Bereich: %1$@ - %2$@"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allowed range: %1$@ - %2$@"
+          }
+        }
+      }
+    },
     "Allow transparency operators" : {
       "localizations" : {
         "de" : {
@@ -2536,12 +2552,44 @@
         }
       }
     },
+    "Random numbers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zufallszahlen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Random numbers"
+          }
+        }
+      }
+    },
     "Security limits" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Sicherheitsgrenzen"
+          }
+        }
+      }
+    },
+    "Seed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Startwert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seed"
           }
         }
       }
