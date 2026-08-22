@@ -164,6 +164,24 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		289A59103039F56B004C5CB6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MainEnhancedSecurityHelper.swift,
+				MainInfo.plist,
+				ShareInfo.plist,
+			);
+			target = F50000000000000000000002 /* iPS2PDFShareSecurity */;
+		};
+		289A59113039F579004C5CB6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				MainInfo.plist,
+				ShareEnhancedSecurityHelper.swift,
+				ShareInfo.plist,
+			);
+			target = F50000000000000000000001 /* iPS2PDFSecurity */;
+		};
 		28D58F533031FAA600668A85 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -176,13 +194,10 @@
 			membershipExceptions = (
 				Localizable.xcstrings,
 				Models/AppTint.swift,
-				Models/ConversionFailure.swift,
 				Models/DiagnosticPresentation.swift,
 				Models/PDFACompatibility.swift,
 				Models/PDFPresentation.swift,
 				Models/PDFVersion.swift,
-				Services/FileConverting.swift,
-				Services/GhostscriptConverter.swift,
 			);
 			target = B50000000000000000000001 /* iPS2PDFShare */;
 		};
@@ -198,7 +213,7 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		289E1EDD30390C1900A176CF /* Enhanced Security Helpers */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "Enhanced Security Helpers"; sourceTree = "<group>"; };
+		289E1EDD30390C1900A176CF /* EnhancedSecurityHelpers */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (289A59113039F579004C5CB6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 289A59103039F56B004C5CB6 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = EnhancedSecurityHelpers; sourceTree = "<group>"; };
 		28D58F3B3031FAA500668A85 /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (28D58F533031FAA600668A85 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, 28D58F543031FAA600668A85 /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = App; sourceTree = "<group>"; };
 		28D58F593031FACE00668A85 /* Vendor */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Vendor; sourceTree = "<group>"; };
 		28D58F5C3031FAD500668A85 /* Scripts */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Scripts; sourceTree = "<group>"; };
@@ -262,7 +277,7 @@
 				28D58F5C3031FAD500668A85 /* Scripts */,
 				E00000000000000000000002 /* BundledResources */,
 				T70000000000000000000001 /* Tests */,
-				289E1EDD30390C1900A176CF /* Enhanced Security Helpers */,
+				289E1EDD30390C1900A176CF /* EnhancedSecurityHelpers */,
 				28D58F593031FACE00668A85 /* Vendor */,
 				A70000000000000000000011 /* Frameworks */,
 				A70000000000000000000012 /* Products */,
@@ -363,7 +378,7 @@
 				C90000000000000000000003 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				289E1EDD30390C1900A176CF /* Enhanced Security Helpers */,
+				289E1EDD30390C1900A176CF /* EnhancedSecurityHelpers */,
 			);
 			name = iPS2PDFSecurity;
 			productName = iPS2PDFSecurity;
@@ -387,7 +402,7 @@
 				C90000000000000000000004 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				289E1EDD30390C1900A176CF /* Enhanced Security Helpers */,
+				289E1EDD30390C1900A176CF /* EnhancedSecurityHelpers */,
 			);
 			name = iPS2PDFShareSecurity;
 			productName = iPS2PDFShareSecurity;
@@ -952,14 +967,14 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				ARCHS = arm64;
-				CODE_SIGN_ENTITLEMENTS = "Enhanced Security Helpers/EnhancedSecurity.entitlements";
+				CODE_SIGN_ENTITLEMENTS = EnhancedSecurityHelpers/EnhancedSecurity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
 				ENABLE_ENHANCED_SECURITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = "$(GHOSTSCRIPT_ARTIFACT_DIR)/include";
-				INFOPLIST_FILE = "Enhanced Security Helpers/MainInfo.plist";
+				INFOPLIST_FILE = EnhancedSecurityHelpers/MainInfo.plist;
 				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
 				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -976,7 +991,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ENHANCED_SECURITY_HELPER MAIN_HELPER";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Enhanced Security Helpers/Ghostscript Integration/GhostscriptBridge.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/EnhancedSecurityHelpers/GhostscriptBridge/GhostscriptBridge.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -987,14 +1002,14 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				ARCHS = arm64;
-				CODE_SIGN_ENTITLEMENTS = "Enhanced Security Helpers/EnhancedSecurity.entitlements";
+				CODE_SIGN_ENTITLEMENTS = EnhancedSecurityHelpers/EnhancedSecurity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
 				ENABLE_ENHANCED_SECURITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = "$(GHOSTSCRIPT_ARTIFACT_DIR)/include";
-				INFOPLIST_FILE = "Enhanced Security Helpers/MainInfo.plist";
+				INFOPLIST_FILE = EnhancedSecurityHelpers/MainInfo.plist;
 				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
 				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -1011,7 +1026,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ENHANCED_SECURITY_HELPER MAIN_HELPER";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Enhanced Security Helpers/Ghostscript Integration/GhostscriptBridge.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/EnhancedSecurityHelpers/GhostscriptBridge/GhostscriptBridge.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1022,14 +1037,14 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				ARCHS = arm64;
-				CODE_SIGN_ENTITLEMENTS = "Enhanced Security Helpers/EnhancedSecurity.entitlements";
+				CODE_SIGN_ENTITLEMENTS = EnhancedSecurityHelpers/EnhancedSecurity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
 				ENABLE_ENHANCED_SECURITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = "$(GHOSTSCRIPT_ARTIFACT_DIR)/include";
-				INFOPLIST_FILE = "Enhanced Security Helpers/ShareInfo.plist";
+				INFOPLIST_FILE = EnhancedSecurityHelpers/ShareInfo.plist;
 				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
 				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -1046,7 +1061,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ENHANCED_SECURITY_HELPER SHARE_HELPER";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Enhanced Security Helpers/Ghostscript Integration/GhostscriptBridge.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/EnhancedSecurityHelpers/GhostscriptBridge/GhostscriptBridge.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -1057,14 +1072,14 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				ARCHS = arm64;
-				CODE_SIGN_ENTITLEMENTS = "Enhanced Security Helpers/EnhancedSecurity.entitlements";
+				CODE_SIGN_ENTITLEMENTS = EnhancedSecurityHelpers/EnhancedSecurity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
 				ENABLE_ENHANCED_SECURITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				HEADER_SEARCH_PATHS = "$(GHOSTSCRIPT_ARTIFACT_DIR)/include";
-				INFOPLIST_FILE = "Enhanced Security Helpers/ShareInfo.plist";
+				INFOPLIST_FILE = EnhancedSecurityHelpers/ShareInfo.plist;
 				INFOPLIST_PREFIX_HEADER = "$(PROJECT_TEMP_DIR)/BuildNumber.c";
 				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
@@ -1081,7 +1096,7 @@
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ENHANCED_SECURITY_HELPER SHARE_HELPER";
-				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/Enhanced Security Helpers/Ghostscript Integration/GhostscriptBridge.h";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/EnhancedSecurityHelpers/GhostscriptBridge/GhostscriptBridge.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

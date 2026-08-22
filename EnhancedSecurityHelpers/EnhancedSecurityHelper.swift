@@ -20,18 +20,6 @@ extension iPS2PDFEnhancedSecurityExtension {
     }
 }
 
-@main
-struct EnhancedSecurityHelper: iPS2PDFEnhancedSecurityExtension {
-    @AppExtensionPoint.Bind
-    var boundExtensionPoint: AppExtensionPoint {
-#if SHARE_HELPER
-        AppExtensionPoint.Identifier(host: "de.cafe-megabyte.iPS2PDF.Share", name: "enhancedSecurity")
-#else
-        AppExtensionPoint.Identifier(host: "de.cafe-megabyte.iPS2PDF", name: "enhancedSecurity")
-#endif
-    }
-}
-
 private enum EnhancedSecurityRequestHandler {
     static func handle(_ request: XPCDictionary) -> XPCDictionary {
         var reply = XPCDictionary()

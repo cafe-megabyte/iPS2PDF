@@ -22,7 +22,12 @@ sanitizer_directory="$(mktemp -d "${TMPDIR:-/tmp}/ips2pdf-sanitizer.XXXXXX")"
 trap 'rm -rf "$sanitizer_directory"' EXIT
 cp "$project_dir/Scripts/sanitize_joboptions.swift" "$sanitizer_directory/main.swift"
 xcrun swiftc \
-    "$project_dir/Shared/JoboptionsModels.swift" \
+    "$project_dir/Shared/JoboptionsError.swift" \
+    "$project_dir/Shared/JoboptionsValue.swift" \
+    "$project_dir/Shared/SourceBuffer.swift" \
+    "$project_dir/Shared/ParsedObject.swift" \
+    "$project_dir/Shared/ParsedSource.swift" \
+    "$project_dir/Shared/PostScriptScanner.swift" \
     "$project_dir/Shared/LosslessJoboptionsDocument.swift" \
     "$sanitizer_directory/main.swift" \
     -o "$sanitizer_directory/sanitize_joboptions"

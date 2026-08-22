@@ -1,6 +1,5 @@
 import Darwin
 
-#if !ENHANCED_SECURITY_HELPER
 struct OpenDescriptors {
     let input: Int32
     let output: Int32
@@ -16,4 +15,3 @@ struct OpenDescriptors {
             .forEach { Darwin.close($0) }
     }
 }
-#endif

@@ -3,7 +3,6 @@ import ExtensionFoundation
 import Foundation
 import XPC
 
-#if !ENHANCED_SECURITY_HELPER
 // ExtensionFoundation may overlap helper processes; Ghostscript work must stay one request at a time.
 private actor EnhancedSecurityRequestSerializer {
     static let shared = EnhancedSecurityRequestSerializer()
@@ -309,4 +308,3 @@ final class EnhancedSecurityClient: @unchecked Sendable {
         "TextICCProfile", "PDFXOutputIntentProfile"
     ]
 }
-#endif
