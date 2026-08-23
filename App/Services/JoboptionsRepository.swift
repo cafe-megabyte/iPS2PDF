@@ -27,7 +27,7 @@ final class JoboptionsRepository: ObservableObject {
     private let defaults: UserDefaults
     private var readinessWaiters: [CheckedContinuation<Void, Never>] = []
 
-    init(fileManager: FileManager = .default, defaults: UserDefaults = AppGroup.defaults) {
+    init(fileManager: FileManager = .default, defaults: UserDefaults = .standard) {
         self.fileManager = fileManager
         self.defaults = defaults
         if defaults.bool(forKey: DefaultsKey.initializedSecurityLimits) {
@@ -74,7 +74,6 @@ final class JoboptionsRepository: ObservableObject {
 
     func activate(_ record: JoboptionsRecord) throws {
         let document = try LosslessJoboptionsDocument(data: Data(contentsOf: record.url))
-        try publishActiveSnapshot(document)
         activeRecord = record
         activeDocument = document
         defaults.set(record.id, forKey: DefaultsKey.activeIdentifier)
@@ -85,7 +84,6 @@ final class JoboptionsRepository: ObservableObject {
         guard let document = activeDocument else { throw JoboptionsError.unreadable }
         let updated = try document.replacingValue(forKey: key, with: value)
         try atomicWrite(updated.data, to: editable.url)
-        try publishActiveSnapshot(updated)
         activeRecord = editable
         activeDocument = updated
         defaults.set(editable.id, forKey: DefaultsKey.activeIdentifier)
@@ -205,7 +203,6 @@ final class JoboptionsRepository: ObservableObject {
 
         let editable = try editableRecord()
         try atomicWrite(adjusted.data, to: editable.url)
-        try publishActiveSnapshot(adjusted)
         activeRecord = editable
         activeDocument = adjusted
         defaults.set(editable.id, forKey: DefaultsKey.activeIdentifier)
@@ -360,23 +357,12 @@ final class JoboptionsRepository: ObservableObject {
         }
     }
 
-    private func publishActiveSnapshot(_ document: LosslessJoboptionsDocument) throws {
-        let rawStandard = document.value(forKey: "iPS2PDFStandard")?.textualValue ?? "none"
-        try SharedActiveSettings.publish(
-            document: document,
-            standard: PDFStandard(rawValue: rawStandard) ?? .none,
-            fileManager: fileManager
-        )
-    }
-
     private func userJoboptionsDirectory() throws -> URL {
-        try AppGroup.containerURL(fileManager: fileManager)
-            .appendingPathComponent("Joboptions", isDirectory: true)
+        try ApplicationStorage.userJoboptionsDirectory(fileManager: fileManager)
     }
 
     private func userProfilesDirectory() throws -> URL {
-        try AppGroup.containerURL(fileManager: fileManager)
-            .appendingPathComponent("Profiles", isDirectory: true)
+        try ApplicationStorage.userProfilesDirectory(fileManager: fileManager)
     }
 
     private func loadProfiles() {
@@ -392,7 +378,7 @@ final class JoboptionsRepository: ObservableObject {
 
     private func refreshBundledProfileMetadataFromHelper() async {
         guard let bundledDirectory = Bundle.main.url(forResource: "Profiles", withExtension: nil),
-              let metadata = try? await EnhancedSecurityClient().profileMetadata()
+              let metadata = try? await GhostscriptExtensionClient().profileMetadata()
         else { return }
         let bundled: [ICCProfileRecord] = metadata.compactMap { item in
             let url = bundledDirectory.appendingPathComponent(item.file)

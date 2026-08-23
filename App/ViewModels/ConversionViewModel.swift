@@ -43,6 +43,7 @@ final class ConversionViewModel: ObservableObject {
         selectedPDFACompatibility = .none
         startupCleanupTask = Task.detached(priority: .utility) {
             try await workingDirectoryService.clearWorkingDirectory()
+            try AppGroupWorkspace.clearStaleDataPreservingShareInbox()
         }
         repositoryObservation = joboptionsRepository.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -107,11 +108,20 @@ final class ConversionViewModel: ObservableObject {
         acceptFiles(urls)
     }
 
+    func handleOpenURL(_ url: URL) {
+        isFileImporterPresented = false
+        guard PendingShareDocument.isTriggerURL(url) else {
+            acceptFiles([url])
+            return
+        }
+        handlePendingShareDocumentIfAvailable()
+    }
+
     func handleDroppedFile(_ url: URL) {
         let cleanupDirectory = url.deletingLastPathComponent()
         guard acceptFiles([url], cleanupDirectory: cleanupDirectory) else {
             Task { [workingDirectoryService] in
-                await workingDirectoryService.removeDropStagingDirectory(cleanupDirectory)
+                await workingDirectoryService.removeStagingDirectory(cleanupDirectory)
             }
             return
         }
@@ -135,6 +145,24 @@ final class ConversionViewModel: ObservableObject {
 
     func diagnosticDetailsDidDismiss() {
         presentDeferredNoticeIfPossible()
+    }
+
+    func handlePendingShareDocumentIfAvailable() {
+        if isProcessing {
+            PendingShareDocument.remove()
+            return
+        }
+        guard !controlsAreDisabled else { return }
+        do {
+            guard let sourceURL = try PendingShareDocument.claimPendingSourceURL() else {
+                PendingShareDocument.remove()
+                return
+            }
+            let cleanupDirectory = sourceURL.deletingLastPathComponent()
+            _ = acceptFiles([sourceURL], cleanupDirectory: cleanupDirectory)
+        } catch {
+            alert = makeErrorAlert(for: .inputCannotBeRead)
+        }
     }
 
     func beginSharing() {
@@ -196,7 +224,7 @@ final class ConversionViewModel: ObservableObject {
                 sourceURL: url
             )
             if let cleanupDirectory {
-                await workingDirectoryService.removeDropStagingDirectory(cleanupDirectory)
+                await workingDirectoryService.removeStagingDirectory(cleanupDirectory)
             }
         }
         return true
@@ -220,19 +248,20 @@ final class ConversionViewModel: ObservableObject {
             case let .joboptions(joboptionsURL, _):
                 try await converter.validateJoboptions(at: joboptionsURL)
                 _ = try joboptionsRepository.importJoboptions(from: joboptionsURL)
+                try? AppGroupWorkspace.clearAll()
                 finishProcessing()
                 synchronizeFrontSettings()
                 settingsPresentationToken = UUID()
-            case let .postScript(postScriptURL):
+            case let .conversionInput(inputURL):
                 // Capture only after the readiness gate, and keep this immutable
                 // for the lifetime of the conversion.
                 let settingsSnapshot = try joboptionsRepository.snapshot()
-                let outputURL = await workingDirectoryService.outputURL(for: postScriptURL)
+                let outputURL = try await workingDirectoryService.outputURL(for: inputURL)
                 let snapshotURL = try await workingDirectoryService.writeJoboptionsSnapshot(
                     settingsSnapshot.effectiveJoboptionsData
                 )
                 try await converter.convert(
-                    sourceURL: postScriptURL,
+                    sourceURL: inputURL,
                     outputURL: outputURL,
                     joboptionsURL: snapshotURL,
                     standard: settingsSnapshot.standard,
@@ -241,6 +270,7 @@ final class ConversionViewModel: ObservableObject {
                 )
                 try await workingDirectoryService.validatePDF(at: outputURL)
 
+                try? AppGroupWorkspace.clearAll()
                 finishProcessing()
                 presentedPDF = PDFPresentation(url: outputURL)
             }
@@ -267,6 +297,7 @@ final class ConversionViewModel: ObservableObject {
 
     private func finishWithFailure(_ failure: ConversionFailure) async {
         try? await workingDirectoryService.clearWorkingDirectory()
+        try? AppGroupWorkspace.clearAll()
         finishProcessing()
         alert = makeErrorAlert(for: failure)
     }
@@ -341,4 +372,5 @@ final class ConversionViewModel: ObservableObject {
         default: selectedPDFACompatibility = .none
         }
     }
+
 }

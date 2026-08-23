@@ -1,64 +1,66 @@
 import Foundation
-import PDFKit
-import SwiftUI
 import UniformTypeIdentifiers
 
 @MainActor
-final class ShareConversionModel: ObservableObject {
-    enum Phase {
-        case preparing
-        case viewer(URL)
-        case failed(String)
-    }
-
-    @Published private(set) var phase: Phase = .preparing
+final class ShareConversionModel {
     private weak var extensionContext: NSExtensionContext?
+    private var activateContainingApplication: ((URL, NSExtensionContext) -> Bool)?
+    private var handoffIsReady = false
+    private var extensionIsVisible = false
+    private var isOpeningApplication = false
+    private var activationTask: Task<Void, Never>?
 
-    func start(extensionContext: NSExtensionContext?) {
+    func start(
+        extensionContext: NSExtensionContext?,
+        activateContainingApplication: @escaping (URL, NSExtensionContext) -> Bool
+    ) {
         self.extensionContext = extensionContext
-        guard let provider = textProviders().first else {
-            phase = .failed(String(localized: "No text was provided to iPS2PDF."))
+        self.activateContainingApplication = activateContainingApplication
+        let providers = textProviders()
+        guard let provider = providers.first else {
+            cancelRequest()
             return
         }
         let typeIdentifier = provider.registeredTypeIdentifiers.first {
             UTType($0)?.conforms(to: .plainText) == true
-        } ?? UTType.plainText.identifier
+        } ?? provider.registeredTypeIdentifiers.first {
+            UTType($0)?.conforms(to: .text) == true
+        } ?? UTType.text.identifier
 
         provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { [weak self] item, error in
             let errorMessage = error?.localizedDescription
             let text = Self.text(from: item)
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                if let errorMessage {
-                    phase = .failed(errorMessage)
+                if errorMessage != nil {
+                    cancelRequest()
                     return
                 }
                 guard let text else {
-                    phase = .failed(String(localized: "The shared item could not be read as text."))
+                    cancelRequest()
                     return
                 }
                 do {
-                    phase = .viewer(try await Self.convert(text))
-                } catch let failure as ConversionFailure {
-                    phase = .failed([failure.localizedMessage, failure.diagnostics]
-                        .compactMap { $0 }
-                        .joined(separator: "\n"))
+                    _ = try PendingShareDocument.writePostScript(text)
+                    handoffIsReady = true
+                    scheduleApplicationOpeningIfPossible()
                 } catch {
-                    phase = .failed(error.localizedDescription)
+                    cancelRequest(error)
                 }
             }
         }
     }
 
-    func finish() {
-        extensionContext?.completeRequest(returningItems: nil)
+    func extensionDidAppear() {
+        extensionIsVisible = true
+        scheduleApplicationOpeningIfPossible()
     }
 
     private func textProviders() -> [NSItemProvider] {
         let items = extensionContext?.inputItems.compactMap { $0 as? NSExtensionItem } ?? []
         return items
             .flatMap { $0.attachments ?? [] }
-            .filter { $0.hasItemConformingToTypeIdentifier(UTType.plainText.identifier) }
+            .filter { $0.hasItemConformingToTypeIdentifier(UTType.text.identifier) }
     }
 
     private nonisolated static func text(from item: NSSecureCoding?) -> String? {
@@ -71,47 +73,34 @@ final class ShareConversionModel: ObservableObject {
         }
     }
 
-    private nonisolated static func convert(_ text: String) async throws -> URL {
-        let fileManager = FileManager.default
-        let directoryURL = fileManager.temporaryDirectory
-            .appendingPathComponent("Shared conversion", isDirectory: true)
-        try? fileManager.removeItem(at: directoryURL)
-        try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+    private func scheduleApplicationOpeningIfPossible() {
+        guard handoffIsReady,
+              extensionIsVisible,
+              !isOpeningApplication,
+              let extensionContext,
+              let activateContainingApplication
+        else { return }
 
-        let sourceURL = directoryURL.appendingPathComponent(UUID().uuidString).appendingPathExtension("ps")
-        let outputURL = sourceURL.deletingPathExtension().appendingPathExtension("pdf")
-        let joboptionsURL = directoryURL.appendingPathComponent("Active.joboptions")
-        try text.write(to: sourceURL, atomically: true, encoding: .utf8)
+        isOpeningApplication = true
+        activationTask = Task { [weak self] in
+            // Let the Share Extension finish its presentation transition before
+            // asking SpringBoard to activate the containing application.
+            try? await Task.sleep(for: .milliseconds(550))
+            guard !Task.isCancelled, let self else { return }
 
-        let settings: SharedActiveSettings
-        do {
-            settings = try SharedActiveSettings.load()
-        } catch {
-            guard let normal = Bundle.main.url(
-                forResource: "Normal",
-                withExtension: "joboptions",
-                subdirectory: "Joboptions"
-            ) else { throw error }
-            settings = SharedActiveSettings(
-                joboptionsData: try Data(contentsOf: normal),
-                standard: .none,
-                securityLimitsEnabled: true,
-                randomSeedSettings: PostScriptRandomSeedSettings()
-            )
+            guard activateContainingApplication(
+                PendingShareDocument.triggerURL,
+                extensionContext
+            ) else {
+                isOpeningApplication = false
+                activationTask = nil
+                return
+            }
         }
-        let effectiveJoboptionsData = try GhostscriptCompatibilityAdjuster.adjustedData(
-            from: settings.joboptionsData
-        )
-        try effectiveJoboptionsData.write(to: joboptionsURL, options: [.atomic])
-        try await GhostscriptConverter().convert(
-            sourceURL: sourceURL,
-            outputURL: outputURL,
-            joboptionsURL: joboptionsURL,
-            standard: settings.standard,
-            securityLimitsEnabled: settings.securityLimitsEnabled,
-            postScriptRandomSeed: settings.randomSeedSettings.resolvedSeed
-        )
-        guard PDFDocument(url: outputURL) != nil else { throw ConversionFailure.invalidPDF }
-        return outputURL
+    }
+
+    private func cancelRequest(_ error: Error? = nil) {
+        let failure = error ?? CocoaError(.fileReadUnknown)
+        extensionContext?.cancelRequest(withError: failure)
     }
 }

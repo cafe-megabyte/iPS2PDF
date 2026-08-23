@@ -1,6 +1,6 @@
 import Foundation
 
 enum IncomingDocument {
-    case postScript(URL)
+    case conversionInput(URL)
     case joboptions(URL, LosslessJoboptionsDocument)
 }

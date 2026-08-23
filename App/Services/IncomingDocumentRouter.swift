@@ -15,16 +15,12 @@ struct IncomingDocumentRouter {
         let extensionMatches = stagedURL.pathExtension
             .caseInsensitiveCompare("joboptions") == .orderedSame
         let declaredTypeMatches = resourceValues.contentType?.conforms(to: .joboptions) == true
-        let data = try Data(contentsOf: stagedURL, options: [.mappedIfSafe])
-
-        do {
-            let document = try LosslessJoboptionsDocument(data: data)
-            return .joboptions(stagedURL, document)
-        } catch {
-            if extensionMatches || declaredTypeMatches {
-                throw error
-            }
-            return .postScript(stagedURL)
+        guard extensionMatches || declaredTypeMatches else {
+            return .conversionInput(stagedURL)
         }
+
+        let data = try Data(contentsOf: stagedURL, options: [.mappedIfSafe])
+        let document = try LosslessJoboptionsDocument(data: data)
+        return .joboptions(stagedURL, document)
     }
 }

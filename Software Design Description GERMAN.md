@@ -120,13 +120,11 @@ Ab diesem Zeitpunkt:
 
 ---
 
-# 5. „Öffnen mit iPS2PDF“
+# 5. Externe Übergaben
 
 ## 5.1 Grundprinzip
 
 Die App unterstützt die Übergabe von Dateien über den iOS-/iPadOS-Mechanismus **„Öffnen mit iPS2PDF“**.
-
-Eine separate Share Extension wird nicht implementiert.
 
 Die App akzeptiert dabei dieselben Eingaben wie über den internen Datei-Picker:
 
@@ -170,6 +168,20 @@ Die App zeigt einen modalen Hinweis mit einem Button:
 
 ---
 
+## 5.5 Markierter PostScript-Text über die Share Extension
+
+Für markierten Text existiert eine schlanke Share Extension. Sie akzeptiert genau Text, schreibt ihn als `SharedText.ps` in die gemeinsame App Group und aktiviert die Haupt-App über das registrierte URL-Schema `ips2pdf://share-pending`.
+
+Die Share Extension führt ausdrücklich keine Konvertierung aus. Sie enthält und linkt weder Ghostscript noch PDFKit und besitzt keinen eigenen Konvertierungshelper. Ihre sichtbare Oberfläche ist vollständig leer. Nach `viewDidAppear` und erfolgreicher Dateiablage wartet sie 550 ms. Danach ermittelt sie die öffentliche `UIWindowScene` ihrer sichtbaren Extension-Ansicht, beendet die Share-Anfrage und ruft erst im Completion-Handler von `completeRequest` die öffentliche Methode `UIScene.open(_:options:completionHandler:)` auf. Diese Reihenfolge verhindert, dass das Schließen der noch aktiven Share-Session eine bereits angeforderte App-Aktivierung verwirft.
+
+Die Haupt-App beansprucht die hinterlegte Datei genau einmal, kopiert sie in ein privates temporäres Staging-Verzeichnis und startet denselben Verarbeitungsworkflow wie bei allen anderen Eingaben. Läuft bereits eine Konvertierung, wird die Share-Übergabe still verworfen. Die eigentliche Ghostscript-Konvertierung wird von der Haupt-App an `iPS2PDFSecurity` delegiert. Nach erfolgreicher Konvertierung zeigt die Haupt-App das PDF automatisch an.
+
+App, Share Extension und Ghostscript-Extension besitzen dieselbe App Group. In ihr liegen ausschließlich der aktive Übergabe- bzw. Konvertierungsjob und keine dauerhaften Einstellungen, Joboptions oder ICC-Profile.
+
+Ist beim Aktivierungsversuch noch keine `UIWindowScene` verfügbar, bleibt die leere Extension-Ansicht sichtbar und kann über die Systemgeste geschlossen werden. Lehnt das System das Öffnen erst nach dem Beenden der Share-Anfrage ab, bleibt die bereits abgelegte Übergabe für einen manuellen App-Start erhalten.
+
+---
+
 # 6. Einheitliche Behandlung aller Eingaben
 
 Es existiert keine Dateityperkennung vor Ghostscript.
@@ -195,10 +207,16 @@ Wait for startup cleanup if necessary
 Clear current working directory
       |
       v
-Copy source file
+Copy source file into the private app workspace
       |
       v
-Run Ghostscript
+Stage input and active Joboptions in ConversionInput
+      |
+      v
+Trigger Ghostscript through XPC
+      |
+      v
+Read output.pdf from ConversionOutput
       |
       v
 Validate generated PDF
@@ -211,9 +229,9 @@ Die Dateiendung beeinflusst die Ghostscript-Argumente nicht.
 
 ---
 
-# 7. Arbeitsverzeichnis
+# 7. Arbeits- und Übergabeverzeichnisse
 
-## 7.1 Genau ein Arbeitsverzeichnis
+## 7.1 Privates Arbeitsverzeichnis der App
 
 Die App verwendet genau ein Arbeitsverzeichnis:
 
@@ -234,11 +252,23 @@ Es wird keine Historie geführt.
 
 Es werden keine alten Konvertierungen gesammelt.
 
+Zusätzlich enthält die gemeinsame App Group genau drei app-eigene, flüchtige Verzeichnisse:
+
+```text
+ShareInbox/       Share Extension → Haupt-App
+ConversionInput/ Haupt-App → Ghostscript-Extension
+ConversionOutput/Ghostscript-Extension → Haupt-App
+```
+
+Es gibt keine Job-UUID, keine Queue und keine parallelen Jobs. Die Haupt-App legt `ConversionInput/ready` erst nach vollständiger Vorbereitung des Jobs an. Die XPC-Nachricht startet lediglich die Verarbeitung und enthält keinen Dokumentinhalt.
+
+Dauerhafte Joboptions und ICC-Profile liegen ausschließlich im privaten Application-Support-Verzeichnis der Haupt-App. Für einen aktiven Job benötigte Daten werden nach `ConversionInput` kopiert.
+
 ---
 
 ## 7.2 Bereinigung beim App-Start
 
-Beim Start der App wird das Verzeichnis `Current conversion` asynchron bereinigt.
+Beim Start der App werden das Verzeichnis `Current conversion` und veraltete app-eigene Inhalte der App Group asynchron bereinigt. Eine bereits vollständig bereitgestellte `ShareInbox` bleibt erhalten, bis die App sie beansprucht. Systemverwaltete Einträge des App-Group-Containers werden nie gelöscht.
 
 Die Benutzeroberfläche bleibt währenddessen bedienbar.
 
@@ -278,7 +308,7 @@ Beginnt bei geöffnetem PDF-Viewer eine neue Konvertierung, gilt:
 
 ## 7.5 Bereinigung nach Fehlern
 
-Nach einem Fehler während Dateiübernahme oder Konvertierung wird das Arbeitsverzeichnis vollständig bereinigt, bevor der Fehlerzustand abgeschlossen wird.
+Nach einem Fehler während Dateiübernahme oder Konvertierung werden das private Arbeitsverzeichnis und alle app-eigenen Übergabeverzeichnisse vollständig bereinigt, bevor der Fehlerzustand abgeschlossen wird. Dies gilt auch dann, wenn der Ghostscript-Prozess unerwartet stirbt.
 
 Scheitert eine Dateiübernahme teilweise, wird ebenfalls versucht, das gesamte Arbeitsverzeichnis wieder zu bereinigen.
 
@@ -336,7 +366,7 @@ Temporary:
 Current conversion/Schöne Datei.test.xyz
 ```
 
-Es erfolgt keine generische Umbenennung in `input`.
+Im privaten Arbeitsverzeichnis erfolgt keine generische Umbenennung in `input`. Für die anschließende Übergabe an die Ghostscript-Extension wird dieselbe Datei unverändert nach `ConversionInput/input` kopiert. Der Inhalt wird weder klassifiziert noch verändert.
 
 ---
 
@@ -392,26 +422,20 @@ PostScript Input
 
 ## 9.3 Eingabedatei mit PDF-Endung
 
-Ist die letzte Dateiendung bereits `pdf`, wird sie nicht ersetzt.
-
-Stattdessen wird eine zusätzliche `.pdf`-Endung angehängt.
-
-Die Prüfung erfolgt case-insensitive.
+Ist die letzte Dateiendung bereits `pdf`, bleibt der abgeleitete Ausgabename unverändert. Eingabe und Ausgabe kollidieren trotzdem nicht, weil die Ausgabe in einem eigenen Unterverzeichnis liegt. Ghostscript schreibt die PDF dabei vollständig neu.
 
 Beispiele:
 
 ```text
 Dokument.pdf
-→ Dokument.pdf.pdf
+→ Dokument.pdf
 
 Dokument.PDF
-→ Dokument.PDF.pdf
+→ Dokument.pdf
 
 Dokument.Pdf
-→ Dokument.Pdf.pdf
+→ Dokument.pdf
 ```
-
-Damit können Eingabe- und Ausgabedatei niemals allein aufgrund der PDF-Endung denselben Pfad erhalten.
 
 ---
 
@@ -698,11 +722,11 @@ Ghostscript unterstützt dafür explizit stdio-Callback-Funktionen.
 
 Bei einem Ghostscript-Fehler gilt:
 
-1. Ist `stderr` nicht leer, werden dessen erste 300 Zeichen verwendet.
-2. Ist `stderr` leer, werden die ersten 300 Zeichen von `stdout` verwendet.
-3. Längere Ausgabe wird nach 300 Zeichen abgeschnitten.
-4. Eine gekürzte Ausgabe wird entsprechend kenntlich gemacht.
-5. Zusätzlich wird der numerische Ghostscript-Return-Code angezeigt.
+1. Die Bytes aus `stdout` und `stderr` werden in der Reihenfolge ihrer Callback-Aufrufe unverändert in `ConversionOutput/journal.log` geschrieben.
+2. Die App fügt keine Präfixe, Start-/End-Markierungen oder sonstigen eigenen Logging-Zeilen in dieses Journal ein.
+3. Das Journal ist als Schutz vor unbegrenztem Wachstum auf 1 MiB begrenzt. Bis zu dieser Sicherheitsgrenze bleibt die Ghostscript-Ausgabe bytegetreu erhalten.
+4. Der Fehlerdialog zeigt die letzten 2.000 Zeichen der erfassten Diagnose; die Detailansicht zeigt das vollständig erfasste Journal.
+5. Zusätzlich wird der numerische Ghostscript-Return-Code angezeigt, sofern Ghostscript einen geliefert hat.
 
 Der Ghostscript-Text wird nicht übersetzt oder semantisch interpretiert.
 
@@ -822,7 +846,7 @@ Die genaue interne Pfadstruktur darf technisch angepasst werden, solange inkompa
 
 ## 16.7 Inkrementeller Aggregate-Build
 
-Ein gemeinsames Xcode-Aggregate-Target `Build Ghostscript` ist eine Dependency sowohl des App-Targets als auch der Share Extension. Dadurch wird eine Ghostscript-Variante innerhalb eines Build-Graphen höchstens einmal gebaut, auch wenn Xcode die beiden nativen Targets parallel verarbeitet.
+Ein gemeinsames Xcode-Aggregate-Target `Build Ghostscript` ist eine Dependency des Haupt-App-Konvertierungshelpers `iPS2PDFSecurity`. Die Share Extension besitzt keine Abhängigkeit auf dieses Aggregate-Target.
 
 Das Build-Script deklariert mindestens folgende Inputs:
 
@@ -855,11 +879,11 @@ Ein Clean oder das Löschen von Derived Data entfernt die erzeugten Artefakte we
 
 ## 16.9 Statisches Linken
 
-Die erzeugte `libgs.a` wird vor dem Linken bereitgestellt und aus demselben gemeinsamen Artefaktverzeichnis statisch in das App-Executable und das Executable der Share Extension gelinkt.
+Die erzeugte `libgs.a` wird vor dem Linken bereitgestellt und aus dem gemeinsamen Artefaktverzeichnis statisch ausschließlich in das Executable von `iPS2PDFSecurity` gelinkt.
 
 Die statische Library wird nicht nachträglich als ungenutzte `.a`-Datei in das fertige App-Bundle kopiert.
 
-Die beiden nativen Targets besitzen jeweils eine kleine, inkrementelle Build-Phase `Install Ghostscript Resources`. Sie kopiert ausschließlich `PDFA_def.ps` und `srgb.icc` aus dem gemeinsamen Artefaktverzeichnis in das jeweilige Bundle. Der ressourcenspezifische Kopiervorgang ist vom Ghostscript-Compiler-Build getrennt.
+Der Helper besitzt eine kleine, inkrementelle Build-Phase `Install Ghostscript Resources`. Sie kopiert die benötigten Ghostscript-Ressourcen aus dem gemeinsamen Artefaktverzeichnis in sein Bundle. Der ressourcenspezifische Kopiervorgang ist vom Ghostscript-Compiler-Build getrennt. Das Bundle der Share Extension enthält keine Ghostscript-Ressourcen.
 
 ---
 
@@ -1014,13 +1038,34 @@ release external file access
 derive final PDF filename
         |
         v
-create new Ghostscript instance
+clear ConversionInput and ConversionOutput
+        |
+        v
+copy source unchanged to ConversionInput/input
+        |
+        v
+copy active Joboptions and required user profiles to ConversionInput
+        |
+        v
+publish ConversionInput/ready
+        |
+        v
+send scalar control metadata through XPC
+        |
+        v
+create new Ghostscript instance in iPS2PDFSecurity
         |
         v
 run Ghostscript
         |
         v
 destroy Ghostscript instance
+        |
+        v
+publish ConversionOutput/output.pdf and journal.log
+        |
+        v
+copy the PDF into the private app workspace
         |
         v
 validate output
@@ -1234,21 +1279,9 @@ Die technische Ghostscript-Diagnose selbst wird nicht übersetzt.
 
 ## 24.2 Ghostscript-Diagnose
 
-Priorität:
+`stdout` und `stderr` werden nicht getrennt priorisiert. Beide Ghostscript-Streams gelangen in der Reihenfolge ihrer Callback-Aufrufe unverändert in dasselbe Journal. Der Fehlerdialog zeigt dessen letzte 2.000 Zeichen, während die Detailansicht die vollständig erfasste Diagnose bis zur Sicherheitsgrenze von 1 MiB enthält.
 
-```text
-stderr available?
-    |
-   yes --> first 300 characters of stderr
-    |
-    no
-    |
-stdout available?
-    |
-   yes --> first 300 characters of stdout
-```
-
-Danach wird, soweit vorhanden, der numerische Ghostscript-Return-Code ergänzt.
+Soweit vorhanden, wird der numerische Ghostscript-Return-Code separat ergänzt. Dieser Zusatz verändert den Ghostscript-Text selbst nicht.
 
 ---
 
@@ -1387,10 +1420,15 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 - Ordner werden nicht akzeptiert.
 - Der Datei-Picker erlaubt nur eine Datei.
 - „Öffnen mit iPS2PDF“ wird unterstützt.
-- Eine separate Share Extension existiert nicht.
+- Markierter PostScript-Text kann über die Share Extension an die Haupt-App übergeben werden.
+- Die Share Extension konvertiert nicht und enthält weder Ghostscript noch PDFKit.
 - Mehrfachübergaben werden vollständig abgelehnt.
 - Jede akzeptierte Datei wird ohne Typ-/Inhaltsprüfung an denselben Ghostscript-Workflow gegeben.
-- Es gibt genau ein Arbeitsverzeichnis `Current conversion`.
+- Es gibt genau ein privates Arbeitsverzeichnis `Current conversion` und genau die drei flüchtigen App-Group-Verzeichnisse `ShareInbox`, `ConversionInput` und `ConversionOutput`.
+- App, Share Extension und Ghostscript-Extension verwenden dieselbe App Group.
+- Die App Group enthält keine dauerhaften Joboptions, Einstellungen oder ICC-Profile.
+- XPC überträgt nur Steuerdaten und keinen Dateiinhalt.
+- Es gibt keine Job-UUID und keine parallelen Jobs.
 - Das Arbeitsverzeichnis wird beim App-Start asynchron bereinigt.
 - Das Arbeitsverzeichnis wird vor jeder neuen Dateiübernahme geleert.
 - Jede externe Datei wird vor Ghostscript lokal kopiert.
@@ -1400,7 +1438,7 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 - `.pdf` wird immer klein geschrieben.
 - Eine vorhandene Nicht-PDF-Endung wird ersetzt.
 - Bei fehlender Endung wird `.pdf` angehängt.
-- Bei vorhandener PDF-Endung wird zusätzlich `.pdf` angehängt.
+- Bei vorhandener PDF-Endung bleibt der Ausgabename auf `.pdf`; Ghostscript schreibt die Datei im getrennten Ausgabeverzeichnis neu.
 - Nach Annahme einer konkreten Datei wird die UI sofort deaktiviert.
 - Der 0,5-Sekunden-Timer startet sofort mit Annahme der Datei.
 - Nach 0,5 Sekunden erscheint bei noch laufendem Vorgang das abgedunkelte Warte-Overlay.
@@ -1409,8 +1447,8 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 - Die Ghostscript-Shellskripte werden unter iOS nicht ausgeführt.
 - Ihre relevante Argumentsemantik wird in der Bridge nachgebildet.
 - Für jede Konvertierung wird eine neue Ghostscript-Instanz erzeugt.
-- `stderr` bzw. ersatzweise `stdout` wird für Fehlerdiagnosen erfasst.
-- Maximal die ersten 300 Diagnosezeichen werden angezeigt.
+- Ghostscripts `stderr` und `stdout` werden unverändert für Fehlerdiagnosen erfasst; eigene Start-/End-Markierungen werden nicht ergänzt.
+- Der Fehlerdialog zeigt die letzten 2.000 Diagnosezeichen; die Detailansicht enthält die vollständig erfasste Ausgabe bis zur Sicherheitsgrenze von 1 MiB.
 - Der Ghostscript-Return-Code wird angezeigt, sofern vorhanden.
 - Ghostscript wird über das offizielle Upstream-iOS-Buildscript gebaut.
 - Die App besitzt kein separates eigenes Ghostscript-Buildsystem.
@@ -1420,8 +1458,8 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 - Ein gemeinsames Aggregate-Target baut jede benötigte Ghostscript-Variante innerhalb eines Build-Graphen höchstens einmal.
 - Xcodes Input-/Output-Dependency-Analysis entscheidet über einen Ghostscript-Rebuild.
 - Ein Austausch des deklarierten Ghostscript-Archivs löst automatisch einen Neuaufbau aus.
-- `libgs.a` wird aus einem gemeinsamen Artefaktverzeichnis statisch in App und Share Extension gelinkt.
-- PDF/A-Ressourcen werden durch getrennte, inkrementelle Installationsphasen in beide Bundles kopiert.
+- `libgs.a` wird aus einem gemeinsamen Artefaktverzeichnis statisch ausschließlich in `iPS2PDFSecurity` gelinkt.
+- Ghostscript- und PDF/A-Ressourcen werden ausschließlich im Konvertierungshelper installiert.
 - Eine erfolgreiche Konvertierung erzeugt eine existierende, nicht leere und von PDFKit lesbare PDF-Datei.
 - Das PDF wird anschließend automatisch vollflächig angezeigt.
 - Die erste PDF-Seite wird initial vollständig angezeigt; PDFKit unterstützt anschließend Scrollen und Pinch-to-Zoom.
@@ -1454,14 +1492,12 @@ Nicht Bestandteil der ersten Version sind:
 - parallele Konvertierung
 - Conversion Queue
 - Mehrfensterbetrieb
-- Share Extension
 - Dateityp- oder Inhaltsanalyse vor Ghostscript
 - eigene Parser für Shell-Skripte
 - eigene Parser für Dateinamen
 - eigene manuelle Ghostscript-Source-Dateilisten
 - eigener Ghostscript-Buildsystem-Ersatz
 - weitere PDF-Versionen
-- vom Benutzer konfigurierbare Ghostscript-Optionen
 - Benutzerabbruch einer laufenden Konvertierung
 - garantierte Hintergrundkonvertierung
 
@@ -1491,10 +1527,28 @@ Clear Current conversion
 Copy input locally
             |
             v
-Ghostscript conversion
+Clear ConversionInput and ConversionOutput
+            |
+            v
+Stage input, active Joboptions and profiles in ConversionInput
+            |
+            v
+Publish ready marker
+            |
+            v
+Trigger Ghostscript extension through control-only XPC
+            |
+            v
+Ghostscript reads ConversionInput and publishes ConversionOutput/output.pdf
             |
             v
 Validate PDF
+            |
+            v
+Copy PDF into the private Output directory
+            |
+            v
+Clear transient App Group job data
             |
             v
 Present PDF

@@ -54,32 +54,31 @@ actor WorkingDirectoryService {
         }
     }
 
-    func removeDropStagingDirectory(_ stagingDirectoryURL: URL) {
-        let expectedParent = fileManager.temporaryDirectory
-            .appendingPathComponent("Incoming drops", isDirectory: true)
-            .standardizedFileURL
+    func removeStagingDirectory(_ stagingDirectoryURL: URL) {
+        let expectedParents = ["Incoming drops", "Incoming shares"].map {
+            fileManager.temporaryDirectory
+                .appendingPathComponent($0, isDirectory: true)
+                .standardizedFileURL
+        }
+        let actualParent = stagingDirectoryURL.standardizedFileURL.deletingLastPathComponent()
 
-        guard stagingDirectoryURL.standardizedFileURL.deletingLastPathComponent() == expectedParent else {
+        guard expectedParents.contains(actualParent) else {
             return
         }
 
         try? fileManager.removeItem(at: stagingDirectoryURL)
     }
 
-    func outputURL(for localSourceURL: URL) -> URL {
-        var outputURL = localSourceURL
-        let extensionValue = outputURL.pathExtension
-
-        if extensionValue.isEmpty {
-            outputURL.appendPathExtension("pdf")
-        } else if extensionValue.caseInsensitiveCompare("pdf") == .orderedSame {
-            outputURL.appendPathExtension("pdf")
-        } else {
-            outputURL.deletePathExtension()
-            outputURL.appendPathExtension("pdf")
+    func outputURL(for localSourceURL: URL) throws -> URL {
+        let outputDirectoryURL = directoryURL.appendingPathComponent("Output", isDirectory: true)
+        do {
+            try fileManager.createDirectory(at: outputDirectoryURL, withIntermediateDirectories: true)
+        } catch {
+            throw ConversionFailure.workingDirectoryCleanup
         }
-
-        return outputURL
+        return outputDirectoryURL
+            .appendingPathComponent(localSourceURL.deletingPathExtension().lastPathComponent)
+            .appendingPathExtension("pdf")
     }
 
     func writeJoboptionsSnapshot(_ data: Data) throws -> URL {

@@ -117,6 +117,16 @@
         }
       }
     },
+    "Allow transparency operators" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenzoperatoren zulassen"
+          }
+        }
+      }
+    },
     "Allowed range: %@ - %@" : {
       "localizations" : {
         "de" : {
@@ -129,16 +139,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Allowed range: %1$@ - %2$@"
-          }
-        }
-      }
-    },
-    "Allow transparency operators" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Transparenzoperatoren zulassen"
           }
         }
       }
@@ -280,7 +280,14 @@
       }
     },
     "Blend conversion strategy" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strategie zur Verlaufskonvertierung"
+          }
+        }
+      }
     },
     "Bundled" : {
       "localizations" : {
@@ -352,6 +359,7 @@
       }
     },
     "Close" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -505,6 +513,7 @@
       }
     },
     "Conversion failed" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -981,6 +990,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ghostscript could not create an interpreter instance."
+          }
+        }
+      }
+    },
+    "error_ghostscript_process_terminated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ghostscript-Prozess wurde unerwartet beendet."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Ghostscript process terminated unexpectedly."
           }
         }
       }
@@ -1585,16 +1610,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Name"
-          }
-        }
-      }
-    },
-    "No text was provided to iPS2PDF." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für iPS2PDF wurde kein Text bereitgestellt."
           }
         }
       }
@@ -2284,6 +2299,7 @@
       }
     },
     "Preparing PostScript…" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2403,22 +2419,22 @@
         }
       }
     },
-    "Preserved; ignored by Ghostscript." : {
+    "Preserved; ignored by Ghostscript" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wird beibehalten, von Ghostscript jedoch ignoriert."
+            "value" : "Wird beibehalten, von Ghostscript jedoch ignoriert"
           }
         }
       }
     },
-    "Preserved; not interpreted by Ghostscript pdfwrite." : {
+    "Preserved; not interpreted by Ghostscript pdfwrite" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wird beibehalten, von Ghostscript pdfwrite jedoch nicht ausgewertet."
+            "value" : "Wird beibehalten, von Ghostscript pdfwrite jedoch nicht ausgewertet"
           }
         }
       }
@@ -2455,6 +2471,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Processing"
+          }
+        }
+      }
+    },
+    "Random numbers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zufallszahlen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Random numbers"
           }
         }
       }
@@ -2548,22 +2580,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joboptions sichern unter"
-          }
-        }
-      }
-    },
-    "Random numbers" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zufallszahlen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Random numbers"
           }
         }
       }
@@ -2810,12 +2826,12 @@
         }
       }
     },
-    "The shared item could not be read as text." : {
+    "The shared App Group container is unavailable." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Das geteilte Element konnte nicht als Text gelesen werden."
+            "value" : "Der gemeinsame App-Group-Container ist nicht verfügbar."
           }
         }
       }

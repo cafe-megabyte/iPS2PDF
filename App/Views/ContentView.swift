@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     @ObservedObject var viewModel: ConversionViewModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showsBack = false
 
     var body: some View {
@@ -57,7 +58,14 @@ struct ContentView: View {
             }
         }
         .onOpenURL { url in
-            viewModel.handleIncomingFiles([url])
+            viewModel.handleOpenURL(url)
+        }
+        .task {
+            viewModel.handlePendingShareDocumentIfAvailable()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            viewModel.handlePendingShareDocumentIfAvailable()
         }
         .onChange(of: viewModel.settingsPresentationToken) { _, _ in
             setBackVisible(true)

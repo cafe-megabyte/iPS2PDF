@@ -1,0 +1,18 @@
+import Foundation
+
+/// Serializable ICC profile metadata returned by the Ghostscript extension.
+struct GhostscriptExtensionProfileMetadata: Codable, Sendable {
+    let file: String
+    let name: String
+    let profileClass: String
+    let colorSpace: String
+    let connectionSpace: String
+
+    init(record: ICCProfileRecord) {
+        file = record.url.lastPathComponent
+        name = record.name
+        profileClass = record.profileClass
+        colorSpace = record.colorSpace
+        connectionSpace = record.connectionSpace
+    }
+}

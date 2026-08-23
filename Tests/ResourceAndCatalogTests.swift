@@ -28,6 +28,10 @@ final class ResourceAndCatalogTests: XCTestCase {
         for category in DistillerCategory.allCases where category != .additional {
             XCTAssertFalse(DistillerOptionCatalog.options(in: category).isEmpty, category.rawValue)
         }
+        for option in DistillerOptionCatalog.options {
+            XCTAssertFalse(option.localizedHelp.hasSuffix("."), option.key)
+            XCTAssertFalse(option.localizedCompatibilityNote?.hasSuffix(".") == true, option.key)
+        }
     }
 
     func testStandardCompatibilityLocksAreDefined() {
