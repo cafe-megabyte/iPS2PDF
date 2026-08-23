@@ -358,17 +358,6 @@
         }
       }
     },
-    "Close" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schließen"
-          }
-        }
-      }
-    },
     "CMYK" : {
       "shouldTranslate" : false
     },
@@ -508,17 +497,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konvertierung"
-          }
-        }
-      }
-    },
-    "Conversion failed" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Konvertierung fehlgeschlagen"
           }
         }
       }
@@ -2298,17 +2276,6 @@
         }
       }
     },
-    "Preparing PostScript…" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PostScript wird vorbereitet…"
-          }
-        }
-      }
-    },
     "Preserve" : {
       "localizations" : {
         "de" : {
@@ -2751,17 +2718,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Datei enthält kein statisches Distiller-Parameterwörterbuch."
-          }
-        }
-      }
-    },
-    "The file does not contain a valid ICC profile header." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die Datei enthält keinen gültigen ICC-Profil-Header."
           }
         }
       }
