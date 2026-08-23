@@ -269,6 +269,7 @@
 				E00000000000000000000003 /* Install Joboptions and Profiles */,
 				F6000000000000000000000D /* Embed Foundation Extensions */,
 				B60000000000000000000004 /* Embed App Extensions */,
+				A60000000000000000000006 /* Remove Spurious Extension Point Output */,
 			);
 			buildRules = (
 			);
@@ -448,6 +449,22 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A60000000000000000000006 /* Remove Spurious Extension Point Output */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(EXTENSIONS_FOLDER_PATH)/$(PRODUCT_NAME).appexpt",
+			);
+			name = "Remove Spurious Extension Point Output";
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/spurious-extension-point-output-cleanup.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Xcode 27's ExtensionPointExtractor declares a relative phantom output and\n# creates these empty directories in PROJECT_DIR on the first build. rmdir\n# intentionally leaves anything nonempty untouched.\nrmdir \"${PROJECT_DIR}/${WRAPPER_NAME}/Extensions\" \"${PROJECT_DIR}/${WRAPPER_NAME}\" 2>/dev/null || true\ntouch \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+		};
 		C60000000000000000000001 /* Generate Build Number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
