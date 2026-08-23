@@ -19,7 +19,7 @@ struct SettingsNavigationLabel: View {
             title
         } icon: {
             Image(systemName: systemImage)
-                .foregroundStyle(Color(uiColor: UIColor.appTint))
+                .foregroundStyle(Color.appTint)
         }
     }
 }

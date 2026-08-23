@@ -2,7 +2,8 @@ import SwiftUI
 
 struct ShareRootView: View {
     var body: some View {
-        Color(uiColor: .systemBackground)
+        Rectangle()
+            .fill(.background)
             .ignoresSafeArea()
     }
 }

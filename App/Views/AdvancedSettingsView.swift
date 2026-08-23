@@ -51,7 +51,7 @@ struct AdvancedSettingsView: View {
                             Text("Manage …")
                         } icon: {
                             Image(systemName: "folder")
-                                .foregroundStyle(Color(uiColor: UIColor.appTint))
+                                .foregroundStyle(Color.appTint)
                         }
                         .font(.headline)
                         .padding(.vertical, 6)
@@ -80,7 +80,7 @@ struct AdvancedSettingsView: View {
                         Text("Manage …")
                     } icon: {
                         Image(systemName: "folder")
-                            .foregroundStyle(Color(uiColor: UIColor.appTint))
+                            .foregroundStyle(Color.appTint)
                     }
                     .font(.headline)
                     .tag(BackSelection.management)

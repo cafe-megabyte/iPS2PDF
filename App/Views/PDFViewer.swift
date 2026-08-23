@@ -1,6 +1,5 @@
 import PDFKit
 import SwiftUI
-import UIKit
 
 struct PDFViewer: View {
     let url: URL

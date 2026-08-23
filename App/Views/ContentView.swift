@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import UIKit
 import UniformTypeIdentifiers
 
 struct ContentView: View {
