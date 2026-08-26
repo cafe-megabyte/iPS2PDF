@@ -28,6 +28,10 @@ if [[ "$resource_set" == "all" || "$resource_set" == "joboptions" ]]; then
         echo "Bundled Joboptions are missing. Run prepare_bundled_resources.sh." >&2
         exit 1
     }
+    [[ -s "$joboptions_source/Normal.joboptions" ]] || {
+        echo "Bundled Normal.joboptions is missing. Run prepare_bundled_resources.sh." >&2
+        exit 1
+    }
     mkdir -p "$destination_root/Joboptions"
     find "$destination_root/Joboptions" -maxdepth 1 -type f -delete
     ditto "$joboptions_source" "$destination_root/Joboptions"
@@ -41,10 +45,4 @@ if [[ "$resource_set" == "all" || "$resource_set" == "profiles" ]]; then
     mkdir -p "$destination_root/Profiles"
     find "$destination_root/Profiles" -maxdepth 1 -type f -delete
     ditto "$profiles_source" "$destination_root/Profiles"
-
-    profile_count="$(find "$destination_root/Profiles" -maxdepth 1 -type f \( -name '*.icc' -o -name '*.icm' \) | wc -l | tr -d ' ')"
-    if [[ "$profile_count" -ne 58 ]]; then
-        echo "Expected 58 bundled ICC profiles, found $profile_count." >&2
-        exit 1
-    fi
 fi

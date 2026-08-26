@@ -1,6 +1,8 @@
 # iPS2PDF
 
-iPS2PDF is a SwiftUI app for iOS and iPadOS that converts files to PDF with a statically linked Ghostscript library. A file can be selected inside the app or sent to it through **Open with iPS2PDF**. Selected PostScript text can also be handed to the lightweight Share Extension, which opens the containing app and delegates conversion to its Ghostscript helper. The app copies the input into its temporary workspace, stages the active job in one shared App Group, validates the generated PDF with PDFKit, and presents it for viewing and sharing.
+iPS2PDF is a SwiftUI app for iOS, iPadOS, and MacOS that converts files to PDF with a statically linked Ghostscript library. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Open**. Every MacOS conversion gets an independent PDF document window.
+
+Ghostscript never runs in either main app process. iOS delegates it to the existing ExtensionKit helper; MacOS embeds a private XPC service. The MacOS Quick Look extensions execute Ghostscript directly through the same bridge because they cannot use the app's XPC service. The app and the relevant helper stage exactly one current job in their shared App Group, while a FIFO coordinator serializes requests from multiple MacOS document windows. XPC carries control metadata, not document payloads.
 
 The input is intentionally not filtered by filename extension or content. Ghostscript decides whether a file can be processed.
 
@@ -18,20 +20,96 @@ For example, the tested archive is:
 Vendor/Ghostscript/ghostscript-10.07.1.tar.gz
 ```
 
-The `GHOSTSCRIPT_ARCHIVE_PATH` build setting of the `Build Ghostscript` target must point to that file. Update the setting when an upgrade changes the archive filename.
+The `GHOSTSCRIPT_ARCHIVE_PATH` build settings of the Ghostscript aggregate targets must point to that file. Update the settings when an upgrade changes the archive filename.
 
-The archive does not need to be unpacked manually. The `Build Ghostscript` aggregate target extracts it into a disposable directory, creates a patched working copy of Ghostscript's official iOS build script, and publishes the static library, public headers, and PDF/A resources under `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`. The main app's `iPS2PDFSecurity` helper depends on that aggregate target. Xcode input/output dependency analysis reuses unchanged artifacts on subsequent builds; changing the source archive or build script rebuilds them automatically. Simulator and device variants remain separate. Deleting the build folder still forces a complete rebuild.
+The archive does not need to be unpacked manually and no unpacked Ghostscript tree belongs in the repository. `Build Ghostscript` extracts it into a disposable directory, creates a patched working copy of Ghostscript's official iOS build script, and publishes the iOS artifacts under `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`. `Build Ghostscript MacOS` does the same with the upstream `toolbin/macos_build_uni_dylib.sh`: it copies and applies the small deterministic `Scripts/ghostscript_MacOS_static.patch`, builds static `arm64` and `x86_64` slices with the selected Xcode SDK and a MacOS 15 deployment target, then combines them into a universal `libgs.a`. The original `.tar.gz` remains unchanged.
 
-The `iPS2PDFSecurity` Ghostscript helper links the generated `libgs.a` and installs the required Ghostscript resources in its bundle. The app, Share Extension, and Ghostscript helper use the same App Group. It contains only the current handoff and conversion job in `ShareInbox`, `ConversionInput`, and `ConversionOutput`; XPC carries control metadata, not document payloads. Persistent Joboptions and ICC profiles remain in the main app's private Application Support directory. The Share Extension neither links Ghostscript/PDFKit nor contains conversion settings or conversion resources; it only transfers text and activates the main app.
+Xcode input/output dependency analysis and the build scripts' content fingerprints reuse unchanged artifacts. Changing the archive, build script, patch, SDK, or deployment target rebuilds the affected variant; deleting Derived Data forces a complete rebuild.
 
-Open `iPS2PDF.xcodeproj`, select the `iPS2PDF` scheme and the desired iOS destination, then build with **Command-B**. The first build takes longer because it compiles Ghostscript; subsequent builds reuse the generated library.
+The iOS `iPS2PDFSecurity` helper links the generated iOS `libgs.a` as before. On MacOS, `GhostscriptRuntime.framework` alone links the universal `libgs.a`; the app, XPC service, Preview Extension, and Thumbnail Extension dynamically link that framework. The app embeds exactly one framework copy under `Contents/Frameworks`. All bundled Joboptions, ICC profiles, and Ghostscript definition files are installed only in the framework resources. The App Group contains only the current handoff and conversion job in `ShareInbox`, `ConversionInput`, and `ConversionOutput`. Persistent user Joboptions and ICC profiles remain in the main app's private Application Support directory. The Share Extension is iOS-only; the MacOS app does not embed it.
+
+Open `iPS2PDF.xcodeproj` and select either the `iPS2PDF iOS` scheme for iOS/iPadOS or `iPS2PDF MacOS` for MacOS. The first build takes longer because it compiles Ghostscript; subsequent builds reuse the generated library.
+
+The MacOS app and XPC service use the existing `group.de.cafe-megabyte.iPS2PDF` App Group. Their bundle identifiers and App Group access must be registered for the selected development team so Xcode can create valid development or distribution profiles. A code-signing identity is also required for an end-to-end sandboxed run.
+
+## MacOS Quick Look
+
+The Preview and Thumbnail Extensions declare only `com.adobe.postscript` and `com.adobe.encapsulated-postscript`. Both use the bundled `Normal.joboptions` and bundled ICC profiles from `GhostscriptRuntime.framework`; they do not access user profiles, user Joboptions, the App Group, or the XPC service.
+
+The Preview Extension returns a PDF containing every page. The Thumbnail Extension asks Ghostscript for page 1 only, then lets Core Graphics draw that PDF page at the requested thumbnail size. Both paths extract the effective `AutoPositionEPSFiles` value from the Joboptions. When it is `true`, the bridge adds `-dEPSCrop`, so EPS output respects its bounding box. The same extraction and bridge behavior applies to normal app conversions on iOS and MacOS.
+
+## Project organization
+
+All compiled product sources and app resources live under the single physical `Sources` directory. Xcode's navigator mirrors the physical hierarchy with folder-backed structural groups and blue, file-system-synchronized component folders:
+
+```text
+Sources/
+├── Shared/
+│   ├── AppCore/
+│   │   ├── Conversion/
+│   │   ├── Incoming/
+│   │   ├── Joboptions/
+│   │   ├── Models/
+│   │   └── Storage/
+│   ├── AppUI/
+│   ├── GhostscriptClient/
+│   ├── GhostscriptRuntime/
+│   │   ├── GhostscriptBridge/
+│   │   ├── Profiles/
+│   │   ├── RequestHandling/
+│   │   └── Resources/
+│   ├── IPC/
+│   ├── MacOSGhostscriptRuntime/
+│   └── Resources/
+└── Targets/
+    ├── iOSApp/
+    ├── iOSShareExtension/
+    ├── iOSGhostscriptExtension/
+    ├── MacOSApp/
+    ├── MacOSGhostscriptRuntime/
+    ├── MacOSGhostscriptXPC/
+    ├── MacOSQuickLookPreview/
+    └── MacOSThumbnailExtension/
+BuildSupport/
+└── Targets/        # Info.plist and entitlements, not target members
+Tests/
+├── Unit/
+└── Integration/
+```
+
+`Sources`, `Shared`, `AppCore`, `GhostscriptRuntime`, `IPC`, `Resources`, `Targets`, and `Tests` are stable structural groups backed by the corresponding directories. Their synchronized child folders are the build-membership units: additions and moves inside one of these blue folders follow the file system automatically. Selecting such a folder in Xcode's File inspector shows its complete target membership. Adding a new component requires adding one new synchronized folder reference; adding files below an existing component does not modify the project file.
+
+The shared component memberships are intentionally folder-granular:
+
+| Component | Consumers |
+| --- | --- |
+| `AppCore/Conversion`, `Incoming`, `Models` | iOS app, MacOS app, unit tests |
+| `AppCore/Joboptions` | iOS app, MacOS app, Quick Look, Thumbnail, unit tests |
+| `AppCore/Storage`, `AppUI`, `GhostscriptClient`, `Resources/App` | iOS app, MacOS app |
+| `GhostscriptRuntime/GhostscriptBridge` | iOS Ghostscript extension, MacOS runtime framework |
+| `GhostscriptRuntime/Profiles` | iOS Ghostscript extension, MacOS XPC, Quick Look, Thumbnail |
+| `GhostscriptRuntime/RequestHandling` | iOS Ghostscript extension, MacOS XPC |
+| `GhostscriptRuntime/Resources` | both apps, iOS Ghostscript extension, MacOS XPC, Quick Look, Thumbnail |
+| `IPC/AppGroup` | both apps, Share/Ghostscript helpers, unit tests |
+| `IPC/GhostscriptControl` | both apps and their Ghostscript helpers |
+| `IPC/iOSShare` | iOS app, Share extension, unit tests |
+| `IPC/MacOSXPC` | MacOS app, MacOS XPC |
+| `MacOSGhostscriptRuntime` | Quick Look, Thumbnail |
+
+Targets reference only the synchronized component folders they compile. The project uses neither source-name include/exclude filters, synchronized-folder membership exceptions, nor per-file source memberships. Each synchronized folder has exactly one place in the navigator, so Xcode does not need a `Recovered References` group. Each Swift file contains at most one top-level nominal type. Project-owned platform names consistently use `MacOS`; Apple-defined tokens such as `#if os(macOS)`, `SDKROOT = macosx`, and `MACOSX_DEPLOYMENT_TARGET` retain Apple's spelling.
+
+The project remains in the Xcode 26 project format and does not use Xcode 27-only synchronized-folder object types.
 
 ## Tested configuration
 
 - Ghostscript 10.07.1
-- Xcode 27.0, build 27A5237l
-- iPhone 17 Pro simulator with iOS 27.0
+- Project compatibility: Xcode 26
 - Deployment target: iOS/iPadOS 26.0 or newer
+- MacOS deployment target: MacOS 15.0 or newer
+- MacOS architectures: Apple silicon (`arm64`) and Intel (`x86_64`)
+- MacOS XPC service launch and request/reply handshake verified in a separate process
+- MacOS Preview Extension: all-page PDF output for PostScript and EPS
+- MacOS Thumbnail Extension: first-page output with EPS bounding-box cropping
 - Ghostscript sample: `examples/colorcir.ps`
 - Verified output: PDF 1.2, PDF 1.3, and PDF 1.4, validated with PDFKit
 

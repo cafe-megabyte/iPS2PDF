@@ -1,0 +1,147 @@
+import PDFKit
+import XCTest
+@testable import iPS2PDF
+
+/// Verifies conversion behavior across the app-to-extension boundary.
+final class GhostscriptExtensionIntegrationTests: XCTestCase {
+    func testSetTransparencyPdfmarkConvertsWhenAllowedByJoboptions() async throws {
+        let output = try await convert(allowTransparency: true)
+        let document = try XCTUnwrap(PDFDocument(data: output))
+        XCTAssertEqual(document.pageCount, 1)
+    }
+
+    func testSetTransparencyPdfmarkIsNotMappedWhenDisabledByJoboptions() async throws {
+        let enabled = try centerPixel(in: await convert(allowTransparency: true))
+        let disabled = try centerPixel(in: await convert(allowTransparency: false))
+
+        XCTAssertGreaterThan(enabled.blue, disabled.blue + 50)
+        XCTAssertLessThan(enabled.red, disabled.red - 50)
+    }
+
+    func testPDFInputIsRewrittenAsPDF() async throws {
+        let firstPDF = try await convert(allowTransparency: true)
+        let rewrittenPDF = try await convert(
+            input: firstPDF,
+            inputFileName: "Already.pdf",
+            allowTransparency: true
+        )
+
+        let document = try XCTUnwrap(PDFDocument(data: rewrittenPDF))
+        XCTAssertEqual(document.pageCount, 1)
+    }
+
+    func testAutoPositionEPSFilesAppliesTheEPSBoundingBox() async throws {
+        let cropped = try await convert(
+            input: Data(Self.boundedEPS.utf8),
+            inputFileName: "Bounded.eps",
+            allowTransparency: false,
+            autoPositionEPSFiles: true
+        )
+        let uncropped = try await convert(
+            input: Data(Self.boundedEPS.utf8),
+            inputFileName: "Bounded.eps",
+            allowTransparency: false,
+            autoPositionEPSFiles: false
+        )
+
+        let croppedBox = try mediaBox(in: cropped)
+        let uncroppedBox = try mediaBox(in: uncropped)
+        XCTAssertEqual(croppedBox.width, 100, accuracy: 0.1)
+        XCTAssertEqual(croppedBox.height, 200, accuracy: 0.1)
+        XCTAssertGreaterThan(uncroppedBox.width, croppedBox.width)
+        XCTAssertGreaterThan(uncroppedBox.height, croppedBox.height)
+    }
+
+    private func convert(allowTransparency: Bool) async throws -> Data {
+        try await convert(
+            input: Data(Self.transparencyPostScript.utf8),
+            inputFileName: "Transparency.ps",
+            allowTransparency: allowTransparency
+        )
+    }
+
+    private func convert(
+        input: Data,
+        inputFileName: String,
+        allowTransparency: Bool,
+        autoPositionEPSFiles: Bool = false
+    ) async throws -> Data {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iPS2PDF-Transparency-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let joboptionsURL = directory.appendingPathComponent("Transparency.joboptions")
+        let inputURL = directory.appendingPathComponent(inputFileName)
+        let outputURL = directory.appendingPathComponent("Transparency.pdf")
+        let allowValue = allowTransparency ? "true" : "false"
+        let autoPositionValue = autoPositionEPSFiles ? "true" : "false"
+        try Data(
+            "<< /AllowTransparency \(allowValue) /AutoPositionEPSFiles \(autoPositionValue) >> setdistillerparams\n".utf8
+        )
+            .write(to: joboptionsURL)
+        try input.write(to: inputURL)
+
+        try await GhostscriptExtensionClient().convert(
+            inputURL: inputURL,
+            outputURL: outputURL,
+            joboptionsURL: joboptionsURL,
+            standard: .none,
+            limitsEnabled: true,
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
+        )
+
+        return try Data(contentsOf: outputURL)
+    }
+
+    private func mediaBox(in data: Data) throws -> CGRect {
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        return try XCTUnwrap(document.page(at: 0)).bounds(for: .mediaBox)
+    }
+
+    private func centerPixel(in data: Data) throws -> (red: Int, green: Int, blue: Int) {
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        let page = try XCTUnwrap(document.page(at: 0))
+        let width = 200
+        let height = 200
+        var pixels = [UInt8](repeating: 255, count: width * height * 4)
+        try pixels.withUnsafeMutableBytes { bytes in
+            let context = try XCTUnwrap(CGContext(
+                data: bytes.baseAddress,
+                width: width,
+                height: height,
+                bitsPerComponent: 8,
+                bytesPerRow: width * 4,
+                space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ))
+            context.setFillColor(gray: 1, alpha: 1)
+            context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+            page.draw(with: .mediaBox, to: context)
+        }
+        let offset = ((height / 2) * width + (width / 2)) * 4
+        return (Int(pixels[offset]), Int(pixels[offset + 1]), Int(pixels[offset + 2]))
+    }
+
+    private static let transparencyPostScript = """
+    %!PS-Adobe-3.0
+    << /PageSize [200 200] >> setpagedevice
+    0 0 1 setrgbcolor
+    20 20 160 160 rectfill
+    [ /ca 0.5 /CA 0.5 /BM /Normal /SetTransparency pdfmark
+    1 0 0 setrgbcolor
+    60 60 100 100 rectfill
+    showpage
+    """
+
+    private static let boundedEPS = """
+    %!PS-Adobe-3.0 EPSF-3.0
+    %%BoundingBox: 10 20 110 220
+    %%HiResBoundingBox: 10 20 110 220
+    %%Pages: 1
+    0 0 1 setrgbcolor
+    10 20 100 200 rectfill
+    showpage
+    %%EOF
+    """
+}

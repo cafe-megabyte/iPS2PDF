@@ -1,0 +1,64 @@
+--- macos_build_uni_dylib.sh
++++ build_macos_gslib.patched.sh
+@@ -1,4 +1,5 @@
+ #!/bin/bash
++set -o pipefail
+ #
+ 
+ if [ ! -f base/version.mak ] ; then
+@@ -48,36 +49,29 @@
+     exit 1
+ fi
+ 
+-./configure CC="gcc -arch x86_64" CXX="g++ -arch x86_64" CCAUX="gcc -arch $native_arch" --without-x --host=$this_host --build=x86_64-apple-darwin --with-arch_h="arch/osx-x86-x86_64-ppc_arm64-gcc.h" 2>&1 | tee conflog_x86_64.txt || exit 1
++: "${IP2PDF_MACOSX_DEPLOYMENT_TARGET:?Missing MacOS deployment target}"
++: "${IP2PDF_MACOS_SDK:?Missing MacOS SDK name}"
++: "${IP2PDF_MACOS_OUTPUT:?Missing output library path}"
++sdk_path=$(xcrun --sdk "$IP2PDF_MACOS_SDK" --show-sdk-path) || exit 1
++target_clang=$(xcrun --sdk "$IP2PDF_MACOS_SDK" --find clang) || exit 1
++target_clangxx=$(xcrun --sdk "$IP2PDF_MACOS_SDK" --find clang++) || exit 1
++minimum_version_flag="-mmacosx-version-min=$IP2PDF_MACOSX_DEPLOYMENT_TARGET"
++arch_header="arch/osx-x86-x86_64-ppc_arm64-gcc.h"
++mkdir -p macos-slices
++
++./configure CC="$target_clang -arch x86_64 -isysroot $sdk_path $minimum_version_flag" CXX="$target_clangxx -arch x86_64 -isysroot $sdk_path $minimum_version_flag" CCAUX="$target_clang -arch $native_arch -isysroot $sdk_path $minimum_version_flag" --without-cal --without-x --host=$this_host --build=x86_64-apple-darwin --with-arch_h="$arch_header" 2>&1 | tee conflog_x86_64.txt || exit 1
+ 
+-make -j4 so 2>&1 | tee buildlog_x86_64.txt || exit 1
++make -j4 BUILDDIRPREFIX=macos_x86_64- GS=libgs_x86_64 libgs 2>&1 | tee buildlog_x86_64.txt || exit 1
+ 
+-mv Makefile Makefile.x86_64
+-mv sobin sobin-x86_64
+-mv soobj soobj-x86_64
++cp macos_x86_64-bin/libgs_x86_64.a macos-slices/libgs_x86_64.a || exit 1
+ 
+-./configure CC="gcc -arch arm64" CXX="g++ -arch arm64" CCAUX="gcc -arch $native_arch" --without-x --host=$this_host --build=arm64-apple-darwin --with-arch_h="arch/osx-x86-x86_64-ppc_arm64-gcc.h" 2>&1 | tee conflog_arm64.txt || exit 1
++./configure CC="$target_clang -arch arm64 -isysroot $sdk_path $minimum_version_flag" CXX="$target_clangxx -arch arm64 -isysroot $sdk_path $minimum_version_flag" CCAUX="$target_clang -arch $native_arch -isysroot $sdk_path $minimum_version_flag" --without-cal --without-x --host=$this_host --build=arm64-apple-darwin --with-arch_h="$arch_header" 2>&1 | tee conflog_arm64.txt || exit 1
+ 
+-make -j4 so 2>&1 | tee buildlog_arm64.txt || exit 1
+-mv sobin sobin-arm64
+-mv soobj soobj-arm64
+-
+-mv Makefile Makefile.arm64
++make -j4 BUILDDIRPREFIX=macos_arm64- GS=libgs_arm64 libgs 2>&1 | tee buildlog_arm64.txt || exit 1
+ 
++cp macos_arm64-bin/libgs_arm64.a macos-slices/libgs_arm64.a || exit 1
+ 
++mkdir -p "$(dirname "$IP2PDF_MACOS_OUTPUT")"
++lipo -output "$IP2PDF_MACOS_OUTPUT" -create macos-slices/libgs_x86_64.a macos-slices/libgs_arm64.a 2>&1 | tee buildlog_uni.txt || exit 1
++lipo -info "$IP2PDF_MACOS_OUTPUT" | grep -q 'x86_64 arm64' || exit 1
+-mkdir sobin
+-
+-lipo -output sobin/libgs.$GS_VERSION_MAJOR.$GS_VERSION_MINOR.dylib -create sobin-x86_64/libgs.$GS_VERSION_MAJOR.$GS_VERSION_MINOR.dylib sobin-arm64/libgs.$GS_VERSION_MAJOR.$GS_VERSION_MINOR.dylib 2>&1 | tee buildlog_uni.txt || exit 1
+-lipo -output sobin/gsc -create sobin-x86_64/gsc sobin-arm64/gsc 2>&1 | tee buildlog_uni.txt || exit 1
+-
+-cd sobin
+-
+-ln -s libgs.$GS_VERSION_MAJOR.$GS_VERSION_MINOR.dylib libgs.$GS_VERSION_MAJOR.dylib
+-ln -s libgs.$GS_VERSION_MAJOR.$GS_VERSION_MINOR.dylib libgs.dylib
+-cd ..
+-
+-rm -rf sobin-x86_64 soobj-x86_64 sobin-arm64 soobj-arm64
+-
+-rm Makefile.x86_64 Makefile.arm64
+-
+ exit 0

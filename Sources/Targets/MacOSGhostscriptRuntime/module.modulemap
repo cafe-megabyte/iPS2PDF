@@ -1,0 +1,5 @@
+framework module GhostscriptRuntime {
+    umbrella header "GhostscriptRuntime.h"
+    export *
+    module * { export * }
+}

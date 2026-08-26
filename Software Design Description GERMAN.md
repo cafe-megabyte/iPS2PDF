@@ -21,14 +21,17 @@ Die App untersucht den Dateityp oder Dateiinhalt vor der Konvertierung nicht. Je
 
 - iOS 26 oder neuer
 - iPadOS 26 oder neuer
+- MacOS 15 oder neuer
 - SwiftUI
 - Swift
 - PDFKit
 - Ghostscript als statisch eingebundene Library
 
-Die App unterstützt Hoch- und Querformat.
+Die iOS-/iPadOS-App unterstützt Hoch- und Querformat. Das native MacOS-Target baut universal für `arm64` und `x86_64`.
 
-Die App ist eine **Single-Scene-/Single-Window-App**. Mehrere unabhängige iPS2PDF-Fenster werden auch auf iPadOS nicht unterstützt.
+Die iOS-/iPadOS-App ist eine **Single-Scene-/Single-Window-App**. Mehrere unabhängige iPS2PDF-Fenster werden auf iPadOS nicht unterstützt. Das MacOS-Target ist dagegen dokumentbasiert und unterstützt mehrere unabhängige PDF-Fenster.
+
+Neue Swift-Dateien enthalten möglichst genau einen obersten nominalen Typ (`class`, `struct`, `enum`, `actor` oder `protocol`). Plattformübergreifend wird möglichst SwiftUI eingesetzt; kleine AppKit-Brücken sind für `NSDocument`, `NSWindow`, `NSApplicationDelegate` und `PDFView` zulässig.
 
 ---
 
@@ -851,7 +854,7 @@ Ein gemeinsames Xcode-Aggregate-Target `Build Ghostscript` ist eine Dependency d
 Das Build-Script deklariert mindestens folgende Inputs:
 
 ```text
-Scripts/build_ghostscript.sh
+Scripts/build_ghostscript_iOS.sh
 Vendor/Ghostscript/<Ghostscript source archive>.tar.gz
 ```
 
@@ -1349,57 +1352,61 @@ Wechselt die App während einer Konvertierung in den Hintergrund:
 
 ---
 
-# 27. Vorgeschlagene Swift-Struktur
+# 27. Swift- und Projektstruktur
 
 ```text
-App/
-├── iPS2PDFApp.swift
-│
-├── Models/
-│   ├── PDFVersion.swift
-│   ├── ProcessingState.swift
-│   └── ConversionError.swift
-│
-├── Views/
-│   ├── ContentView.swift
-│   ├── PDFViewer.swift
-│   └── ProcessingOverlay.swift
-│
-├── ViewModels/
-│   └── ConversionViewModel.swift
-│
-├── Services/
-│   ├── FileConverting.swift
-│   ├── GhostscriptConverter.swift
-│   ├── WorkingDirectoryService.swift
-│   ├── IncomingFileHandler.swift
-│   └── SettingsStore.swift
-│
-└── Localization/
-    ├── English
-    └── German
+Sources/
+├── Shared/
+│   ├── AppCore/
+│   │   ├── Conversion/
+│   │   ├── Joboptions/
+│   │   ├── Models/
+│   │   └── Services/
+│   ├── AppUI/
+│   ├── GhostscriptClient/
+│   ├── GhostscriptRuntime/
+│   │   ├── GhostscriptBridge/
+│   │   ├── Profiles/
+│   │   ├── RequestHandling/
+│   │   └── Resources/
+│   ├── IPC/
+│   │   ├── AppGroup/
+│   │   ├── GhostscriptControl/
+│   │   ├── iOSShare/
+│   │   └── MacOSXPC/
+│   ├── MacOSGhostscriptRuntime/
+│   └── Resources/
+└── Targets/
+    ├── iOSApp/
+    ├── iOSShareExtension/
+    ├── iOSGhostscriptExtension/
+    ├── MacOSApp/
+    ├── MacOSGhostscriptRuntime/
+    ├── MacOSGhostscriptXPC/
+    ├── MacOSQuickLookPreview/
+    └── MacOSThumbnailExtension/
+BuildSupport/
+└── Targets/        # Info.plist und Entitlements ohne Target-Membership
 ```
 
-Zusätzlich:
+Die physische Struktur und Xcodes Navigatorstruktur sind identisch. `Sources` ist als eine einzige blaue `PBXFileSystemSynchronizedRootGroup` eingebunden; `Shared`, `Targets` und alle fachlichen Zwischenordner erscheinen dadurch ebenfalls durchgehend als reale, synchronisierte Ordner. `BuildSupport`, `Scripts`, `BundledResources`, `Vendor` und `Tests` bleiben ebenfalls synchronisierte Root-Gruppen. Alle von mehreren Targets kompilierten Quellen stehen sichtbar unter `Sources/Shared`, targetspezifische Implementierungen unter `Sources/Targets`. Plists und Entitlements liegen im nicht kompilierten `BuildSupport/Targets`-Baum und erzeugen dadurch keine impliziten Resource-Memberships.
+
+Jedes Produkt-Target verwendet ausschließlich die konkreten synchronisierten Komponenten, die es kompiliert. Diese Build-Wurzeln werden nicht zusätzlich im Navigator angezeigt. Die globale `Sources`-Navigatorwurzel ist bei keinem Target Build-Eingang. Es gibt weder `EXCLUDED_SOURCE_FILE_NAMES`-/`INCLUDED_SOURCE_FILE_NAMES`-Filter noch `PBXFileSystemSynchronizedBuildFileExceptionSet`-Objekte. Jede Swift-Datei enthält höchstens einen obersten nominalen Typ; Erweiterungen werden bei Bedarf in einer eigenen `Typ+Rolle.swift`-Datei abgelegt.
+
+Projekteigene Plattformbezeichner verwenden durchgehend `MacOS`. Von Apple definierte technische Schreibweisen wie `#if os(macOS)`, `SDKROOT = macosx` und `MACOSX_DEPLOYMENT_TARGET` bleiben unverändert. Die Projektdatei bleibt im Xcode-26-kompatiblen Format und verwendet keine erst mit Xcode 27 eingeführten Projektobjekttypen.
+
+Weitere unveränderte Projektbereiche:
 
 ```text
-GhostscriptIntegration/
-├── GhostscriptBridge.h
-├── GhostscriptBridge.c
-└── BuildIntegration/
-```
-
-und:
-
-```text
+BundledResources/
+Scripts/
+Tests/
 Vendor/
 └── Ghostscript/
     └── <Ghostscript source archive>.tar.gz
 ```
 
 Der entpackte, unveränderte Ghostscript-Sourcecode liegt nur in einem temporären Arbeitsverzeichnis unter `$(PROJECT_TEMP_DIR)` und wird nach dem Build entfernt. Die benötigten Ergebnisse liegen unter `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`.
-
-Die konkrete Xcode-Gruppenstruktur darf abweichen, sofern die beschriebenen Verantwortlichkeiten erhalten bleiben.
 
 ---
 
@@ -1480,7 +1487,7 @@ Die erste Version gilt als funktional umgesetzt, wenn alle folgenden Anforderung
 
 # 29. Nicht-Ziele
 
-Nicht Bestandteil der ersten Version sind:
+Nicht Bestandteil der iOS-/iPadOS-Oberfläche bzw. der plattformübergreifenden ersten Version sind:
 
 - Bearbeitung von Eingabedateien
 - Bearbeitung von PDFs
@@ -1490,8 +1497,8 @@ Nicht Bestandteil der ersten Version sind:
 - Cloud-Synchronisation
 - Batch-Konvertierung
 - parallele Konvertierung
-- Conversion Queue
-- Mehrfensterbetrieb
+- eine vom Benutzer verwaltete Batch- oder Conversion Queue
+- Mehrfensterbetrieb auf iOS/iPadOS
 - Dateityp- oder Inhaltsanalyse vor Ghostscript
 - eigene Parser für Shell-Skripte
 - eigene Parser für Dateinamen
@@ -1500,6 +1507,7 @@ Nicht Bestandteil der ersten Version sind:
 - weitere PDF-Versionen
 - Benutzerabbruch einer laufenden Konvertierung
 - garantierte Hintergrundkonvertierung
+- eine Quick-Look-Extension für PostScript oder EPS
 
 ---
 
@@ -1591,3 +1599,88 @@ Das Design verfolgt damit drei zentrale Prinzipien:
 1. **Ein einziger deterministischer Datei-Workflow für alle Eingaben.**
 2. **Klare Trennung zwischen SwiftUI, Workflow, Dateioperationen und Ghostscript.**
 3. **Möglichst geringe eigene Ghostscript-Buildlogik bei gleichzeitig reproduzierbarer iOS-Integration.**
+
+---
+
+# 31. Native MacOS-Erweiterung
+
+## 31.1 Target und Plattform
+
+Das Projekt enthält zusätzlich das native App-Target `iPS2PDF MacOS` und den eingebetteten XPC-Service `iPS2PDFMacOSGhostscript`. Beide haben ein Deployment-Target von MacOS 15.0 und werden universal für `arm64` und `x86_64` gebaut.
+
+Die MacOS-App enthält keine Share Extension. Eine Quick-Look-Extension für `.ps` oder `.eps` ist ausdrücklich zurückgestellt.
+
+## 31.2 Dokumentfenster und Eingaben
+
+Die akzeptierten Dateitypen werden gegenüber iOS nicht erweitert oder eingeschränkt:
+
+- `de.cafe-megabyte.joboptions` als `Owner`;
+- `public.data` als `Alternate`.
+
+Eine Datei kann über **Ablage > Öffnen**, Finder-Doppelklick bzw. **Öffnen mit** oder durch Ziehen auf das App-Icon übergeben werden. Jede Konvertierungsdatei erzeugt sofort ein eigenes `NSDocument`-Fenster. Mehrere Fenster dürfen unabhängig voneinander auf ihr PDF warten und bereits fertige PDFs anzeigen, obwohl Ghostscript-Jobs seriell abgearbeitet werden. Die inhaltliche Unterscheidung zwischen Joboptions-Import und Konvertierung erfolgt im gemeinsamen Router.
+
+## 31.3 SwiftUI und Einstellungen
+
+Die sichtbare MacOS-Oberfläche wird möglichst vollständig in SwiftUI implementiert. AppKit bleibt auf die dokumentbasierte Fensterverwaltung, Lebenszyklus-Callbacks, Öffnen-Dialoge und die Einbettung von `PDFView` beschränkt.
+
+Das bisherige iOS-Einstellungs-UI erscheint auf MacOS ausschließlich im systemüblichen SwiftUI-`Settings`-Fenster unter **iPS2PDF > Einstellungen**. Ein leeres App-Fenster mit dem bisherigen iOS-Hauptscreen wird nicht erzeugt.
+
+## 31.4 Ein gemeinsamer App-Group-Job und mehrere Fenster
+
+Jedes MacOS-Dokument besitzt ein eigenes privates temporäres Verzeichnis. Darin werden seine Eingabe, seine effektiven Joboptions und nach Erfolg sein fertiges PDF aufbewahrt. Diese dokumentlokalen Dateien sind unabhängig von der App Group.
+
+Ein Actor-basierter Koordinator vergibt den Zugriff auf die App Group in FIFO-Reihenfolge. Genau ein Auftrag besitzt zu einem Zeitpunkt die festen Verzeichnisse `ConversionInput` und `ConversionOutput`. Der Besitz umfasst den vollständigen Ablauf von der Bereinigung und Veröffentlichung der Eingabe bis zum Kopieren des fertigen PDFs in das dokumentlokale Verzeichnis. Erst danach wird die App Group geleert und der nächste wartende Auftrag fortgesetzt.
+
+Damit passt ein einzelner gemeinsamer App-Group-Job zu mehreren Dokumentfenstern: Ein fertiges PDF ist bereits aus der App Group herauskopiert und bleibt im privaten Dokument-Workspace verfügbar, während der nächste Auftrag dieselben festen Übergabeverzeichnisse wiederverwendet.
+
+Konzeptionell:
+
+```text
+Document window A ----+
+Document window B ----+--> FIFO coordinator
+Document window C ----+          |
+                                v
+                     exactly one App Group job
+                                |
+                                v
+                         MacOS XPC service
+                                |
+                                v
+                  copy PDF to owning document workspace
+                                |
+                                v
+                     clear App Group, release next job
+```
+
+Es gibt keine parallelen Ghostscript-Aufrufe. Fehler eines Auftrags geben den Koordinator ebenfalls frei und blockieren nachfolgende Dokumente nicht.
+
+## 31.5 XPC-Prozesstrennung
+
+Ghostscript wird auf MacOS ausschließlich durch den privaten, in `Contents/XPCServices` eingebetteten Service `iPS2PDFMacOSGhostscript.xpc` geladen und ausgeführt. Nur dessen Binary linkt `libgs.a` und enthält Ghostscript-/PDF-A-Ressourcen. Die MacOS-Haupt-App linkt Ghostscript nicht.
+
+Die Haupt-App öffnet eine `NSXPCConnection` über den Bundle-Identifier des Services. Der Service verwendet `NSXPCListener.service()` mit einem `NSRunLoop`-Service-Runloop, exportiert eine kleine Objective-C-kompatible Schnittstelle und reicht ausschließlich Property-List-codierte Steuerdaten weiter. Eingabe, Joboptions, ICC-Profile, Journal und PDF werden nicht als XPC-Nutzlast übertragen, sondern über den einen App-Group-Job ausgetauscht.
+
+Verbindungsfehler, ungültige Antworten und das Überschreiten der Konvertierungsfrist beenden den jeweiligen Dokumentauftrag kontrolliert. Eine Antwort-Guard stellt sicher, dass konkurrierende Reply-, Fehler- und Timeout-Callbacks eine Swift-Continuation höchstens einmal fortsetzen.
+
+## 31.6 Ghostscript-Build auf MacOS
+
+Auch MacOS erhält Ghostscript ausschließlich als unverändertes `.tar.gz` unter `Vendor/Ghostscript`. Das Aggregate-Target `Build Ghostscript MacOS` führt folgende Schritte ausschließlich unter `$(PROJECT_TEMP_DIR)` aus:
+
+1. Archiv in ein temporäres Buildverzeichnis entpacken;
+2. das offizielle Upstream-Script `toolbin/macos_build_uni_dylib.sh` in eine Arbeitskopie kopieren;
+3. die kleine deterministische Patchdatei `Scripts/ghostscript_MacOS_static.patch` auf diese Kopie anwenden;
+4. statische Slices für `x86_64` und `arm64` mit Xcodes ausgewähltem MacOS-SDK und Deployment-Target 15.0 bauen;
+5. beide Slices mit `lipo` zu einer universellen `libgs.a` verbinden;
+6. Library, öffentliche Header und erforderliche Ressourcen atomar unter `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/` veröffentlichen.
+
+Das Archiv und sein entpackter Inhalt werden nicht in den Projektbaum geschrieben oder dauerhaft verändert. Ein inhaltlicher Fingerprint von Archiv, Script, Patch, SDK und Deployment-Target erlaubt die Wiederverwendung unveränderter Artefakte.
+
+## 31.7 Anzeige- und Speicherlebenszyklus
+
+Solange noch kein PDF vorliegt, bleibt das Dokumentfenster zunächst ruhig. Nach exakt 0,5 Sekunden zeigt es einen SwiftUI-`ProgressView`, sofern die Konvertierung noch läuft. Sobald ein PDF vollständig geschrieben und mit PDFKit validiert wurde, zeigt das Fenster es mit `PDFView` an.
+
+Ein erzeugtes PDF ist zunächst ein ungespeichertes `NSDocument`; seine erste Speicherung ist daher **Sichern unter**. Beim Schließen eines ungespeicherten PDF-Fensters sowie beim Beenden der App verwendet AppKit die üblichen Optionen **Sichern**, **Nicht sichern** und **Abbrechen**. Während einer laufenden Konvertierung ist der Schließen-Button deaktiviert. Eine Beendigungsanforderung wartet ohne Abbruch des Ghostscript-Auftrags, bis alle laufenden Konvertierungen einen terminalen Zustand erreicht haben, und setzt danach den normalen Dokument-Speicherdialog fort.
+
+## 31.8 Signierung
+
+MacOS-App und XPC-Service sind sandboxed und besitzen dieselbe App-Group-Entitlement `group.de.cafe-megabyte.iPS2PDF`. Für einen produktiven oder vollständigen lokalen Lauf müssen beide neuen Bundle-Identifier sowie der App-Group-Zugriff im verwendeten Apple-Developer-Team registriert sein und mit zueinander passenden Profilen bzw. Identitäten signiert werden.
