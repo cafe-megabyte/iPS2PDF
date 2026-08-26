@@ -196,31 +196,31 @@ base14_fonts=(
 usable_base14_count=0
 missing_base14_fonts=()
 for font in "${base14_fonts[@]}"; do
-    if [ -s "$local_base14_directory/$font" ]; then
+    if [ -s "$local_base14_directory/$font.pfb" ]; then
         usable_base14_count=$((usable_base14_count + 1))
     else
-        missing_base14_fonts+=("$font")
+        missing_base14_fonts+=("$font.pfb")
     fi
 done
 if [ "$usable_base14_count" -eq "${#base14_fonts[@]}" ]; then
     for font in "${base14_fonts[@]}"; do
-        install -m 0644 "$local_base14_directory/$font" "$staged_artifact_directory/resources/Resource/Font/$font"
+        install -m 0644 "$local_base14_directory/$font.pfb" "$staged_artifact_directory/resources/Resource/Font/$font.pfb"
     done
     cat > "$staged_artifact_directory/resources/Resource/Init/Fontmap.iPS2PDF" <<'EOF'
-/Courier (Couri) ;
-/Courier-Bold (CouriBol) ;
-/Courier-Oblique (CouriObl) ;
-/Courier-BoldOblique (CouriBolObl) ;
-/Helvetica (Helve) ;
-/Helvetica-Bold (HelveBol) ;
-/Helvetica-Oblique (HelveObl) ;
-/Helvetica-BoldOblique (HelveBolObl) ;
-/Times-Roman (TimesRom) ;
-/Times-Bold (TimesBol) ;
-/Times-Italic (TimesIta) ;
-/Times-BoldItalic (TimesBolIta) ;
-/Symbol (Symbo) ;
-/ZapfDingbats (ZapfDin) ;
+/Courier (Couri.pfb) ;
+/Courier-Bold (CouriBol.pfb) ;
+/Courier-Oblique (CouriObl.pfb) ;
+/Courier-BoldOblique (CouriBolObl.pfb) ;
+/Helvetica (Helve.pfb) ;
+/Helvetica-Bold (HelveBol.pfb) ;
+/Helvetica-Oblique (HelveObl.pfb) ;
+/Helvetica-BoldOblique (HelveBolObl.pfb) ;
+/Times-Roman (TimesRom.pfb) ;
+/Times-Bold (TimesBol.pfb) ;
+/Times-Italic (TimesIta.pfb) ;
+/Times-BoldItalic (TimesBolIta.pfb) ;
+/Symbol (Symbo.pfb) ;
+/ZapfDingbats (ZapfDin.pfb) ;
 EOF
     cat > "$staged_artifact_directory/resources/Resource/Init/Fontmap" <<'EOF'
 (Fontmap.GS) .runlibfile

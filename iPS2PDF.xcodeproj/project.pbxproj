@@ -292,8 +292,8 @@
 		U20000000000000000000016 /* MacOSGhostscriptRuntime */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOSGhostscriptRuntime; sourceTree = "<group>"; };
 		U20000000000000000000017 /* App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = App; sourceTree = "<group>"; };
 		U20000000000000000000018 /* Incoming */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Incoming; sourceTree = "<group>"; };
-		U20000000000000000000019 /* Unit Tests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Unit; sourceTree = "<group>"; };
-		U2000000000000000000001A /* Integration Tests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Integration; sourceTree = "<group>"; };
+		U20000000000000000000019 /* Unit */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Unit; sourceTree = "<group>"; };
+		U2000000000000000000001A /* Integration */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Integration; sourceTree = "<group>"; };
 		U2000000000000000000001B /* Storage */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Storage; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
@@ -396,6 +396,35 @@
 			);
 			sourceTree = "<group>";
 		};
+		A70000000000000000000011 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000016 /* PDFKit.framework */,
+				A20000000000000000000017 /* UIKit.framework */,
+				F20000000000000000000007 /* ExtensionFoundation.framework */,
+				Q20000000000000000000002 /* QuickLookUI.framework */,
+				N20000000000000000000002 /* QuickLookThumbnailing.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A70000000000000000000012 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A20000000000000000000022 /* iPS2PDF.app */,
+				M20000000000000000000001 /* iPS2PDF.app */,
+				B20000000000000000000006 /* iPS2PDFShare.appex */,
+				F20000000000000000000001 /* iPS2PDFSecurity.appex */,
+				M20000000000000000000002 /* iPS2PDFMacOSGhostscript.xpc */,
+				R20000000000000000000001 /* GhostscriptRuntime.framework */,
+				Q20000000000000000000001 /* iPS2PDFQuickLook.appex */,
+				N20000000000000000000001 /* iPS2PDFThumbnail.appex */,
+				T20000000000000000000002 /* iPS2PDFTests.xctest */,
+				V20000000000000000000001 /* iPS2PDFIntegrationTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		S00000000000000000000001 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
@@ -479,39 +508,10 @@
 		T70000000000000000000001 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
-				U20000000000000000000019 /* Unit Tests */,
-				U2000000000000000000001A /* Integration Tests */,
+				U20000000000000000000019 /* Unit */,
+				U2000000000000000000001A /* Integration */,
 			);
 			path = Tests;
-			sourceTree = "<group>";
-		};
-		A70000000000000000000011 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				A20000000000000000000016 /* PDFKit.framework */,
-				A20000000000000000000017 /* UIKit.framework */,
-				F20000000000000000000007 /* ExtensionFoundation.framework */,
-				Q20000000000000000000002 /* QuickLookUI.framework */,
-				N20000000000000000000002 /* QuickLookThumbnailing.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		A70000000000000000000012 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				A20000000000000000000022 /* iPS2PDF.app */,
-				M20000000000000000000001 /* iPS2PDF.app */,
-				B20000000000000000000006 /* iPS2PDFShare.appex */,
-				F20000000000000000000001 /* iPS2PDFSecurity.appex */,
-				M20000000000000000000002 /* iPS2PDFMacOSGhostscript.xpc */,
-				R20000000000000000000001 /* GhostscriptRuntime.framework */,
-				Q20000000000000000000001 /* iPS2PDFQuickLook.appex */,
-				N20000000000000000000001 /* iPS2PDFThumbnail.appex */,
-				T20000000000000000000002 /* iPS2PDFTests.xctest */,
-				V20000000000000000000001 /* iPS2PDFIntegrationTests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -539,17 +539,17 @@
 			fileSystemSynchronizedGroups = (
 				U20000000000000000000001 /* iOSApp */,
 				U20000000000000000000009 /* Conversion */,
-				U20000000000000000000018 /* Incoming */,
 				U2000000000000000000000A /* Joboptions */,
-				U2000000000000000000000D /* Models */,
-				U2000000000000000000001B /* Storage */,
 				U2000000000000000000000B /* AppUI */,
 				U2000000000000000000000C /* GhostscriptClient */,
+				U2000000000000000000000D /* Models */,
 				U20000000000000000000010 /* Resources */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
 				U20000000000000000000014 /* iOSShare */,
 				U20000000000000000000017 /* App */,
+				U20000000000000000000018 /* Incoming */,
+				U2000000000000000000001B /* Storage */,
 			);
 			name = "iPS2PDF iOS";
 			productName = iPS2PDF;
@@ -597,10 +597,10 @@
 			);
 			fileSystemSynchronizedGroups = (
 				U20000000000000000000003 /* iOSGhostscriptExtension */,
-				U20000000000000000000011 /* GhostscriptBridge */,
 				U2000000000000000000000E /* Profiles */,
 				U2000000000000000000000F /* RequestHandling */,
 				U20000000000000000000010 /* Resources */,
+				U20000000000000000000011 /* GhostscriptBridge */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
 			);
@@ -633,17 +633,17 @@
 			fileSystemSynchronizedGroups = (
 				U20000000000000000000004 /* MacOSApp */,
 				U20000000000000000000009 /* Conversion */,
-				U20000000000000000000018 /* Incoming */,
 				U2000000000000000000000A /* Joboptions */,
-				U2000000000000000000000D /* Models */,
-				U2000000000000000000001B /* Storage */,
 				U2000000000000000000000B /* AppUI */,
 				U2000000000000000000000C /* GhostscriptClient */,
+				U2000000000000000000000D /* Models */,
 				U20000000000000000000010 /* Resources */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
 				U20000000000000000000015 /* MacOSXPC */,
 				U20000000000000000000017 /* App */,
+				U20000000000000000000018 /* Incoming */,
+				U2000000000000000000001B /* Storage */,
 			);
 			name = "iPS2PDF MacOS";
 			productName = iPS2PDF;
@@ -770,12 +770,12 @@
 			);
 			fileSystemSynchronizedGroups = (
 				U20000000000000000000009 /* Conversion */,
-				U20000000000000000000018 /* Incoming */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000D /* Models */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000014 /* iOSShare */,
-				U20000000000000000000019 /* Unit Tests */,
+				U20000000000000000000018 /* Incoming */,
+				U20000000000000000000019 /* Unit */,
 			);
 			name = iPS2PDFTests;
 			productName = iPS2PDFTests;
@@ -795,7 +795,7 @@
 				V90000000000000000000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				U2000000000000000000001A /* Integration Tests */,
+				U2000000000000000000001A /* Integration */,
 			);
 			name = iPS2PDFIntegrationTests;
 			productName = iPS2PDFIntegrationTests;
