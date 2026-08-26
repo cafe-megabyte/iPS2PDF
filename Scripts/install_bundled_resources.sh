@@ -35,6 +35,7 @@ if [[ "$resource_set" == "all" || "$resource_set" == "joboptions" ]]; then
     mkdir -p "$destination_root/Joboptions"
     find "$destination_root/Joboptions" -maxdepth 1 -type f -delete
     ditto "$joboptions_source" "$destination_root/Joboptions"
+    printf 'installed_resource_set=joboptions\n' > "$destination_root/Joboptions/.install.stamp"
 fi
 
 if [[ "$resource_set" == "all" || "$resource_set" == "profiles" ]]; then
@@ -45,4 +46,5 @@ if [[ "$resource_set" == "all" || "$resource_set" == "profiles" ]]; then
     mkdir -p "$destination_root/Profiles"
     find "$destination_root/Profiles" -maxdepth 1 -type f -delete
     ditto "$profiles_source" "$destination_root/Profiles"
+    printf 'installed_resource_set=profiles\n' > "$destination_root/Profiles/.install.stamp"
 fi

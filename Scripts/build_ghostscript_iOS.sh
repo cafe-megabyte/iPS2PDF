@@ -1,10 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# Build one Ghostscript variant into a shared, immutable artifact directory.
-# Xcode's dependency analysis decides whether this script needs to run. When it
-# does run, the build happens in disposable directories and the completed
-# artifact set is published only after every required file is available.
+# Build one iOS Ghostscript static-library variant into a shared artifact
+# directory. Resource packaging is handled by package_ghostscript_resources.sh.
 
 if [ "$#" -ne 6 ]; then
     echo "Usage: build_ghostscript_iOS.sh <iphonesimulator|iphoneos> <architecture> <deployment-target> <sdk-name> <project-temp-dir> <source-archive>" >&2
@@ -18,8 +16,10 @@ sdk_name="$4"
 project_temp_dir="$5"
 source_archive="$6"
 script_directory="$(cd "$(dirname "$0")" && pwd)"
-project_root="$(cd "$script_directory/.." && pwd)"
-local_base14_directory="$project_root/BundledResources/PostScriptBase14"
+fingerprint_helpers="$script_directory/Shared/ghostscript_fingerprint.sh"
+
+# shellcheck source=Shared/ghostscript_fingerprint.sh
+source "$fingerprint_helpers"
 
 case "$platform" in
     iphonesimulator)
@@ -69,6 +69,37 @@ fi
 artifact_key="$sdk_name-$architecture-ios$deployment_target"
 artifact_parent="$project_temp_dir/GhostscriptArtifacts"
 artifact_directory="$artifact_parent/$artifact_key"
+compile_stamp="$artifact_directory/compile.stamp"
+existing_library="$artifact_directory/lib/libgs.a"
+existing_files=(
+    "$existing_library"
+    "$artifact_directory/include/iapi.h"
+    "$artifact_directory/include/gserrors.h"
+)
+
+input_fingerprint="$({
+    printf 'artifact_schema=ghostscript-compile-v2\n'
+    printf 'platform=%s\n' "$platform"
+    printf 'architecture=%s\n' "$architecture"
+    printf 'deployment_target=%s\n' "$deployment_target"
+    printf 'sdk_name=%s\n' "$sdk_name"
+    ghostscript_hash_file "$source_archive"
+    ghostscript_hash_file "$0"
+    ghostscript_hash_file "$fingerprint_helpers"
+} | ghostscript_fingerprint)"
+
+can_reuse=true
+for existing_file in "${existing_files[@]}"; do
+    if [ ! -s "$existing_file" ]; then
+        can_reuse=false
+        break
+    fi
+done
+if [ "$can_reuse" = true ] && ghostscript_stamp_contains_fingerprint "$compile_stamp" "$input_fingerprint"; then
+    echo "Reusing iOS Ghostscript compile artifacts at $artifact_directory"
+    exit 0
+fi
+
 xcode_temp_root="$project_temp_dir"
 case "$project_temp_dir" in
     */Build/Intermediates.noindex/*)
@@ -79,14 +110,14 @@ scratch_parent="$xcode_temp_root/iPS2PDFGhostscriptBuilds"
 
 mkdir -p "$artifact_parent" "$scratch_parent"
 work_directory="$(mktemp -d "$scratch_parent/GhostscriptBuild.$artifact_key.XXXXXX")"
-staged_artifact_directory="$(mktemp -d "$artifact_parent/.$artifact_key.stage.XXXXXX")"
+staged_compile_directory="$(mktemp -d "$artifact_parent/.$artifact_key.compile.stage.XXXXXX")"
 
 cleanup() {
     if [ -n "${work_directory:-}" ] && [ -d "$work_directory" ]; then
         rm -rf -- "$work_directory"
     fi
-    if [ -n "${staged_artifact_directory:-}" ] && [ -d "$staged_artifact_directory" ]; then
-        rm -rf -- "$staged_artifact_directory"
+    if [ -n "${staged_compile_directory:-}" ] && [ -d "$staged_compile_directory" ]; then
+        rm -rf -- "$staged_compile_directory"
     fi
 }
 trap cleanup EXIT
@@ -128,24 +159,15 @@ unset SDKROOT SDK_NAME SDK_DIR IPHONEOS_DEPLOYMENT_TARGET
 
 mkdir -p "$upstream_artifact_directory"
 
-# The known 10.07.1 script has the historical x86/i386 and armv7 universal
-# library setup. Unknown versions still receive this best-effort patch.
 if ! grep -q 'BUILDDIRPREFIX=ios_x86-' "$official_script"; then
     echo "notice: Unknown Ghostscript iOS script version; applying compatibility patch anyway." >&2
 fi
 
 cp "$official_script" "$working_script"
-
-# The upstream script pipes configure/make output through tee. Make failures
-# must remain failures in the working copy when the shell's pipefail behavior
-# is otherwise unavailable.
 sed -i '' '2i\
 set -o pipefail
 ' "$working_script"
 
-# Keep the official script's configure + make build logic. The patcher adapts
-# its first build leg to the active SDK and ends after that leg, before the
-# now-obsolete second architecture/lipo section.
 sed -i '' \
     -e "s/iphonesimulator/$platform/g" \
     -e "s/-arch x86_64 -arch i386/-arch $architecture $minimum_version_flag/g" \
@@ -160,8 +182,6 @@ sed -i '' \
 
 chmod +x "$working_script"
 
-# Xcode treats "warning:" in Run Script output as project warnings.
-# Keep upstream diagnostics visible without letting vendored Ghostscript warnings pollute the issue navigator.
 set +e
 (
     cd "$upstream_root/ios" && "$working_script"
@@ -173,102 +193,35 @@ if [ "$build_status" -ne 0 ]; then
     exit "$build_status"
 fi
 
-if [ ! -s "$upstream_artifact" ]; then
-    echo "Ghostscript did not create $upstream_artifact" >&2
-    exit 73
-fi
-
-pdfa_definition="$upstream_root/lib/PDFA_def.ps"
-pdfx_definition="$upstream_root/lib/PDFX_def.ps"
-srgb_profile="$upstream_root/iccprofiles/srgb.icc"
-ghostscript_resource_directory="$upstream_root/Resource"
 iapi_header="$upstream_root/psi/iapi.h"
 gserrors_header="$upstream_root/base/gserrors.h"
-
-for required_file in "$pdfa_definition" "$pdfx_definition" "$srgb_profile" "$iapi_header" "$gserrors_header"; do
-    if [ ! -f "$required_file" ]; then
-        echo "Missing required Ghostscript artifact: $required_file" >&2
-        exit 74
+for required_file in "$upstream_artifact" "$iapi_header" "$gserrors_header"; do
+    if [ ! -s "$required_file" ]; then
+        echo "Missing required Ghostscript compile artifact: $required_file" >&2
+        exit 73
     fi
 done
-if [ ! -d "$ghostscript_resource_directory/Init" ] || [ ! -d "$ghostscript_resource_directory/Font" ]; then
-    echo "Missing required Ghostscript Resource tree: $ghostscript_resource_directory" >&2
-    exit 74
-fi
 
-mkdir -p \
-    "$staged_artifact_directory/lib" \
-    "$staged_artifact_directory/include" \
-    "$staged_artifact_directory/resources"
-
-install -m 0644 "$upstream_artifact" "$staged_artifact_directory/lib/libgs.a"
-install -m 0644 "$iapi_header" "$staged_artifact_directory/include/iapi.h"
-install -m 0644 "$gserrors_header" "$staged_artifact_directory/include/gserrors.h"
-install -m 0644 "$pdfa_definition" "$staged_artifact_directory/resources/PDFA_def.ps"
-sed 's/ISO Coated sb\.icc/CoatedFOGRA39.icc/g' \
-    "$pdfx_definition" > "$staged_artifact_directory/resources/PDFX_def.ps"
-install -m 0644 "$srgb_profile" "$staged_artifact_directory/resources/srgb.icc"
-ditto "$ghostscript_resource_directory" "$staged_artifact_directory/resources/Resource"
-
-base14_fonts=(
-    Couri CouriBol CouriObl CouriBolObl
-    Helve HelveBol HelveObl HelveBolObl
-    TimesRom TimesBol TimesIta TimesBolIta
-    Symbo ZapfDin
-)
-usable_base14_count=0
-missing_base14_fonts=()
-for font in "${base14_fonts[@]}"; do
-    if [ -s "$local_base14_directory/$font.pfb" ]; then
-        usable_base14_count=$((usable_base14_count + 1))
-    else
-        missing_base14_fonts+=("$font.pfb")
-    fi
-done
-if [ "$usable_base14_count" -eq "${#base14_fonts[@]}" ]; then
-    for font in "${base14_fonts[@]}"; do
-        install -m 0644 "$local_base14_directory/$font.pfb" "$staged_artifact_directory/resources/Resource/Font/$font.pfb"
-    done
-    cat > "$staged_artifact_directory/resources/Resource/Init/Fontmap.iPS2PDF" <<'EOF'
-/Courier (Couri.pfb) ;
-/Courier-Bold (CouriBol.pfb) ;
-/Courier-Oblique (CouriObl.pfb) ;
-/Courier-BoldOblique (CouriBolObl.pfb) ;
-/Helvetica (Helve.pfb) ;
-/Helvetica-Bold (HelveBol.pfb) ;
-/Helvetica-Oblique (HelveObl.pfb) ;
-/Helvetica-BoldOblique (HelveBolObl.pfb) ;
-/Times-Roman (TimesRom.pfb) ;
-/Times-Bold (TimesBol.pfb) ;
-/Times-Italic (TimesIta.pfb) ;
-/Times-BoldItalic (TimesBolIta.pfb) ;
-/Symbol (Symbo.pfb) ;
-/ZapfDingbats (ZapfDin.pfb) ;
-EOF
-    cat > "$staged_artifact_directory/resources/Resource/Init/Fontmap" <<'EOF'
-(Fontmap.GS) .runlibfile
-(Fontmap.iPS2PDF) .runlibfile
-EOF
-else
-    echo "Found $usable_base14_count of ${#base14_fonts[@]} usable local Base 14 fonts; using Ghostscript bundled fonts." >&2
-    if [ "${#missing_base14_fonts[@]}" -gt 0 ]; then
-        echo "Missing or empty local Base 14 fonts: ${missing_base14_fonts[*]}" >&2
-    fi
-fi
-xattr -cr "$staged_artifact_directory/resources" 2>/dev/null || true
+mkdir -p "$staged_compile_directory/lib" "$staged_compile_directory/include"
+install -m 0644 "$upstream_artifact" "$staged_compile_directory/lib/libgs.a"
+install -m 0644 "$iapi_header" "$staged_compile_directory/include/iapi.h"
+install -m 0644 "$gserrors_header" "$staged_compile_directory/include/gserrors.h"
 
 {
+    printf 'artifact_schema=ghostscript-compile-v2\n'
     printf 'platform=%s\n' "$platform"
     printf 'architecture=%s\n' "$architecture"
     printf 'deployment_target=%s\n' "$deployment_target"
     printf 'sdk_name=%s\n' "$sdk_name"
-    shasum -a 256 "$source_archive" "$0"
-} > "$staged_artifact_directory/build.stamp"
+    printf 'source_archive=%s\n' "$source_archive"
+    printf 'input_fingerprint=%s\n' "$input_fingerprint"
+} > "$staged_compile_directory/compile.stamp"
 
-if [ -e "$artifact_directory" ]; then
-    rm -rf -- "$artifact_directory"
-fi
-mv "$staged_artifact_directory" "$artifact_directory"
-staged_artifact_directory=""
+mkdir -p "$artifact_directory"
+rm -rf -- "$artifact_directory/lib" "$artifact_directory/include"
+ditto "$staged_compile_directory/lib" "$artifact_directory/lib"
+ditto "$staged_compile_directory/include" "$artifact_directory/include"
+install -m 0644 "$staged_compile_directory/compile.stamp" "$compile_stamp"
+staged_compile_directory=""
 
-echo "Built Ghostscript artifacts at $artifact_directory"
+echo "Built iOS Ghostscript compile artifacts at $artifact_directory"

@@ -1,0 +1,14 @@
+$(SRCROOT)/BundledResources/PostScriptBase14/Couri.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/CouriBol.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/CouriBolObl.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/CouriObl.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/Helve.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/HelveBol.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/HelveBolObl.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/HelveObl.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/Symbo.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/TimesBol.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/TimesBolIta.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/TimesIta.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/TimesRom.pfb
+$(SRCROOT)/BundledResources/PostScriptBase14/ZapfDin.pfb

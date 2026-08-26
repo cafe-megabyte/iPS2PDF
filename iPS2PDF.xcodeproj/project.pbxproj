@@ -18,15 +18,16 @@
 			name = "Generate Build Number";
 			productName = "Generate Build Number";
 		};
-		D50000000000000000000001 /* Build Ghostscript */ = {
+		D50000000000000000000001 /* Build Ghostscript iOS */ = {
 			isa = PBXAggregateTarget;
-			buildConfigurationList = D80000000000000000000001 /* Build configuration list for PBXAggregateTarget "Build Ghostscript" */;
+			buildConfigurationList = D80000000000000000000001 /* Build configuration list for PBXAggregateTarget "Build Ghostscript iOS" */;
 			buildPhases = (
-				D60000000000000000000001 /* Build Ghostscript */,
+				D60000000000000000000001 /* Build Ghostscript iOS */,
+				28037B25303F6B6B005B1F70 /* Package Ghostscript iOS */,
 			);
 			dependencies = (
 			);
-			name = "Build Ghostscript";
+			name = "Build Ghostscript iOS";
 			productName = "Build Ghostscript";
 		};
 		D50000000000000000000002 /* Build Ghostscript MacOS */ = {
@@ -34,6 +35,7 @@
 			buildConfigurationList = D80000000000000000000002 /* Build configuration list for PBXAggregateTarget "Build Ghostscript MacOS" */;
 			buildPhases = (
 				D60000000000000000000002 /* Build Ghostscript MacOS */,
+				28037B26303F6C05005B1F70 /* Package Ghostscript MacOS */,
 			);
 			dependencies = (
 			);
@@ -904,7 +906,7 @@
 				T50000000000000000000001 /* iPS2PDFTests */,
 				V50000000000000000000001 /* iPS2PDFIntegrationTests */,
 				C50000000000000000000001 /* Generate Build Number */,
-				D50000000000000000000001 /* Build Ghostscript */,
+				D50000000000000000000001 /* Build Ghostscript iOS */,
 				D50000000000000000000002 /* Build Ghostscript MacOS */,
 			);
 		};
@@ -970,6 +972,60 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		28037B25303F6B6B005B1F70 /* Package Ghostscript iOS */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"$(SRCROOT)/BuildSupport/FileLists/BundledPostScriptBase14.xcfilelist",
+			);
+			inputPaths = (
+				"$(SRCROOT)/Scripts/package_ghostscript_resources.sh",
+				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
+				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
+			);
+			name = "Package Ghostscript iOS";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources.stamp",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFA_def.ps",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFX_def.ps",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/srgb.icc",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/Resource/Init/gs_init.ps",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/Scripts/package_ghostscript_resources.sh\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BundledResources/PostScriptBase14\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
+		};
+		28037B26303F6C05005B1F70 /* Package Ghostscript MacOS */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"$(SRCROOT)/BuildSupport/FileLists/BundledPostScriptBase14.xcfilelist",
+			);
+			inputPaths = (
+				"$(SRCROOT)/Scripts/package_ghostscript_resources.sh",
+				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
+				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
+			);
+			name = "Package Ghostscript MacOS";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources.stamp",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFA_def.ps",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFX_def.ps",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/srgb.icc",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/Resource/Init/gs_init.ps",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/Scripts/package_ghostscript_resources.sh\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BundledResources/PostScriptBase14\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
+		};
 		A60000000000000000000006 /* Remove Spurious Extension Point Output */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1003,7 +1059,7 @@
 			shellPath = /bin/sh;
 			shellScript = "mkdir -p \"${PROJECT_TEMP_DIR}\"\nprintf '#define BUILD_NUMBER_VALUE %s\\n' \"$(date '+%Y%m%d.%H%M%S')\" > \"${PROJECT_TEMP_DIR}/BuildNumber.c\"\n";
 		};
-		D60000000000000000000001 /* Build Ghostscript */ = {
+		D60000000000000000000001 /* Build Ghostscript iOS */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -1011,16 +1067,14 @@
 			inputPaths = (
 				"$(SRCROOT)/Scripts/build_ghostscript_iOS.sh",
 				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
+				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
 			);
-			name = "Build Ghostscript";
+			name = "Build Ghostscript iOS";
 			outputPaths = (
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/lib/libgs.a",
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/include/iapi.h",
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/include/gserrors.h",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFA_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFX_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/srgb.icc",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/build.stamp",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/compile.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1035,16 +1089,14 @@
 				"$(SRCROOT)/Scripts/build_ghostscript_MacOS.sh",
 				"$(SRCROOT)/Scripts/ghostscript_MacOS_static.patch",
 				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
+				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
 			);
 			name = "Build Ghostscript MacOS";
 			outputPaths = (
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/lib/libgs.a",
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/include/iapi.h",
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/include/gserrors.h",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFA_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFX_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/srgb.icc",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/build.stamp",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/compile.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1055,15 +1107,17 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"$(SRCROOT)/BuildSupport/FileLists/BundledJoboptions.xcfilelist",
+				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
+			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
-				"$(SRCROOT)/BundledResources/Joboptions",
-				"$(SRCROOT)/BundledResources/Profiles",
 			);
 			name = "Install Joboptions and Profiles";
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions/.install.stamp",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1074,13 +1128,17 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
+			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
-				"$(SRCROOT)/BundledResources/Profiles",
 			);
 			name = "Install Profiles";
+			outputFileListPaths = (
+			);
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1093,15 +1151,11 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_ghostscript_resources.sh",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFA_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFX_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/srgb.icc",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources.stamp",
 			);
 			name = "Install Ghostscript Resources";
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/PDFA_def.ps",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/PDFX_def.ps",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/srgb.icc",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1150,15 +1204,17 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"$(SRCROOT)/BuildSupport/FileLists/BundledJoboptions.xcfilelist",
+				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
+			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
-				"$(SRCROOT)/BundledResources/Joboptions",
-				"$(SRCROOT)/BundledResources/Profiles",
 			);
 			name = "Install Joboptions and Profiles";
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions/.install.stamp",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1171,15 +1227,11 @@
 			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_ghostscript_resources.sh",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFA_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/PDFX_def.ps",
-				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources/srgb.icc",
+				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources.stamp",
 			);
 			name = "Install Ghostscript Resources";
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/PDFA_def.ps",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/PDFX_def.ps",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/srgb.icc",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Ghostscript/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1222,15 +1274,17 @@
 			buildActionMask = 2147483647;
 			files = (
 			);
+			inputFileListPaths = (
+				"$(SRCROOT)/BuildSupport/FileLists/BundledJoboptions.xcfilelist",
+				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
+			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
-				"$(SRCROOT)/BundledResources/Joboptions",
-				"$(SRCROOT)/BundledResources/Profiles",
 			);
 			name = "Install Unit Test Resources";
 			outputPaths = (
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions/.install.stamp",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
@@ -1339,7 +1393,7 @@
 		};
 		F90000000000000000000003 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = D50000000000000000000001 /* Build Ghostscript */;
+			target = D50000000000000000000001 /* Build Ghostscript iOS */;
 			targetProxy = F30000000000000000000003 /* PBXContainerItemProxy */;
 		};
 		M90000000000000000000001 /* PBXTargetDependency */ = {
@@ -2142,7 +2196,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		D80000000000000000000001 /* Build configuration list for PBXAggregateTarget "Build Ghostscript" */ = {
+		D80000000000000000000001 /* Build configuration list for PBXAggregateTarget "Build Ghostscript iOS" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				DA00000000000000000000001 /* Debug */,

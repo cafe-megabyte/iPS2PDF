@@ -1,0 +1,57 @@
+$(SRCROOT)/BundledResources/Profiles/ACESCG Linear.icc
+$(SRCROOT)/BundledResources/Profiles/AdobeRGB1998.icc
+$(SRCROOT)/BundledResources/Profiles/AnimePalette.icc
+$(SRCROOT)/BundledResources/Profiles/AppleRGB.icc
+$(SRCROOT)/BundledResources/Profiles/BlackWhite.icc
+$(SRCROOT)/BundledResources/Profiles/BlacklightPoster.icc
+$(SRCROOT)/BundledResources/Profiles/CIERGB.icc
+$(SRCROOT)/BundledResources/Profiles/CoatedFOGRA27.icc
+$(SRCROOT)/BundledResources/Profiles/CoatedFOGRA39.icc
+$(SRCROOT)/BundledResources/Profiles/CoatedGRACoL2006.icc
+$(SRCROOT)/BundledResources/Profiles/CobaltCarmine.icc
+$(SRCROOT)/BundledResources/Profiles/ColorMatchRGB.icc
+$(SRCROOT)/BundledResources/Profiles/ColorNegative.icc
+$(SRCROOT)/BundledResources/Profiles/DCI(P3) RGB.icc
+$(SRCROOT)/BundledResources/Profiles/Display P3.icc
+$(SRCROOT)/BundledResources/Profiles/EuroscaleCoated.icc
+$(SRCROOT)/BundledResources/Profiles/EuroscaleUncoated.icc
+$(SRCROOT)/BundledResources/Profiles/Generic CMYK Profile.icc
+$(SRCROOT)/BundledResources/Profiles/Generic Gray Gamma 2.2 Profile.icc
+$(SRCROOT)/BundledResources/Profiles/Generic Gray Profile.icc
+$(SRCROOT)/BundledResources/Profiles/Generic Lab Profile.icc
+$(SRCROOT)/BundledResources/Profiles/Generic RGB Profile.icc
+$(SRCROOT)/BundledResources/Profiles/Generic XYZ Profile.icc
+$(SRCROOT)/BundledResources/Profiles/GoldBlue.icc
+$(SRCROOT)/BundledResources/Profiles/GoldCrimson.icc
+$(SRCROOT)/BundledResources/Profiles/GreenRed.icc
+$(SRCROOT)/BundledResources/Profiles/HDR_P3_D65_ST2084.icc
+$(SRCROOT)/BundledResources/Profiles/ITU-2020.icc
+$(SRCROOT)/BundledResources/Profiles/ITU-709.icc
+$(SRCROOT)/BundledResources/Profiles/JapanColor2001Coated.icc
+$(SRCROOT)/BundledResources/Profiles/JapanColor2001Uncoated.icc
+$(SRCROOT)/BundledResources/Profiles/JapanColor2002Newspaper.icc
+$(SRCROOT)/BundledResources/Profiles/JapanColor2003WebCoated.icc
+$(SRCROOT)/BundledResources/Profiles/JapanWebCoated.icc
+$(SRCROOT)/BundledResources/Profiles/P3D65.icc
+$(SRCROOT)/BundledResources/Profiles/PAL_SECAM.icc
+$(SRCROOT)/BundledResources/Profiles/Pastel8Hues.icc
+$(SRCROOT)/BundledResources/Profiles/ProPhoto.icm
+$(SRCROOT)/BundledResources/Profiles/ROMM RGB.icc
+$(SRCROOT)/BundledResources/Profiles/RedBlueYelllow.icc
+$(SRCROOT)/BundledResources/Profiles/SMPTE-C.icc
+$(SRCROOT)/BundledResources/Profiles/SiennaBlue.icc
+$(SRCROOT)/BundledResources/Profiles/Smokey.icc
+$(SRCROOT)/BundledResources/Profiles/TealMagentaGold.icc
+$(SRCROOT)/BundledResources/Profiles/TotalInkPreview.icc
+$(SRCROOT)/BundledResources/Profiles/TurquoiseSepia.icc
+$(SRCROOT)/BundledResources/Profiles/USNewsprintSNAP2007.icc
+$(SRCROOT)/BundledResources/Profiles/USSheetfedCoated.icc
+$(SRCROOT)/BundledResources/Profiles/USSheetfedUncoated.icc
+$(SRCROOT)/BundledResources/Profiles/USWebCoatedSWOP.icc
+$(SRCROOT)/BundledResources/Profiles/USWebUncoated.icc
+$(SRCROOT)/BundledResources/Profiles/UncoatedFOGRA29.icc
+$(SRCROOT)/BundledResources/Profiles/WebCoatedFOGRA28.icc
+$(SRCROOT)/BundledResources/Profiles/WebCoatedSWOP2006Grade3.icc
+$(SRCROOT)/BundledResources/Profiles/WebCoatedSWOP2006Grade5.icc
+$(SRCROOT)/BundledResources/Profiles/WideGamutRGB.icc
+$(SRCROOT)/BundledResources/Profiles/sRGB Profile.icc
