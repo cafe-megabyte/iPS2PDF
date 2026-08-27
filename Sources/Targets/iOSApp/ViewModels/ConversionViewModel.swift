@@ -8,6 +8,7 @@ final class ConversionViewModel: ObservableObject {
     @Published var isFileImporterPresented = false
     @Published private(set) var isProcessing = false
     @Published private(set) var showsProgressOverlay = false
+    @Published private(set) var preservesFileImporterSelectionAppearance = false
     @Published var presentedPDF: PDFPresentation?
     @Published var isShareSheetPresented = false
     @Published var alert: AppAlert?
@@ -61,6 +62,10 @@ final class ConversionViewModel: ObservableObject {
         isProcessing || isShareSheetPresented || alert != nil
     }
 
+    var controlsAppearDisabled: Bool {
+        controlsAreDisabled && !preservesFileImporterSelectionAppearance
+    }
+
     func setPDFVersion(_ version: PDFVersion) {
         guard !controlsAreDisabled else { return }
         do {
@@ -100,7 +105,7 @@ final class ConversionViewModel: ObservableObject {
     }
 
     func handleSelectedFile(_ url: URL) {
-        acceptFiles([url])
+        acceptFiles([url], preservesSelectionAppearance: true)
     }
 
     func handleIncomingFiles(_ urls: [URL]) {
@@ -190,6 +195,8 @@ final class ConversionViewModel: ObservableObject {
         viewerDismissalWaiters.removeAll()
         waiters.forEach { $0.resume() }
 
+        preservesFileImporterSelectionAppearance = false
+
         if shouldClear {
             Task.detached(priority: .utility) { [workingDirectoryService] in
                 try? await workingDirectoryService.clearWorkingDirectory()
@@ -198,7 +205,11 @@ final class ConversionViewModel: ObservableObject {
     }
 
     @discardableResult
-    private func acceptFiles(_ urls: [URL], cleanupDirectory: URL? = nil) -> Bool {
+    private func acceptFiles(
+        _ urls: [URL],
+        cleanupDirectory: URL? = nil,
+        preservesSelectionAppearance: Bool = false
+    ) -> Bool {
         guard urls.count == 1, let url = urls.first else {
             presentNotice(
                 title: String(localized: "notice_multiple_files_title"),
@@ -216,6 +227,7 @@ final class ConversionViewModel: ObservableObject {
         }
 
         isProcessing = true
+        preservesFileImporterSelectionAppearance = preservesSelectionAppearance
         showsProgressOverlay = false
         startProgressDelay()
 
@@ -271,8 +283,8 @@ final class ConversionViewModel: ObservableObject {
                 try await workingDirectoryService.validatePDF(at: outputURL)
 
                 try? AppGroupWorkspace.clearAll()
-                finishProcessing()
                 presentedPDF = PDFPresentation(url: outputURL)
+                finishProcessing(preservesSelectionAppearance: true)
             }
         } catch let failure as ConversionFailure {
             await finishWithFailure(failure)
@@ -302,10 +314,13 @@ final class ConversionViewModel: ObservableObject {
         alert = makeErrorAlert(for: failure)
     }
 
-    private func finishProcessing() {
+    private func finishProcessing(preservesSelectionAppearance: Bool = false) {
         progressTask?.cancel()
         progressTask = nil
         showsProgressOverlay = false
+        if !preservesSelectionAppearance {
+            preservesFileImporterSelectionAppearance = false
+        }
         isProcessing = false
     }
 

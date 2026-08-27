@@ -12,7 +12,7 @@ struct FrontConversionView: View {
                     Label("Settings", systemImage: "slider.horizontal.3")
                 }
                 .buttonStyle(.bordered)
-                .disabled(viewModel.controlsAreDisabled)
+                .disabled(viewModel.controlsAppearDisabled)
             }
 
             Spacer(minLength: 0)
@@ -22,7 +22,7 @@ struct FrontConversionView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
-            .disabled(viewModel.controlsAreDisabled)
+            .disabled(viewModel.controlsAppearDisabled)
 
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
@@ -31,7 +31,7 @@ struct FrontConversionView: View {
 
                     JoboptionsDropdown(
                         repository: viewModel.joboptionsRepository,
-                        isDisabled: viewModel.controlsAreDisabled
+                        isDisabled: viewModel.controlsAppearDisabled
                     )
                 }
 
@@ -41,7 +41,7 @@ struct FrontConversionView: View {
 
                     PDFVersionDropdown(
                         selectedVersion: viewModel.selectedPDFVersion,
-                        isDisabled: viewModel.controlsAreDisabled || viewModel.joboptionsRepository.activeStandard != .none
+                        isDisabled: viewModel.controlsAppearDisabled || viewModel.joboptionsRepository.activeStandard != .none
                     ) { version in
                         viewModel.setPDFVersion(version)
                     }
@@ -53,7 +53,7 @@ struct FrontConversionView: View {
 
                     PDFACompatibilityDropdown(
                         selectedCompatibility: viewModel.selectedPDFACompatibility,
-                        isDisabled: viewModel.controlsAreDisabled
+                        isDisabled: viewModel.controlsAppearDisabled
                     ) { compatibility in
                         viewModel.setPDFACompatibility(compatibility)
                     }
@@ -65,5 +65,6 @@ struct FrontConversionView: View {
             Spacer(minLength: 0)
         }
         .padding(32)
+        .allowsHitTesting(!viewModel.controlsAreDisabled)
     }
 }

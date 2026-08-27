@@ -31,7 +31,8 @@ struct JoboptionsDropdown: View {
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .buttonStyle(.bordered)
-        .disabled(isDisabled || !repository.isReady)
+        .disabled(isDisabled)
+        .allowsHitTesting(!isDisabled && repository.isReady)
     }
 
     private func recordButton(_ record: JoboptionsRecord) -> some View {
