@@ -5,7 +5,7 @@ enum ConversionFailure: Error, Sendable {
     case workingDirectoryCleanup
     case inputIsNotRegularFile
     case inputCannotBeRead
-    case inputCopy
+    case inputCopy(diagnostics: String)
     case joboptions(diagnostics: String)
     case ghostscriptInstance(returnCode: Int32, diagnostics: String)
     case ghostscriptInitialization(returnCode: Int32, diagnostics: String)
@@ -59,6 +59,8 @@ enum ConversionFailure: Error, Sendable {
 
     var diagnostics: String? {
         switch self {
+        case let .inputCopy(diagnostics):
+            return diagnostics.isEmpty ? nil : diagnostics
         case let .joboptions(diagnostics):
             return diagnostics.isEmpty ? nil : diagnostics
         case let .ghostscriptInstance(_, diagnostics),

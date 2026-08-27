@@ -57,6 +57,10 @@ final class MacOSDocumentViewModel {
 
         Task { [weak self] in
             guard let self else { return }
+            let didStartAccess = sourceURL.startAccessingSecurityScopedResource()
+            defer {
+                if didStartAccess { sourceURL.stopAccessingSecurityScopedResource() }
+            }
             do {
                 let stagedURL = try await workspace.stageInput(from: sourceURL)
                 await repository.waitUntilReady()

@@ -15,6 +15,7 @@ enum PendingShareDocument {
         containerURL: URL? = nil
     ) throws -> URL {
         let directoryURL = try directory(fileManager: fileManager, containerURL: containerURL)
+        AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
         try? fileManager.removeItem(at: directoryURL)
         try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
 
@@ -48,13 +49,27 @@ enum PendingShareDocument {
             .appendingPathComponent(stagingDirectoryName, isDirectory: true)
         let claimedURL = stagingDirectoryURL.appendingPathComponent(pendingURL.lastPathComponent)
 
+        AppGroupWorkspace.prepareForRemoval(at: stagingDirectoryURL, fileManager: fileManager)
         try? fileManager.removeItem(at: stagingDirectoryURL)
         try fileManager.createDirectory(at: stagingDirectoryURL, withIntermediateDirectories: true)
         do {
-            try fileManager.copyItem(at: pendingURL, to: claimedURL)
-            try fileManager.removeItem(at: directory(fileManager: fileManager, containerURL: containerURL))
+            try AppGroupWorkspace.cloneFileForConversion(
+                from: pendingURL,
+                to: claimedURL,
+                fileManager: fileManager
+            )
+            let pendingDirectoryURL = try directory(
+                fileManager: fileManager,
+                containerURL: containerURL
+            )
+            AppGroupWorkspace.prepareForRemoval(
+                at: pendingDirectoryURL,
+                fileManager: fileManager
+            )
+            try fileManager.removeItem(at: pendingDirectoryURL)
             return claimedURL
         } catch {
+            AppGroupWorkspace.prepareForRemoval(at: stagingDirectoryURL, fileManager: fileManager)
             try? fileManager.removeItem(at: stagingDirectoryURL)
             throw error
         }
@@ -65,6 +80,7 @@ enum PendingShareDocument {
             fileManager: fileManager,
             containerURL: containerURL
         ) else { return }
+        AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
         try? fileManager.removeItem(at: directoryURL)
     }
 

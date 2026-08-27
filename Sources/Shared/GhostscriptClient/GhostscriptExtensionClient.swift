@@ -1,4 +1,6 @@
-#if !os(macOS)
+#if os(macOS)
+import Darwin
+#else
 @preconcurrency import ExtensionFoundation
 #endif
 import Foundation
@@ -127,7 +129,23 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             }
         }
 
-        let prepared = try prepareWorkspace(inputURL: inputURL, joboptionsURL: joboptionsURL)
+        let inputFileHandle: FileHandle?
+#if os(macOS)
+        inputFileHandle = try openInputFileHandle(at: inputURL)
+        defer { try? inputFileHandle?.close() }
+        let prepared = try prepareWorkspace(
+            inputURL: inputURL,
+            joboptionsURL: joboptionsURL,
+            stagesInputFile: false
+        )
+#else
+        inputFileHandle = nil
+        let prepared = try prepareWorkspace(
+            inputURL: inputURL,
+            joboptionsURL: joboptionsURL,
+            stagesInputFile: true
+        )
+#endif
         defer { try? AppGroupWorkspace.clearConversionDirectories() }
 
         var request = runRequest(
@@ -139,7 +157,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             postScriptRandomSeed: postScriptRandomSeed
         )
         addProfiles(prepared, to: &request)
-        let reply = try await sendRun(request)
+        let reply = try await sendRun(request, inputFileHandle: inputFileHandle)
         try requireSuccess(reply, diagnostics: journalText())
         try copyOutput(to: outputURL)
 
@@ -156,7 +174,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
     private func prepareWorkspace(
         inputURL: URL?,
-        joboptionsURL: URL
+        joboptionsURL: URL,
+        stagesInputFile: Bool = true
     ) throws -> PreparedJob {
         try AppGroupWorkspace.prepareConversionDirectories()
         let inputDirectory = try AppGroupWorkspace.inputDirectoryURL()
@@ -169,10 +188,12 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         var userProfileKeys: [String] = []
 
         if let inputURL {
-            try AppGroupWorkspace.publishFile(
-                from: inputURL,
-                to: inputDirectory.appendingPathComponent(AppGroupWorkspace.inputFileName)
-            )
+            if stagesInputFile {
+                try AppGroupWorkspace.publishFile(
+                    from: inputURL,
+                    to: inputDirectory.appendingPathComponent(AppGroupWorkspace.inputFileName)
+                )
+            }
             let profilesDirectory = inputDirectory
                 .appendingPathComponent(AppGroupWorkspace.profilesDirectoryName, isDirectory: true)
             try FileManager.default.createDirectory(
@@ -283,9 +304,12 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         return String(decoding: data.suffix(1_048_576), as: UTF8.self)
     }
 
-    private func sendRun(_ request: XPCDictionary) async throws -> XPCDictionary {
+    private func sendRun(
+        _ request: XPCDictionary,
+        inputFileHandle: FileHandle? = nil
+    ) async throws -> XPCDictionary {
         do {
-            return try await send(request)
+            return try await send(request, inputFileHandle: inputFileHandle)
         } catch let failure as ConversionFailure {
             throw failure
         } catch {
@@ -327,11 +351,14 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         return request
     }
 
-    private func send(_ request: XPCDictionary) async throws -> XPCDictionary {
+    private func send(
+        _ request: XPCDictionary,
+        inputFileHandle: FileHandle? = nil
+    ) async throws -> XPCDictionary {
         let serializer = GhostscriptExtensionRequestSerializer.shared
         await serializer.wait()
         do {
-            let reply = try await sendUnlocked(request)
+            let reply = try await sendUnlocked(request, inputFileHandle: inputFileHandle)
             await serializer.signal()
             return reply
         } catch {
@@ -340,15 +367,19 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         }
     }
 
-    private func sendUnlocked(_ request: XPCDictionary) async throws -> XPCDictionary {
+    private func sendUnlocked(
+        _ request: XPCDictionary,
+        inputFileHandle: FileHandle? = nil
+    ) async throws -> XPCDictionary {
 #if os(macOS)
         let requestData = try MacOSXPCMessageCodec.encode(request)
         let connection = NSXPCConnection(
             serviceName: MacOSGhostscriptService.identifier
         )
-        connection.remoteObjectInterface = NSXPCInterface(
+        let interface = NSXPCInterface(
             with: MacOSGhostscriptXPCProtocol.self
         )
+        connection.remoteObjectInterface = interface
         connection.resume()
 
         let replyData: Data = try await withCheckedThrowingContinuation {
@@ -366,7 +397,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
                 gate.finish(.failure(MacOSConnectionError.unavailable))
                 return
             }
-            service.send(requestData) { data, errorMessage in
+            service.send(requestData, inputFileHandle: inputFileHandle) { data, errorMessage in
                 if let data {
                     gate.finish(.success(data))
                 } else if let errorMessage {
@@ -415,6 +446,26 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         }
 #endif
     }
+
+#if os(macOS)
+    private func openInputFileHandle(at url: URL) throws -> FileHandle {
+        let descriptor = Darwin.open(url.path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+        guard descriptor >= 0 else {
+            throw ConversionFailure.inputCopy(
+                diagnostics: "Could not open \(url.lastPathComponent): \(String(cString: strerror(errno)))."
+            )
+        }
+
+        var metadata = stat()
+        guard Darwin.fstat(descriptor, &metadata) == 0,
+              metadata.st_mode & S_IFMT == S_IFREG
+        else {
+            Darwin.close(descriptor)
+            throw ConversionFailure.inputIsNotRegularFile
+        }
+        return FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+    }
+#endif
 
     private static let profileKeys = [
         "CalGrayProfile", "CalRGBProfile", "CalCMYKProfile", "sRGBProfile",

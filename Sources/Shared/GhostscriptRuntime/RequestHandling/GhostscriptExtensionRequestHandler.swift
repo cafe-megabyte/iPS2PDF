@@ -21,7 +21,10 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         gs_bridge_request_cancellation()
     }
 
-    func handle(_ request: XPCDictionary) -> XPCDictionary {
+    func handle(
+        _ request: XPCDictionary,
+        inputFileHandle: FileHandle? = nil
+    ) -> XPCDictionary {
         var reply = XPCDictionary()
         let version: Int64 = request[GhostscriptExtensionEnvelope.envelopeVersion] ?? -1
         let operation: String = request[GhostscriptExtensionEnvelope.operation] ?? ""
@@ -39,7 +42,7 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
                 reply[GhostscriptExtensionEnvelope.profileMetadataJSON] =
                     Self.bundledProfileMetadataJSON()
             case GhostscriptExtensionEnvelope.run:
-                reply = try run(request)
+                reply = try run(request, inputFileHandle: inputFileHandle)
             default:
                 reply[GhostscriptExtensionEnvelope.status] = Int64(-1)
                 reply[GhostscriptExtensionEnvelope.message] =
@@ -52,7 +55,10 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         return reply
     }
 
-    private func run(_ request: XPCDictionary) throws -> XPCDictionary {
+    private func run(
+        _ request: XPCDictionary,
+        inputFileHandle: FileHandle?
+    ) throws -> XPCDictionary {
         let validationOnly: Bool = request[GhostscriptExtensionEnvelope.validate] ?? false
         let limitsEnabled: Bool = request[GhostscriptExtensionEnvelope.limitsEnabled] ?? true
         let allowTransparency: Bool =
@@ -103,7 +109,14 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         var input: Int32 = -1
         var output: Int32 = -1
         if !validationOnly {
-            input = try openRegularFile(at: inputURL, flags: O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+            if let inputFileHandle {
+                input = try duplicateRegularFileDescriptor(
+                    inputFileHandle.fileDescriptor,
+                    name: AppGroupWorkspace.inputFileName
+                )
+            } else {
+                input = try openRegularFile(at: inputURL, flags: O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+            }
             output = try openRegularFile(
                 at: partialOutputURL,
                 flags: O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW,
@@ -291,6 +304,34 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             throw HelperError.message("A Ghostscript job file is not a regular file.")
         }
         return descriptor
+    }
+
+    private func duplicateRegularFileDescriptor(
+        _ descriptor: Int32,
+        name: String
+    ) throws -> Int32 {
+        let duplicate = Darwin.fcntl(descriptor, F_DUPFD_CLOEXEC, 0)
+        guard duplicate >= 0 else {
+            throw HelperError.message(
+                "Could not duplicate \(name): \(String(cString: strerror(errno)))."
+            )
+        }
+
+        var metadata = stat()
+        guard Darwin.fstat(duplicate, &metadata) == 0,
+              metadata.st_mode & S_IFMT == S_IFREG
+        else {
+            Darwin.close(duplicate)
+            throw HelperError.message("A Ghostscript job file is not a regular file.")
+        }
+
+        guard Darwin.lseek(duplicate, 0, SEEK_SET) >= 0 else {
+            Darwin.close(duplicate)
+            throw HelperError.message(
+                "Could not rewind \(name): \(String(cString: strerror(errno)))."
+            )
+        }
+        return duplicate
     }
 
     private func publish(_ partialURL: URL, as finalURL: URL) throws {

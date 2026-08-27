@@ -15,9 +15,14 @@ enum DroppedFileStaging {
         let fileName = URL(fileURLWithPath: proposedName).lastPathComponent
         let stagedURL = directoryURL.appendingPathComponent(fileName)
         do {
-            try fileManager.copyItem(at: temporaryURL, to: stagedURL)
+            try AppGroupWorkspace.cloneFileForConversion(
+                from: temporaryURL,
+                to: stagedURL,
+                fileManager: fileManager
+            )
             return stagedURL
         } catch {
+            AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
             try? fileManager.removeItem(at: directoryURL)
             throw error
         }

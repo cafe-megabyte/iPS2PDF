@@ -21,18 +21,7 @@ actor MacOSDocumentWorkspace {
         }
 
         try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
-        let suffix = sourceURL.pathExtension.isEmpty ? "" : ".\(sourceURL.pathExtension)"
-        let destinationURL = directoryURL.appendingPathComponent("input\(suffix)")
-        let didStartAccess = sourceURL.startAccessingSecurityScopedResource()
-        defer {
-            if didStartAccess { sourceURL.stopAccessingSecurityScopedResource() }
-        }
-        do {
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
-        } catch {
-            throw ConversionFailure.inputCopy
-        }
-        return destinationURL
+        return sourceURL
     }
 
     func writeJoboptions(_ data: Data) throws -> URL {
@@ -60,6 +49,7 @@ actor MacOSDocumentWorkspace {
     func clear() throws {
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: directoryURL.path) {
+            AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
             try fileManager.removeItem(at: directoryURL)
         }
     }

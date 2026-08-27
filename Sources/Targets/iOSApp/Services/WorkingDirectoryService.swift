@@ -14,6 +14,7 @@ actor WorkingDirectoryService {
     func clearWorkingDirectory() throws {
         do {
             if fileManager.fileExists(atPath: directoryURL.path) {
+                AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
                 try fileManager.removeItem(at: directoryURL)
             }
             try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
@@ -47,10 +48,14 @@ actor WorkingDirectoryService {
 
         let localURL = directoryURL.appendingPathComponent(sourceURL.lastPathComponent)
         do {
-            try fileManager.copyItem(at: sourceURL, to: localURL)
+            try AppGroupWorkspace.cloneFileForConversion(
+                from: sourceURL,
+                to: localURL,
+                fileManager: fileManager
+            )
             return localURL
         } catch {
-            throw ConversionFailure.inputCopy
+            throw ConversionFailure.inputCopy(diagnostics: error.localizedDescription)
         }
     }
 
