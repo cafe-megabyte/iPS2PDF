@@ -1100,12 +1100,11 @@
 		};
 		E00000000000000000000003 /* Install Joboptions and Profiles */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"$(SRCROOT)/BuildSupport/FileLists/BundledJoboptions.xcfilelist",
-				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
 			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
@@ -1121,11 +1120,11 @@
 		};
 		F60000000000000000000008 /* Install Profiles */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
 			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
@@ -1197,12 +1196,11 @@
 		};
 		R60000000000000000000006 /* Install Joboptions and Profiles */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"$(SRCROOT)/BuildSupport/FileLists/BundledJoboptions.xcfilelist",
-				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
 			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
@@ -1267,12 +1265,11 @@
 		};
 		T60000000000000000000003 /* Install Unit Test Resources */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (
-				"$(SRCROOT)/BuildSupport/FileLists/BundledJoboptions.xcfilelist",
-				"$(SRCROOT)/BuildSupport/FileLists/BundledProfiles.xcfilelist",
 			);
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
