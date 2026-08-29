@@ -92,7 +92,7 @@ final class MacOSJoboptionsManagementViewController: NSViewController,
             buttonRow.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
             buttonRow.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -16)
         ])
-        reload()
+        reload(preservingScrollPosition: false)
     }
 
     override func viewDidAppear() {
@@ -134,12 +134,13 @@ final class MacOSJoboptionsManagementViewController: NSViewController,
             updateButtons()
             return
         }
+        let previousActiveID = repository.activeRecord?.id
         if repository.activeRecord?.id != record.id {
             do { try repository.activate(record) }
             catch { present(error) }
         }
         updateButtons()
-        tableView.reloadData()
+        reloadRows(withRecordIDs: [previousActiveID, record.id].compactMap(\.self))
     }
 
     func windowWillClose(_ notification: Notification) {
@@ -153,26 +154,50 @@ final class MacOSJoboptionsManagementViewController: NSViewController,
         return record
     }
 
-    private func reload() {
+    private var selectedOrActiveRecord: JoboptionsRecord? {
+        selectedRecord ?? repository.activeRecord
+    }
+
+    private func reload(preservingScrollPosition: Bool = true) {
+        let scrollView = tableView.enclosingScrollView
+        let previousOrigin = scrollView?.contentView.bounds.origin
+        let selectedID = selectedRecord?.id ?? repository.activeRecord?.id
         rows = [
             .group(String(localized: "Bundled"))
         ] + repository.records.filter(\.isBundled).map(Row.record) + [
             .group(String(localized: "User"))
         ] + repository.records.filter { !$0.isBundled }.map(Row.record)
         tableView.reloadData()
-        if let activeID = repository.activeRecord?.id,
+        if let selectedID,
            let index = rows.firstIndex(where: {
-               if case let .record(record) = $0 { return record.id == activeID }
+               if case let .record(record) = $0 { return record.id == selectedID }
                return false
            }) {
             tableView.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
-            tableView.scrollRowToVisible(index)
+            if preservingScrollPosition, let previousOrigin, let scrollView {
+                scrollView.contentView.scroll(to: previousOrigin)
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            } else {
+                tableView.scrollRowToVisible(index)
+            }
         }
         updateButtons()
     }
 
+    private func reloadRows(withRecordIDs ids: [String]) {
+        let indexes = rows.indices.filter { row in
+            guard case let .record(record) = rows[row] else { return false }
+            return ids.contains(record.id)
+        }
+        guard !indexes.isEmpty else { return }
+        tableView.reloadData(
+            forRowIndexes: IndexSet(indexes),
+            columnIndexes: IndexSet(integer: 0)
+        )
+    }
+
     private func updateButtons() {
-        let record = selectedRecord
+        let record = selectedOrActiveRecord
         saveAsButton.isEnabled = repository.activeDocument != nil
         exportButton.isEnabled = record != nil
         duplicateButton.isEnabled = record != nil
@@ -224,7 +249,7 @@ final class MacOSJoboptionsManagementViewController: NSViewController,
     }
 
     @objc private func exportJoboptions(_ sender: Any?) {
-        guard let record = selectedRecord, let window = view.window else { return }
+        guard let record = selectedOrActiveRecord, let window = view.window else { return }
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.joboptions]
         panel.nameFieldStringValue = record.name + ".joboptions"
@@ -237,13 +262,13 @@ final class MacOSJoboptionsManagementViewController: NSViewController,
     }
 
     @objc private func duplicate(_ sender: Any?) {
-        guard let record = selectedRecord else { return }
+        guard let record = selectedOrActiveRecord else { return }
         do { _ = try repository.duplicate(record) }
         catch { present(error) }
     }
 
     @objc private func deleteSelected(_ sender: Any?) {
-        guard let record = selectedRecord, !record.isBundled else { return }
+        guard let record = selectedOrActiveRecord, !record.isBundled else { return }
         do { try repository.delete(record) }
         catch { present(error) }
     }

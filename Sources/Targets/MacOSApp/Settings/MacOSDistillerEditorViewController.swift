@@ -8,6 +8,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         static let rowSpacing: CGFloat = 4
         static let compactRowHeight: CGFloat = 20
         static let labeledRowHeight: CGFloat = 30
+        static let descriptionEditorHeight: CGFloat = 90
+        static let labelWidth: CGFloat = 245
+        static let controlMinWidth: CGFloat = 280
         static let sectionTopInset: CGFloat = 6
         static let sectionBottomInset: CGFloat = 8
         static let sectionChromeHeight: CGFloat = 22
@@ -396,17 +399,21 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                     JoboptionsChange("/\(definition.key)", .boolean(state))
                 ]))
             }
-            control = button
+            control = selectedCategory == .standards ? checkboxRow(button) : button
         case let .name(choices):
-            control = makeChoicePopup(
-                title: definition.localizedTitle,
-                choices: choices,
-                selected: value?.textualValue,
-                localizesChoices: true
-            ) { [weak self] selected in
-                self?.apply(JoboptionsChangeSet([
-                    JoboptionsChange("/\(definition.key)", .name(selected))
-                ]))
+            if definition.key == "UCRandBGInfo" {
+                control = makePreserveNameCheckbox(definition, selected: value?.textualValue)
+            } else {
+                control = makeChoicePopup(
+                    title: definition.localizedTitle,
+                    choices: choices,
+                    selected: value?.textualValue,
+                    localizesChoices: true
+                ) { [weak self] selected in
+                    self?.apply(JoboptionsChangeSet([
+                        JoboptionsChange("/\(definition.key)", .name(selected))
+                    ]))
+                }
             }
         case let .literal(choices):
             control = makeChoicePopup(
@@ -459,6 +466,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     private func makeDescriptionEditor(_ definition: DistillerOptionDefinition) -> NSView {
         let value = SemanticJoboptions.description(in: session.document) ?? ""
         let editor = GrowingTextEditor(value)
+        declareMinimumHeight(Layout.descriptionEditorHeight, for: editor)
         editor.onTextChange = { [weak self] text in
             self?.pendingDescription = text
         }
@@ -743,6 +751,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         let trimPopup = ActionPopUpButton()
         trimPopup.addItem(withTitle: String(localized: "Report an error"), representedObject: "error")
         trimPopup.addItem(withTitle: String(localized: "Use media box with offsets"), representedObject: "media")
+        trimPopup.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        trimPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 300).isActive = true
         let trimOffsets: [Double]
         switch rules.trim {
         case .error:
@@ -761,6 +771,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         let bleedPopup = ActionPopUpButton()
         bleedPopup.addItem(withTitle: String(localized: "Use media box"), representedObject: "media")
         bleedPopup.addItem(withTitle: String(localized: "Use trim box with offsets"), representedObject: "trim")
+        bleedPopup.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        bleedPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 300).isActive = true
         let bleedOffsets: [Double]
         switch rules.bleed {
         case .mediaBox:
@@ -798,21 +810,49 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             self?.apply(SemanticJoboptions.changePDFXBoxRules(trim: trim, bleed: bleed))
         }
 
-        let trimRow = NSStackView(views: [trimPopup] + trimFields)
-        trimRow.orientation = .horizontal
-        trimRow.spacing = 5
-        let bleedRow = NSStackView(views: [bleedPopup] + bleedFields)
-        bleedRow.orientation = .horizontal
-        bleedRow.spacing = 5
-        let rows = NSStackView(views: [trimRow, bleedRow, applyButton])
+        let trimRow = pdfXBoxRuleRow(
+            title: String(localized: "Trim box"),
+            popup: trimPopup,
+            fields: trimFields
+        )
+        let bleedRow = pdfXBoxRuleRow(
+            title: String(localized: "Bleed box"),
+            popup: bleedPopup,
+            fields: bleedFields
+        )
+        let buttonRow = NSStackView(views: [NSView(), applyButton])
+        buttonRow.orientation = .horizontal
+        buttonRow.spacing = 6
+        buttonRow.distribution = .fill
+        buttonRow.views[0].setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        let rows = NSStackView(views: [trimRow, bleedRow, buttonRow])
         rows.orientation = .vertical
         rows.alignment = .leading
         rows.distribution = .fill
         rows.spacing = 7
-        rows.setContentHuggingPriority(.required, for: .vertical)
+        rows.setContentHuggingPriority(.defaultLow, for: .horizontal)
         rows.setContentCompressionResistancePriority(.required, for: .vertical)
+        rows.widthAnchor.constraint(greaterThanOrEqualToConstant: 620).isActive = true
         declareMinimumHeight(24 * 3 + rows.spacing * 2, for: rows)
-        return labeledRow(definition.localizedTitle, rows)
+        return rows
+    }
+
+    private func pdfXBoxRuleRow(
+        title: String,
+        popup: NSView,
+        fields: [NSView]
+    ) -> NSView {
+        let label = text(title)
+        label.alignment = .right
+        label.widthAnchor.constraint(equalToConstant: 120).isActive = true
+
+        let row = NSStackView(views: [label, popup] + fields)
+        row.orientation = .horizontal
+        row.spacing = 5
+        row.distribution = .fill
+        row.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        return row
     }
 
     private func buildAdditional(in formStack: NSStackView) {
@@ -966,6 +1006,20 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         return labeledRow(title, popup)
     }
 
+    private func makePreserveNameCheckbox(
+        _ definition: DistillerOptionDefinition,
+        selected: String?
+    ) -> NSView {
+        ActionButton.checkbox(
+            title: definition.localizedTitle,
+            state: selected == "Preserve"
+        ) { [weak self] isPreserved in
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/\(definition.key)", .name(isPreserved ? "Preserve" : "Remove"))
+            ]))
+        }
+    }
+
     private func makeSection(title: String, rows: [NSView]) -> NSView {
         let box = NSBox()
         box.title = title
@@ -1019,10 +1073,10 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         label.maximumNumberOfLines = 3
         label.setContentHuggingPriority(.required, for: .horizontal)
         label.setContentCompressionResistancePriority(.required, for: .vertical)
-        label.widthAnchor.constraint(equalToConstant: 245).isActive = true
+        label.widthAnchor.constraint(equalToConstant: Layout.labelWidth).isActive = true
         control.setContentHuggingPriority(.defaultLow, for: .horizontal)
         control.setContentCompressionResistancePriority(.required, for: .vertical)
-        let minimumControlWidth = control.widthAnchor.constraint(greaterThanOrEqualToConstant: 280)
+        let minimumControlWidth = control.widthAnchor.constraint(greaterThanOrEqualToConstant: Layout.controlMinWidth)
         minimumControlWidth.priority = .defaultHigh
         minimumControlWidth.isActive = true
         let row = NSStackView(views: [label, control])
@@ -1037,6 +1091,21 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             declaredMinimumHeight(for: control, fallback: Layout.labeledRowHeight),
             for: row
         )
+        return row
+    }
+
+    private func checkboxRow(_ checkbox: NSView) -> NSView {
+        let spacer = NSView()
+        spacer.widthAnchor.constraint(equalToConstant: Layout.labelWidth).isActive = true
+        let row = NSStackView(views: [spacer, checkbox])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.distribution = .fill
+        row.spacing = 10
+        row.translatesAutoresizingMaskIntoConstraints = false
+        row.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        row.setContentCompressionResistancePriority(.required, for: .vertical)
+        declareMinimumHeight(Layout.compactRowHeight, for: row)
         return row
     }
 
@@ -1385,12 +1454,17 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
         init(_ value: String) {
             super.init(frame: .zero)
-            borderType = .bezelBorder
+            borderType = .noBorder
             hasVerticalScroller = false
             hasHorizontalScroller = false
             autohidesScrollers = true
             drawsBackground = true
             backgroundColor = .textBackgroundColor
+            wantsLayer = true
+            layer?.cornerRadius = 5
+            layer?.borderWidth = 1
+            layer?.borderColor = NSColor.separatorColor.cgColor
+            layer?.masksToBounds = true
 
             editor.string = value
             editor.font = .systemFont(ofSize: NSFont.systemFontSize)

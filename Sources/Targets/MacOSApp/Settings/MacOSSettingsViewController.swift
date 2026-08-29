@@ -73,7 +73,7 @@ final class MacOSSettingsViewController: NSViewController {
             stack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             stack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
             stack.topAnchor.constraint(equalTo: view.topAnchor, constant: 28),
-            stack.bottomAnchor.constraint(lessThanOrEqualTo: view.bottomAnchor, constant: -24),
+            stack.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -24),
             joboptionsPopup.widthAnchor.constraint(greaterThanOrEqualToConstant: 250),
             versionPopup.widthAnchor.constraint(equalTo: joboptionsPopup.widthAnchor),
             pdfaPopup.widthAnchor.constraint(equalTo: joboptionsPopup.widthAnchor)

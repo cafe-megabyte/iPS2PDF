@@ -416,6 +416,9 @@
         }
       }
     },
+    "Bleed box" : {
+
+    },
     "Bleed box offsets" : {
       "localizations" : {
         "de" : {
@@ -1618,6 +1621,16 @@
         }
       }
     },
+    "For transfer functions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Druckkennlinien"
+          }
+        }
+      }
+    },
     "Export..." : {
       "localizations" : {
         "de" : {
@@ -1736,6 +1749,9 @@
           }
         }
       }
+    },
+    "For transfer functions" : {
+
     },
     "From" : {
       "localizations" : {
@@ -3345,6 +3361,16 @@
         }
       }
     },
+    "Preserve undercolor removal and black generation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterfarbreduktion und Schwarzaufbau beibehalten"
+          }
+        }
+      }
+    },
     "Preserve OPI comments" : {
       "localizations" : {
         "de" : {
@@ -3374,6 +3400,9 @@
           }
         }
       }
+    },
+    "Preserve undercolor removal and black generation" : {
+
     },
     "Preserved settings" : {
       "localizations" : {
@@ -4066,6 +4095,7 @@
       }
     },
     "Transfer functions" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -4084,6 +4114,9 @@
           }
         }
       }
+    },
+    "Trim box" : {
+
     },
     "Trim box offsets" : {
       "localizations" : {
@@ -4122,6 +4155,7 @@
       }
     },
     "Undercolor removal and black generation" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {

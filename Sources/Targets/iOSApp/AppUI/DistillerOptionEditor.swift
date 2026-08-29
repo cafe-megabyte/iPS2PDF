@@ -41,12 +41,16 @@ struct DistillerOptionEditor: View {
         case .boolean:
             Toggle(definition.localizedTitle, isOn: booleanBinding)
         case let .name(choices):
-            Picker(definition.localizedTitle, selection: nameBinding(default: choices.first ?? "None")) {
-                ForEach(choices, id: \.self) { choice in
-                    Text(localizedChoice(choice)).tag(choice)
+            if definition.key == "UCRandBGInfo" {
+                Toggle(definition.localizedTitle, isOn: preserveNameBinding)
+            } else {
+                Picker(definition.localizedTitle, selection: nameBinding(default: choices.first ?? "None")) {
+                    ForEach(choices, id: \.self) { choice in
+                        Text(localizedChoice(choice)).tag(choice)
+                    }
                 }
+                .pickerStyle(.menu)
             }
-            .pickerStyle(.menu)
         case let .literal(choices):
             Picker(definition.localizedTitle, selection: literalBinding(default: choices.first ?? "0")) {
                 ForEach(choices, id: \.self) { Text($0).tag($0) }
@@ -144,6 +148,13 @@ struct DistillerOptionEditor: View {
         Binding(
             get: { currentValue?.textualValue ?? defaultValue },
             set: { update(.name($0)) }
+        )
+    }
+
+    private var preserveNameBinding: Binding<Bool> {
+        Binding(
+            get: { currentValue?.textualValue == "Preserve" },
+            set: { update(.name($0 ? "Preserve" : "Remove")) }
         )
     }
 

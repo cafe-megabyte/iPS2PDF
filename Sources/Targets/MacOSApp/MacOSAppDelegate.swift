@@ -33,13 +33,14 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate {
         )
         let window = NSWindow(contentViewController: viewController)
         window.title = String(localized: "Settings")
-        window.setContentSize(NSSize(width: 500, height: 260))
-        window.minSize = NSSize(width: 500, height: 260)
+        window.setContentSize(NSSize(width: 500, height: viewController.view.fittingSize.height))
+        window.minSize = window.frame.size
         window.styleMask.formUnion([.titled, .closable, .miniaturizable])
         window.isReleasedWhenClosed = false
 
         let controller = NSWindowController(window: window)
         settingsWindowController = controller
+        window.center()
         controller.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
