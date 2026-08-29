@@ -1,26 +1,24 @@
 import AppKit
 
 @MainActor
-final class MacOSConsistencyBannerView: NSVisualEffectView {
+final class MacOSConsistencyBannerView: NSView {
     var onRepair: (() -> Void)?
     var onHeightChange: ((CGFloat) -> Void)?
 
     private let summaryButton = NSButton()
     private let repairButton = NSButton()
-    private let detailStack = NSStackView()
+    private let detailTextField = NSTextField(labelWithString: "")
     private let detailScrollView = NSScrollView()
+    private var detailScrollHeightConstraint: NSLayoutConstraint!
     private var issues: [JoboptionsConsistencyIssue] = []
     private var isExpanded = false
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
-        material = .popover
-        blendingMode = .withinWindow
-        state = .active
         wantsLayer = true
         layer?.cornerRadius = 10
         layer?.borderWidth = 1
-        layer?.borderColor = NSColor.separatorColor.cgColor
+        updateLayerColors()
         setAccessibilityRole(.group)
         setAccessibilityLabel(String(localized: "Inconsistent settings"))
 
@@ -48,13 +46,16 @@ final class MacOSConsistencyBannerView: NSVisualEffectView {
         header.spacing = 8
         header.views[2].setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        detailStack.orientation = .vertical
-        detailStack.alignment = .leading
-        detailStack.spacing = 8
-        detailStack.edgeInsets = NSEdgeInsets(top: 6, left: 4, bottom: 4, right: 4)
-        detailScrollView.documentView = detailStack
+        detailTextField.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        detailTextField.lineBreakMode = .byWordWrapping
+        detailTextField.maximumNumberOfLines = 0
+        detailTextField.textColor = .secondaryLabelColor
+        detailTextField.autoresizingMask = [.width]
+        detailScrollView.documentView = detailTextField
         detailScrollView.hasVerticalScroller = true
+        detailScrollView.autohidesScrollers = true
         detailScrollView.drawsBackground = false
+        detailScrollView.borderType = .noBorder
         detailScrollView.isHidden = true
 
         let stack = NSStackView(views: [header, detailScrollView])
@@ -62,18 +63,29 @@ final class MacOSConsistencyBannerView: NSVisualEffectView {
         stack.spacing = 4
         stack.translatesAutoresizingMaskIntoConstraints = false
         addSubview(stack)
+        detailScrollHeightConstraint = detailScrollView.heightAnchor.constraint(equalToConstant: 145)
+        detailScrollHeightConstraint.isActive = false
         NSLayoutConstraint.activate([
             stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 12),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -12),
             stack.topAnchor.constraint(equalTo: topAnchor, constant: 9),
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -9),
-            detailScrollView.heightAnchor.constraint(equalToConstant: 145),
             symbol.widthAnchor.constraint(equalToConstant: 18)
         ])
     }
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { nil }
+
+    override func layout() {
+        super.layout()
+        updateDetailDocumentFrame()
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        updateLayerColors()
+    }
 
     func update(issues: [JoboptionsConsistencyIssue]) {
         self.issues = issues
@@ -88,10 +100,12 @@ final class MacOSConsistencyBannerView: NSVisualEffectView {
         )
         repairButton.isEnabled = issues.contains(where: { $0.isAutomaticallyRepairable })
         rebuildDetails()
+        needsLayout = true
     }
 
     @objc private func toggleDetails(_ sender: Any?) {
         isExpanded.toggle()
+        detailScrollHeightConstraint.isActive = isExpanded
         detailScrollView.isHidden = !isExpanded
         summaryButton.setAccessibilityHelp(
             isExpanded
@@ -99,6 +113,7 @@ final class MacOSConsistencyBannerView: NSVisualEffectView {
                 : String(localized: "Expand consistency details")
         )
         onHeightChange?(isExpanded ? 205 : 52)
+        needsLayout = true
     }
 
     @objc private func repair(_ sender: Any?) {
@@ -106,28 +121,46 @@ final class MacOSConsistencyBannerView: NSVisualEffectView {
     }
 
     private func rebuildDetails() {
-        detailStack.arrangedSubviews.forEach {
-            detailStack.removeArrangedSubview($0)
-            $0.removeFromSuperview()
-        }
-        for issue in issues {
-            let summary = NSTextField(labelWithString: issue.summary)
-            summary.font = .monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
-            summary.lineBreakMode = .byTruncatingMiddle
-            summary.maximumNumberOfLines = 1
+        detailTextField.stringValue = issues.map { issue in
+            var lines = [
+                issue.summary,
+                issue.reason
+            ]
+            if !issue.isAutomaticallyRepairable {
+                lines.append(String(localized: "Manual selection required"))
+            }
+            return lines.joined(separator: "\n")
+        }.joined(separator: "\n\n")
+    }
 
-            let reason = NSTextField(labelWithString: issue.reason)
-            reason.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
-            reason.textColor = issue.isAutomaticallyRepairable ? .secondaryLabelColor : .systemOrange
-            reason.maximumNumberOfLines = 2
-            reason.lineBreakMode = .byWordWrapping
+    private func updateDetailDocumentFrame() {
+        let width = max(detailScrollView.contentSize.width, 1)
+        detailTextField.frame.size.width = width
+        let height = max(detailTextField.fittingSize.height, detailScrollView.contentSize.height)
+        detailTextField.frame = NSRect(
+            origin: .zero,
+            size: NSSize(width: width, height: height)
+        )
+    }
 
-            let row = NSStackView(views: [summary, reason])
-            row.orientation = .vertical
-            row.alignment = .leading
-            row.spacing = 2
-            detailStack.addArrangedSubview(row)
-            row.widthAnchor.constraint(equalTo: detailStack.widthAnchor, constant: -8).isActive = true
-        }
+    private func updateLayerColors() {
+        let isDark = effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        layer?.backgroundColor = NSColor.compatibilityBannerBackground(isDark: isDark).cgColor
+        layer?.borderColor = NSColor.compatibilityBannerBorder(isDark: isDark).cgColor
+    }
+
+}
+
+private extension NSColor {
+    static func compatibilityBannerBackground(isDark: Bool) -> NSColor {
+        isDark
+            ? NSColor(calibratedRed: 0.27, green: 0.18, blue: 0.05, alpha: 1)
+            : NSColor(calibratedRed: 1.0, green: 0.92, blue: 0.72, alpha: 1)
+    }
+
+    static func compatibilityBannerBorder(isDark: Bool) -> NSColor {
+        isDark
+            ? NSColor(calibratedRed: 0.78, green: 0.49, blue: 0.16, alpha: 1)
+            : NSColor(calibratedRed: 0.86, green: 0.54, blue: 0.13, alpha: 1)
     }
 }

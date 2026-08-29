@@ -373,15 +373,16 @@ final class ConversionViewModel: ObservableObject {
     }
 
     private func synchronizeFrontSettings() {
-        selectedPDFVersion = PDFVersion(
-            rawValue: joboptionsRepository.compatibilityLevel
-        ) ?? .v13
-        switch joboptionsRepository.activeStandard {
-        case .pdfa1b: selectedPDFACompatibility = .pdfa1b
-        case .pdfa2b: selectedPDFACompatibility = .pdfa2b
-        case .pdfa3b: selectedPDFACompatibility = .pdfa3b
-        default: selectedPDFACompatibility = .none
+        let compatibility: PDFACompatibility = switch joboptionsRepository.activeStandard {
+        case .pdfa1b: .pdfa1b
+        case .pdfa2b: .pdfa2b
+        case .pdfa3b: .pdfa3b
+        default: .none
         }
+        selectedPDFACompatibility = compatibility
+        selectedPDFVersion = compatibility.requiredPDFVersion
+            ?? PDFVersion(rawValue: joboptionsRepository.compatibilityLevel)
+            ?? .v13
     }
 
 }

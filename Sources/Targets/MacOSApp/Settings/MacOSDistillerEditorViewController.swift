@@ -252,7 +252,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         formStack.translatesAutoresizingMaskIntoConstraints = false
         documentView.addSubview(formStack)
         let formHeightConstraint = formStack.heightAnchor.constraint(
-            equalToConstant: activeDocumentContentHeight
+            greaterThanOrEqualToConstant: activeDocumentContentHeight
         )
         NSLayoutConstraint.activate([
             formStack.leadingAnchor.constraint(equalTo: documentView.leadingAnchor),
@@ -1215,7 +1215,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         if let constraint = declaredHeightConstraints[identifier] {
             constraint.constant = height
         } else {
-            let constraint = view.heightAnchor.constraint(equalToConstant: height)
+            let constraint = view.heightAnchor.constraint(greaterThanOrEqualToConstant: height)
             constraint.isActive = true
             declaredHeightConstraints[identifier] = constraint
         }

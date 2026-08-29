@@ -143,8 +143,10 @@ final class MacOSSettingsViewController: NSViewController {
             item.representedObject = version.rawValue
             versionPopup.menu?.addItem(item)
         }
+        let displayedVersion = selectedPDFACompatibility.requiredPDFVersion?.rawValue
+            ?? repository.compatibilityLevel
         if let index = PDFVersion.allCases.firstIndex(where: {
-            $0.rawValue == repository.compatibilityLevel
+            $0.rawValue == displayedVersion
         }) {
             versionPopup.selectItem(at: index)
         }
@@ -158,13 +160,17 @@ final class MacOSSettingsViewController: NSViewController {
             item.representedObject = choice.rawValue
             pdfaPopup.menu?.addItem(item)
         }
-        let selected: PDFACompatibility = switch repository.activeStandard {
+        let selected = selectedPDFACompatibility
+        pdfaPopup.selectItem(at: choices.firstIndex(of: selected) ?? 0)
+    }
+
+    private var selectedPDFACompatibility: PDFACompatibility {
+        switch repository.activeStandard {
         case .pdfa1b: .pdfa1b
         case .pdfa2b: .pdfa2b
         case .pdfa3b: .pdfa3b
         default: .none
         }
-        pdfaPopup.selectItem(at: choices.firstIndex(of: selected) ?? 0)
     }
 
     @objc private func selectJoboptions(_ sender: NSPopUpButton) {
