@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 
 @MainActor
 @main
@@ -29,16 +28,14 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let settingsView = MacOSSettingsView(
+        let viewController = MacOSSettingsViewController(
             repository: MacOSApplicationModel.shared.joboptionsRepository
         )
-        .frame(minWidth: 760, minHeight: 560)
-        let hostingController = NSHostingController(rootView: settingsView)
-        let window = NSWindow(contentViewController: hostingController)
+        let window = NSWindow(contentViewController: viewController)
         window.title = String(localized: "Settings")
-        window.setContentSize(NSSize(width: 760, height: 560))
-        window.minSize = NSSize(width: 760, height: 560)
-        window.styleMask.formUnion([.titled, .closable, .miniaturizable, .resizable])
+        window.setContentSize(NSSize(width: 500, height: 260))
+        window.minSize = NSSize(width: 500, height: 260)
+        window.styleMask.formUnion([.titled, .closable, .miniaturizable])
         window.isReleasedWhenClosed = false
 
         let controller = NSWindowController(window: window)

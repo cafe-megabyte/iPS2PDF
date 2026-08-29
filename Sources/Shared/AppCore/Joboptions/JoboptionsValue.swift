@@ -37,7 +37,7 @@ enum JoboptionsValue: Equatable, Sendable {
         case let .name(value):
             return "/\(value)"
         case let .string(value):
-            return "(\(Self.escapeLiteralString(value)))"
+            return PostScriptStringCodec.encodeLiteral(value)
         case let .array(values):
             return "[\(values.map(\.postScript).joined(separator: " "))]"
         case let .dictionary(values):
@@ -50,10 +50,4 @@ enum JoboptionsValue: Equatable, Sendable {
         }
     }
 
-    private static func escapeLiteralString(_ value: String) -> String {
-        value
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "(", with: "\\(")
-            .replacingOccurrences(of: ")", with: "\\)")
-    }
 }

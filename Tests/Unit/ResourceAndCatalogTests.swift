@@ -29,9 +29,41 @@ final class ResourceAndCatalogTests: XCTestCase {
             XCTAssertFalse(DistillerOptionCatalog.options(in: category).isEmpty, category.rawValue)
         }
         for option in DistillerOptionCatalog.options {
+            XCTAssertFalse(option.keyPaths.isEmpty, option.key)
             XCTAssertFalse(option.localizedHelp.hasSuffix("."), option.key)
             XCTAssertFalse(option.localizedCompatibilityNote?.hasSuffix(".") == true, option.key)
         }
+        XCTAssertTrue(DistillerOptionCatalog.options.contains {
+            $0.classification == .knownAdditional
+        })
+        XCTAssertEqual(
+            DistillerOptionCatalog.byKey["ColorSettingsFile"]?.classification,
+            .preserved
+        )
+    }
+
+    func testCompositeTooltipPathsMatchTheirSemanticChangeSets() {
+        let compression = DistillerOptionCatalog.byKey["ColorImageFilter"]
+        let compressionChanges = SemanticJoboptions.changeCompression(
+            kind: .color,
+            compression: .automaticJPEG,
+            quality: .medium
+        )
+        XCTAssertEqual(compression?.keyPaths, compressionChanges.paths)
+
+        let policy = DistillerOptionCatalog.byKey["MonoImageMinResolution"]
+        let policyChanges = SemanticJoboptions.changeImagePolicy(
+            kind: .monochrome,
+            minimumResolution: 600,
+            policy: .warn
+        )
+        XCTAssertEqual(policy?.keyPaths, policyChanges.paths)
+
+        let override = DistillerOptionCatalog.byKey["LockDistillerParams"]
+        XCTAssertEqual(
+            override?.keyPaths,
+            SemanticJoboptions.changeAllowsDistillerOverrides(true).paths
+        )
     }
 
     func testStandardCompatibilityLocksAreDefined() {

@@ -65,6 +65,63 @@ final class LosslessJoboptionsDocumentTests: XCTestCase {
         XCTAssertTrue(try XCTUnwrap(String(data: edited.data, encoding: .utf8)).contains("/Added (value)"))
     }
 
+    func testNestedReplacementChangesOnlyTheTargetValue() throws {
+        let originalText = """
+        %!PS
+        <<
+          /Description << /ENU (English) /DEU (Deutsch) /JPN <FEFF65E5672C8A9E> >>
+          /ColorImageDict << /QFactor 0.40 /Unknown [1 2 3] >>
+        >> setdistillerparams
+        """
+        let original = Data(originalText.utf8)
+        let document = try LosslessJoboptionsDocument(data: original)
+
+        XCTAssertEqual(document.value(forPath: "/Description /DEU")?.textualValue, "Deutsch")
+        XCTAssertEqual(document.value(forPath: "/ColorImageDict /QFactor")?.numberValue, 0.4)
+
+        let edited = try document.replacingValue(
+            forPath: "/ColorImageDict /QFactor",
+            with: .number(0.75, original: "0.75")
+        )
+        let expected = originalText.replacingOccurrences(of: "/QFactor 0.40", with: "/QFactor 0.75")
+        XCTAssertEqual(edited.data, Data(expected.utf8))
+    }
+
+    func testNestedInsertionPreservesExistingDictionaryBytes() throws {
+        let original = Data("<< /Description << /ENU (Keep) % comment\r\n  /JPN <FEFF65E5672C>\r\n>> >> setdistillerparams\r\n".utf8)
+        let edited = try LosslessJoboptionsDocument(data: original).replacingValue(
+            forPath: "/Description /DEU",
+            with: .string("Grüße"),
+            stringInsertionStyle: .adobeUnicodeHex
+        )
+        let text = try XCTUnwrap(String(data: edited.data, encoding: .utf8))
+
+        XCTAssertTrue(text.contains("/ENU (Keep) % comment\r\n"))
+        XCTAssertTrue(text.contains("/JPN <FEFF65E5672C>\r\n"))
+        XCTAssertTrue(text.contains("/DEU <FEFF0047007200FC00DF0065>"))
+        XCTAssertEqual(edited.value(forPath: "/Description /DEU")?.textualValue, "Grüße")
+    }
+
+    func testHexadecimalUnicodeStringKeepsItsRepresentationWhenReplaced() throws {
+        let original = Data("<< /Description <FEFF004F006C0064> >> setdistillerparams\n".utf8)
+        let document = try LosslessJoboptionsDocument(data: original)
+        XCTAssertEqual(document.value(forKey: "Description")?.textualValue, "Old")
+
+        let edited = try document.replacingValue(forKey: "Description", with: .string("Neu"))
+        XCTAssertTrue(try XCTUnwrap(String(data: edited.data, encoding: .utf8)).contains("<FEFF004E00650075>"))
+        XCTAssertEqual(edited.value(forKey: "Description")?.textualValue, "Neu")
+    }
+
+    func testLatin1SourceRemainsLatin1AfterPointEdit() throws {
+        let source = "<< /Description (Grüße) /Flag false >> setdistillerparams\r"
+        let original = try XCTUnwrap(source.data(using: .isoLatin1))
+        let edited = try LosslessJoboptionsDocument(data: original)
+            .replacingValue(forKey: "Flag", with: .boolean(true))
+
+        XCTAssertNil(String(data: edited.data, encoding: .utf8))
+        XCTAssertEqual(String(data: edited.data, encoding: .isoLatin1), source.replacingOccurrences(of: "false", with: "true"))
+    }
+
     func testUTF8BOMIsPreservedAfterPointEdit() throws {
         var original = Data([0xEF, 0xBB, 0xBF])
         original.append(Data("<< /Flag false >> setdistillerparams\n".utf8))

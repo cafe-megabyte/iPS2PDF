@@ -3,6 +3,7 @@ import Foundation
 struct SourceBuffer: Sendable {
     enum Encoding: Sendable {
         case utf8(bomLength: Int)
+        case isoLatin1
         case utf16LittleEndian
         case utf16BigEndian
     }
@@ -32,7 +33,10 @@ struct SourceBuffer: Sendable {
             }
         } else {
             let bomLength = bytes.starts(with: [0xEF, 0xBB, 0xBF]) ? 3 : 0
-            encoding = .utf8(bomLength: bomLength)
+            let body = Data(bytes.dropFirst(bomLength))
+            encoding = String(data: body, encoding: .utf8) != nil
+                ? .utf8(bomLength: bomLength)
+                : .isoLatin1
             units = bytes.dropFirst(bomLength).map(UInt32.init)
         }
     }
@@ -42,6 +46,8 @@ struct SourceBuffer: Sendable {
         case .utf8:
             String(data: data, encoding: .utf8)
                 ?? String(data: data, encoding: .isoLatin1)
+        case .isoLatin1:
+            String(data: data, encoding: .isoLatin1)
         case .utf16LittleEndian:
             String(data: data.dropFirst(2), encoding: .utf16LittleEndian)
         case .utf16BigEndian:
@@ -59,6 +65,7 @@ struct SourceBuffer: Sendable {
     func byteOffset(forUnit index: Int) -> Int {
         switch encoding {
         case let .utf8(bomLength): bomLength + index
+        case .isoLatin1: index
         case .utf16LittleEndian, .utf16BigEndian: 2 + index * 2
         }
     }
@@ -75,6 +82,8 @@ struct SourceBuffer: Sendable {
             return String(data: slice, encoding: .utf8)
                 ?? String(data: slice, encoding: .isoLatin1)
                 ?? ""
+        case .isoLatin1:
+            return String(data: slice, encoding: .isoLatin1) ?? ""
         case .utf16LittleEndian:
             return String(data: slice, encoding: .utf16LittleEndian) ?? ""
         case .utf16BigEndian:
@@ -87,6 +96,8 @@ struct SourceBuffer: Sendable {
         switch encoding {
         case .utf8:
             encoded = string.data(using: .utf8)
+        case .isoLatin1:
+            encoded = string.data(using: .isoLatin1)
         case .utf16LittleEndian:
             encoded = string.data(using: .utf16LittleEndian)
         case .utf16BigEndian:

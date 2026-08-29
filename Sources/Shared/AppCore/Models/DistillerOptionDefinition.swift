@@ -4,8 +4,12 @@ struct DistillerOptionDefinition: Identifiable, Sendable {
     let key: String
     let title: LocalizedStringResource
     let category: DistillerCategory
+    let section: DistillerSection
     let kind: DistillerOptionKind
-    let help: String
+    let keyPaths: [JoboptionsKeyPath]
+    let semanticEditor: DistillerSemanticEditor
+    let classification: DistillerControlClassification
+    let isDisabledBySelectedStandard: Bool
     let compatibilityNote: LocalizedStringResource?
 
     var id: String { key }
@@ -15,7 +19,7 @@ struct DistillerOptionDefinition: Identifiable, Sendable {
     }
 
     var localizedHelp: String {
-        help
+        keyPaths.map(\.description).joined(separator: ", ")
     }
 
     var localizedCompatibilityNote: String? {

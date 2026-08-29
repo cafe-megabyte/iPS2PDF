@@ -17,7 +17,7 @@ struct SettingsCategoryView: View {
                     DistillerOptionEditor(
                         definition: definition,
                         repository: repository,
-                        isLocked: isLocked(definition.key)
+                        isLocked: isLocked(definition)
                     )
                 }
             } footer: {
@@ -42,7 +42,16 @@ struct SettingsCategoryView: View {
     }
 
     private var visibleDefinitions: [DistillerOptionDefinition] {
-        var definitions = DistillerOptionCatalog.options(in: category)
+        var definitions: [DistillerOptionDefinition]
+        if category == .additional {
+            definitions = DistillerOptionCatalog.options.filter {
+                $0.classification == .knownAdditional
+            }
+        } else {
+            definitions = DistillerOptionCatalog.options(in: category).filter {
+                $0.classification == .distillerControl
+            }
+        }
         if category == .standards {
             definitions.removeAll { $0.key == "iPS2PDFStandard" }
         }
@@ -50,7 +59,10 @@ struct SettingsCategoryView: View {
             let checkboxes = Set(["EmbedAllFonts", "EmbedSubstituteFonts", "SubsetFonts", "EmbedOpenType"])
             definitions.removeAll { !checkboxes.contains($0.key) }
         }
-        return definitions
+        return definitions.filter {
+            if case .companion = $0.semanticEditor { return false }
+            return true
+        }
     }
 
     private var standardSection: some View {
@@ -64,7 +76,7 @@ struct SettingsCategoryView: View {
 
             if repository.activeStandard != .none {
                 Label(
-                    "Mandatory PDF version, encryption, font embedding, output intent and color-space dependencies are locked by the selected standard.",
+                    String(localized: "Required PDF version, encryption, font embedding, output intent and color-space changes are listed as repairable consistency settings."),
                     systemImage: "lock.fill"
                 )
                 .font(.footnote)
@@ -167,13 +179,8 @@ struct SettingsCategoryView: View {
         )
     }
 
-    private func isLocked(_ key: String) -> Bool {
-        guard repository.activeStandard != .none else { return false }
-        return [
-            "CompatibilityLevel", "EmbedAllFonts", "CannotEmbedFontPolicy",
-            "PDFXOutputIntentProfile", "OutputICCProfile", "ColorConversionStrategy",
-            "Encrypt", "EncryptionR", "OwnerPassword", "UserPassword", "Permissions"
-        ].contains(key)
+    private func isLocked(_ definition: DistillerOptionDefinition) -> Bool {
+        repository.activeStandard != .none && definition.isDisabledBySelectedStandard
     }
 
     private var randomSeedFormatter: NumberFormatter {

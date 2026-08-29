@@ -1,6 +1,6 @@
 # iPS2PDF
 
-iPS2PDF is a SwiftUI app for iOS, iPadOS, and MacOS that converts files to PDF with a statically linked Ghostscript library. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Open**. Every MacOS conversion gets an independent PDF document window.
+iPS2PDF converts files to PDF with a statically linked Ghostscript library. Its iOS and iPadOS interface uses SwiftUI; the MacOS app uses AppKit. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Open**. Every MacOS conversion gets an independent PDF document window.
 
 Ghostscript never runs in either main app process. iOS delegates it to the existing ExtensionKit helper; MacOS embeds a private XPC service. The MacOS Quick Look extensions execute Ghostscript directly through the same bridge because they cannot use the app's XPC service. The app and the relevant helper stage exactly one current job in their shared App Group, while a FIFO coordinator serializes requests from multiple MacOS document windows. XPC carries control metadata, not document payloads.
 
@@ -38,6 +38,12 @@ The Preview and Thumbnail Extensions declare only `com.adobe.postscript` and `co
 
 The Preview Extension returns a PDF containing every page. The Thumbnail Extension asks Ghostscript for page 1 only, then lets Core Graphics draw that PDF page at the requested thumbnail size. Both paths extract the effective `AutoPositionEPSFiles` value from the Joboptions. When it is `true`, the bridge adds `-dEPSCrop`, so EPS output respects its bounding box. The same extraction and bridge behavior applies to normal app conversions on iOS and MacOS.
 
+## Joboptions editing
+
+Joboptions are parsed and edited losslessly. The shared editor identifies values by nested PostScript key paths, preserves the source encoding and all bytes outside the changed value, and supports literal as well as hexadecimal strings. Composite controls such as page ranges, image compression and quality, image policies, PDF standards, and page-box rules are implemented once as UI-independent semantic changes.
+
+Before conversion, one shared consistency engine computes the exact effective Joboptions and reports every proposed repair. Conversion never performs a second hidden adjustment. On iOS, edits and repairs are saved immediately. On MacOS, the AppKit Distiller-style editor writes to an isolated temporary working copy; **OK** commits it atomically and **Cancel** discards every staged edit and repair.
+
 ## Project organization
 
 All compiled product sources and app resources live under the single physical `Sources` directory. Xcode's navigator mirrors the physical hierarchy with folder-backed structural groups and blue, file-system-synchronized component folders:
@@ -51,7 +57,6 @@ Sources/
 │   │   ├── Joboptions/
 │   │   ├── Models/
 │   │   └── Storage/
-│   ├── AppUI/
 │   ├── GhostscriptClient/
 │   ├── GhostscriptRuntime/
 │   │   ├── GhostscriptBridge/
@@ -63,9 +68,11 @@ Sources/
 │   └── Resources/
 └── Targets/
     ├── iOSApp/
+    │   └── AppUI/
     ├── iOSShareExtension/
     ├── iOSGhostscriptExtension/
     ├── MacOSApp/
+    │   └── Settings/
     ├── MacOSGhostscriptRuntime/
     ├── MacOSGhostscriptXPC/
     ├── MacOSQuickLookPreview/
@@ -85,7 +92,9 @@ The shared component memberships are intentionally folder-granular:
 | --- | --- |
 | `AppCore/Conversion`, `Incoming`, `Models` | iOS app, MacOS app, unit tests |
 | `AppCore/Joboptions` | iOS app, MacOS app, Quick Look, Thumbnail, unit tests |
-| `AppCore/Storage`, `AppUI`, `GhostscriptClient`, `Resources/App` | iOS app, MacOS app |
+| `AppCore/Storage`, `GhostscriptClient`, `Resources/App` | iOS app, MacOS app |
+| `Targets/iOSApp/AppUI` | iOS app |
+| `Targets/MacOSApp/Settings` | MacOS app |
 | `GhostscriptRuntime/GhostscriptBridge` | iOS Ghostscript extension, MacOS runtime framework |
 | `GhostscriptRuntime/Profiles` | iOS Ghostscript extension, MacOS XPC, Quick Look, Thumbnail |
 | `GhostscriptRuntime/RequestHandling` | iOS Ghostscript extension, MacOS XPC |

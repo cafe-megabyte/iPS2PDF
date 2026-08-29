@@ -280,7 +280,6 @@
 		U20000000000000000000008 /* MacOSThumbnailExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOSThumbnailExtension; sourceTree = "<group>"; };
 		U20000000000000000000009 /* Conversion */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Conversion; sourceTree = "<group>"; };
 		U2000000000000000000000A /* Joboptions */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Joboptions; sourceTree = "<group>"; };
-		U2000000000000000000000B /* AppUI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = AppUI; sourceTree = "<group>"; };
 		U2000000000000000000000C /* GhostscriptClient */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = GhostscriptClient; sourceTree = "<group>"; };
 		U2000000000000000000000D /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
 		U2000000000000000000000E /* Profiles */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Profiles; sourceTree = "<group>"; };
@@ -440,7 +439,6 @@
 			isa = PBXGroup;
 			children = (
 				S70000000000000000000003 /* AppCore */,
-				U2000000000000000000000B /* AppUI */,
 				U2000000000000000000000C /* GhostscriptClient */,
 				S70000000000000000000004 /* GhostscriptRuntime */,
 				S70000000000000000000005 /* IPC */,
@@ -542,7 +540,6 @@
 				U20000000000000000000001 /* iOSApp */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
-				U2000000000000000000000B /* AppUI */,
 				U2000000000000000000000C /* GhostscriptClient */,
 				U2000000000000000000000D /* Models */,
 				U20000000000000000000010 /* Resources */,
@@ -636,7 +633,6 @@
 				U20000000000000000000004 /* MacOSApp */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
-				U2000000000000000000000B /* AppUI */,
 				U2000000000000000000000C /* GhostscriptClient */,
 				U2000000000000000000000D /* Models */,
 				U20000000000000000000010 /* Resources */,

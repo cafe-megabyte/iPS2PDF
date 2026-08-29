@@ -64,7 +64,14 @@ final class JoboptionsRepository: ObservableObject {
 
     var compatibilityIssues: [GhostscriptCompatibilityIssue] {
         guard let activeDocument else { return [] }
-        return GhostscriptCompatibilityAdjuster.issues(in: activeDocument)
+        return JoboptionsConsistencyEngine.issues(
+            in: activeDocument,
+            context: consistencyContext
+        )
+    }
+
+    var consistencyAnalysisContext: JoboptionsConsistencyContext {
+        consistencyContext
     }
 
     func waitUntilReady() async {
@@ -80,9 +87,18 @@ final class JoboptionsRepository: ObservableObject {
     }
 
     func update(key: String, value: JoboptionsValue) throws {
-        let editable = try editableRecord()
+        try apply(JoboptionsChangeSet([JoboptionsChange("/\(key)", value)]))
+    }
+
+    func update(path: JoboptionsKeyPath, value: JoboptionsValue) throws {
+        try apply(JoboptionsChangeSet([JoboptionsChange(path.description, value)]))
+    }
+
+    func apply(_ changeSet: JoboptionsChangeSet) throws {
         guard let document = activeDocument else { throw JoboptionsError.unreadable }
-        let updated = try document.replacingValue(forKey: key, with: value)
+        let updated = try changeSet.applying(to: document)
+        guard updated.data != document.data else { return }
+        let editable = try editableRecord()
         try atomicWrite(updated.data, to: editable.url)
         activeRecord = editable
         activeDocument = updated
@@ -91,41 +107,7 @@ final class JoboptionsRepository: ObservableObject {
     }
 
     func setStandard(_ standard: PDFStandard) throws {
-        try update(key: "iPS2PDFStandard", value: .name(standard.rawValue))
-        guard standard != .none else {
-            try update(key: "PDFX1aCheck", value: .boolean(false))
-            try update(key: "PDFX3Check", value: .boolean(false))
-            return
-        }
-
-        if let compatibility = standard.requiredCompatibilityLevel {
-            try update(
-                key: "CompatibilityLevel",
-                value: .number(Double(compatibility) ?? 1.7, original: compatibility)
-            )
-        }
-        try update(key: "EmbedAllFonts", value: .boolean(true))
-        try update(key: "Encrypt", value: .boolean(false))
-        try update(key: "EncryptionR", value: .number(0, original: "0"))
-        try update(key: "OwnerPassword", value: .string(""))
-        try update(key: "UserPassword", value: .string(""))
-        try update(key: "PDFX1aCheck", value: .boolean(standard == .pdfx1))
-        try update(key: "PDFX3Check", value: .boolean(standard == .pdfx3))
-        if standard.ghostscriptPDFAValue != nil || standard.ghostscriptPDFXValue != nil {
-            try update(key: "CannotEmbedFontPolicy", value: .name("Error"))
-        }
-        if standard.ghostscriptPDFAValue != nil {
-            try update(key: "ColorConversionStrategy", value: .name("RGB"))
-            if let profile = profiles.first(where: { $0.colorSpace == "RGB" && $0.name.localizedCaseInsensitiveContains("sRGB") })
-                ?? profiles.first(where: { $0.colorSpace == "RGB" }) {
-                try update(key: "OutputICCProfile", value: .string(profile.name))
-            }
-        } else if standard.ghostscriptPDFXValue != nil {
-            try update(key: "ColorConversionStrategy", value: .name("CMYK"))
-            if let profile = profiles.first(where: { $0.colorSpace == "CMYK" }) {
-                try update(key: "PDFXOutputIntentProfile", value: .string(profile.name))
-            }
-        }
+        try apply(SemanticJoboptions.changeStandard(standard))
     }
 
     func setAutomaticRandomSeed(_ enabled: Bool) {
@@ -184,7 +166,10 @@ final class JoboptionsRepository: ObservableObject {
 
     func snapshot() throws -> ConversionSettingsSnapshot {
         guard let document = activeDocument else { throw JoboptionsError.unreadable }
-        let effectiveDocument = try GhostscriptCompatibilityAdjuster.adjustedDocument(from: document)
+        let effectiveDocument = try JoboptionsConsistencyEngine.effectiveDocument(
+            from: document,
+            context: consistencyContext
+        )
         return ConversionSettingsSnapshot(
             effectiveJoboptionsData: effectiveDocument.data,
             standard: activeStandard,
@@ -197,8 +182,12 @@ final class JoboptionsRepository: ObservableObject {
     }
 
     func applyGhostscriptCompatibilityAdjustments() throws {
+        try applyConsistencyRepairs(compatibilityIssues)
+    }
+
+    func applyConsistencyRepairs(_ issues: [JoboptionsConsistencyIssue]) throws {
         guard let document = activeDocument else { throw JoboptionsError.unreadable }
-        let adjusted = try GhostscriptCompatibilityAdjuster.adjustedDocument(from: document)
+        let adjusted = try JoboptionsConsistencyEngine.repair(document, applying: issues)
         guard adjusted.data != document.data else { return }
 
         let editable = try editableRecord()
@@ -207,6 +196,26 @@ final class JoboptionsRepository: ObservableObject {
         activeDocument = adjusted
         defaults.set(editable.id, forKey: DefaultsKey.activeIdentifier)
         refreshUserRecordsPreservingSelection()
+    }
+
+    func commitEditingSession(
+        data: Data,
+        originalRecord: JoboptionsRecord,
+        originalData: Data
+    ) throws {
+        guard data != originalData else { return }
+        _ = try LosslessJoboptionsDocument(data: data)
+        if originalRecord.isBundled {
+            _ = try adopt(
+                data: data,
+                named: uniqueName(originalRecord.name),
+                activate: true
+            )
+        } else {
+            try atomicWrite(data, to: originalRecord.url)
+            try activate(originalRecord)
+            refreshUserRecordsPreservingSelection()
+        }
     }
 
     func importProfile(from sourceURL: URL) throws {
@@ -415,5 +424,13 @@ final class JoboptionsRepository: ObservableObject {
             suffix += 1
         }
         return candidate
+    }
+
+    private var consistencyContext: JoboptionsConsistencyContext {
+        JoboptionsConsistencyContext(
+            availableProfiles: profiles.map {
+                .init(name: $0.name, colorSpace: $0.colorSpace)
+            }
+        )
     }
 }

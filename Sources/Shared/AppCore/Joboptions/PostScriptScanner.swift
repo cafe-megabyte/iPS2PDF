@@ -4,6 +4,10 @@ struct PostScriptScanner {
     private let source: SourceBuffer
     private var index = 0
     private var result = ParsedSource()
+    private var currentOccurrences: [LosslessJoboptionsDocument.Occurrence] = []
+    private var currentDictionaryClosingUnits: [JoboptionsKeyPath: Int] = [:]
+    private var lastTopLevelOccurrences: [LosslessJoboptionsDocument.Occurrence] = []
+    private var lastTopLevelDictionaryClosingUnits: [JoboptionsKeyPath: Int] = [:]
     private var lastTopLevelDictionaryClosingUnit: Int?
 
     init(source: SourceBuffer) {
@@ -14,16 +18,25 @@ struct PostScriptScanner {
         while true {
             skipTrivia()
             guard index < source.units.count else { break }
-            let object = try parseObject(recordDictionaryEntries: true)
-            skipTrivia()
 
-            if let closingUnit = object.dictionaryClosingUnit {
-                lastTopLevelDictionaryClosingUnit = closingUnit
-            } else if case let .raw(token) = object.value,
-                      token == "setdistillerparams",
-                      let closingUnit = lastTopLevelDictionaryClosingUnit,
-                      result.primaryDictionaryClosingUnit == nil {
+            if source.units[index] == 0x3C, peek(1) == 0x3C {
+                currentOccurrences = []
+                currentDictionaryClosingUnits = [:]
+                let object = try parseObject(recordDictionaryEntries: true, path: JoboptionsKeyPath([]))
+                lastTopLevelDictionaryClosingUnit = object.dictionaryClosingUnit
+                lastTopLevelOccurrences = currentOccurrences
+                lastTopLevelDictionaryClosingUnits = currentDictionaryClosingUnits
+                continue
+            }
+
+            let object = try parseObject(recordDictionaryEntries: false, path: JoboptionsKeyPath([]))
+            if case let .raw(token) = object.value,
+               token == "setdistillerparams",
+               let closingUnit = lastTopLevelDictionaryClosingUnit,
+               result.primaryDictionaryClosingUnit == nil {
                 result.primaryDictionaryClosingUnit = closingUnit
+                result.occurrences = lastTopLevelOccurrences
+                result.dictionaryClosingUnits = lastTopLevelDictionaryClosingUnits
             } else if case let .raw(token) = object.value,
                       token != "setpagedevice" {
                 result.unclassifiedFragments.append(object.unitRange)
@@ -32,7 +45,10 @@ struct PostScriptScanner {
         return result
     }
 
-    private mutating func parseObject(recordDictionaryEntries: Bool) throws -> ParsedObject {
+    private mutating func parseObject(
+        recordDictionaryEntries: Bool,
+        path: JoboptionsKeyPath
+    ) throws -> ParsedObject {
         skipTrivia()
         guard index < source.units.count else {
             throw JoboptionsError.malformed("unexpected end of file")
@@ -43,7 +59,7 @@ struct PostScriptScanner {
         case 0x28:
             return try parseLiteralString(start: start)
         case 0x3C where peek(1) == 0x3C:
-            return try parseDictionary(start: start, recordEntries: recordDictionaryEntries)
+            return try parseDictionary(start: start, recordEntries: recordDictionaryEntries, path: path)
         case 0x3C:
             return try parseHexString(start: start)
         case 0x5B:
@@ -78,7 +94,11 @@ struct PostScriptScanner {
         }
     }
 
-    private mutating func parseDictionary(start: Int, recordEntries: Bool) throws -> ParsedObject {
+    private mutating func parseDictionary(
+        start: Int,
+        recordEntries: Bool,
+        path: JoboptionsKeyPath
+    ) throws -> ParsedObject {
         index += 2
         var values: [String: JoboptionsValue] = [:]
 
@@ -90,6 +110,7 @@ struct PostScriptScanner {
             if source.units[index] == 0x3E, peek(1) == 0x3E {
                 let closingUnit = index
                 index += 2
+                if recordEntries { currentDictionaryClosingUnits[path] = closingUnit }
                 return ParsedObject(
                     value: .dictionary(values),
                     unitRange: start..<index,
@@ -106,21 +127,26 @@ struct PostScriptScanner {
                     throw JoboptionsError.malformed("empty dictionary key")
                 }
                 let key = source.string(forUnits: keyStart..<index)
+                let entryPath = path.appending(key)
                 skipTrivia()
-                let value = try parseObject(recordDictionaryEntries: recordEntries)
+                let value = try parseObject(
+                    recordDictionaryEntries: recordEntries,
+                    path: entryPath
+                )
                 values[key] = value.value
                 if recordEntries {
-                    result.occurrences.append(
+                    currentOccurrences.append(
                         .init(
-                            key: key,
+                            path: entryPath,
                             entryByteRange: source.byteRange(forUnits: entryStart..<value.unitRange.upperBound),
                             byteRange: source.byteRange(forUnits: value.unitRange),
-                            value: value.value
+                            value: value.value,
+                            stringRepresentation: value.stringRepresentation
                         )
                     )
                 }
             } else {
-                let fragment = try parseObject(recordDictionaryEntries: false)
+                let fragment = try parseObject(recordDictionaryEntries: false, path: path)
                 result.unclassifiedFragments.append(fragment.unitRange)
             }
         }
@@ -138,7 +164,9 @@ struct PostScriptScanner {
                 index += 1
                 return ParsedObject(value: .array(values), unitRange: start..<index, dictionaryClosingUnit: nil)
             }
-            values.append(try parseObject(recordDictionaryEntries: false).value)
+            values.append(
+                try parseObject(recordDictionaryEntries: false, path: JoboptionsKeyPath([])).value
+            )
         }
     }
 
@@ -157,9 +185,10 @@ struct PostScriptScanner {
                 if depth == 0 {
                     let raw = source.string(forUnits: (start + 1)..<(index - 1))
                     return ParsedObject(
-                        value: .string(unescapeLiteralString(raw)),
+                        value: .string(PostScriptStringCodec.decodeLiteral(raw)),
                         unitRange: start..<index,
-                        dictionaryClosingUnit: nil
+                        dictionaryClosingUnit: nil,
+                        stringRepresentation: .literal
                     )
                 }
             }
@@ -169,17 +198,21 @@ struct PostScriptScanner {
 
     private mutating func parseHexString(start: Int) throws -> ParsedObject {
         index += 1
+        let contentStart = index
         while index < source.units.count, source.units[index] != 0x3E {
             index += 1
         }
         guard index < source.units.count else {
             throw JoboptionsError.malformed("unterminated hexadecimal string")
         }
+        let content = source.string(forUnits: contentStart..<index)
         index += 1
+        let raw = source.string(forUnits: start..<index)
         return ParsedObject(
-            value: .raw(source.string(forUnits: start..<index)),
+            value: PostScriptStringCodec.decodeHexadecimal(content).map(JoboptionsValue.string) ?? .raw(raw),
             unitRange: start..<index,
-            dictionaryClosingUnit: nil
+            dictionaryClosingUnit: nil,
+            stringRepresentation: .hexadecimal
         )
     }
 
@@ -248,29 +281,5 @@ struct PostScriptScanner {
 
     private func isDelimiter(_ unit: UInt32) -> Bool {
         isWhitespace(unit) || [0x28, 0x29, 0x3C, 0x3E, 0x5B, 0x5D, 0x7B, 0x7D, 0x2F, 0x25].contains(unit)
-    }
-
-    private func unescapeLiteralString(_ raw: String) -> String {
-        var result = ""
-        var escaping = false
-        for character in raw {
-            if escaping {
-                switch character {
-                case "n": result.append("\n")
-                case "r": result.append("\r")
-                case "t": result.append("\t")
-                case "b": result.append("\u{08}")
-                case "f": result.append("\u{0C}")
-                default: result.append(character)
-                }
-                escaping = false
-            } else if character == "\\" {
-                escaping = true
-            } else {
-                result.append(character)
-            }
-        }
-        if escaping { result.append("\\") }
-        return result
     }
 }

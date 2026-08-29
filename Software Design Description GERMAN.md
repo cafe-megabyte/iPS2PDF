@@ -2,7 +2,7 @@
 
 ## 1. Zweck
 
-iPS2PDF ist eine SwiftUI-App für iOS und iPadOS, die eine beliebige reguläre Datei entgegennimmt, diese über Ghostscript in eine PDF-Datei konvertiert und das erzeugte PDF anschließend systemnah anzeigt.
+iPS2PDF ist eine iOS-/iPadOS-App mit SwiftUI und eine native MacOS-App mit AppKit. Sie nimmt eine beliebige reguläre Datei entgegen, konvertiert diese über Ghostscript in eine PDF-Datei und zeigt das erzeugte PDF anschließend systemnah an.
 
 Die App unterstützt zwei Eingangswege:
 
@@ -22,7 +22,8 @@ Die App untersucht den Dateityp oder Dateiinhalt vor der Konvertierung nicht. Je
 - iOS 26 oder neuer
 - iPadOS 26 oder neuer
 - MacOS 15 oder neuer
-- SwiftUI
+- SwiftUI für iOS und iPadOS
+- AppKit für MacOS
 - Swift
 - PDFKit
 - Ghostscript als statisch eingebundene Library
@@ -31,7 +32,7 @@ Die iOS-/iPadOS-App unterstützt Hoch- und Querformat. Das native MacOS-Target b
 
 Die iOS-/iPadOS-App ist eine **Single-Scene-/Single-Window-App**. Mehrere unabhängige iPS2PDF-Fenster werden auf iPadOS nicht unterstützt. Das MacOS-Target ist dagegen dokumentbasiert und unterstützt mehrere unabhängige PDF-Fenster.
 
-Neue Swift-Dateien enthalten möglichst genau einen obersten nominalen Typ (`class`, `struct`, `enum`, `actor` oder `protocol`). Plattformübergreifend wird möglichst SwiftUI eingesetzt; kleine AppKit-Brücken sind für `NSDocument`, `NSWindow`, `NSApplicationDelegate` und `PDFView` zulässig.
+Neue Swift-Dateien enthalten möglichst genau einen obersten nominalen Typ (`class`, `struct`, `enum`, `actor` oder `protocol`). iOS und iPadOS verwenden SwiftUI. Das MacOS-App-Target verwendet ausschließlich AppKit und linkt SwiftUI nicht. Gemeinsame Fachlogik bleibt UI-unabhängig.
 
 ---
 
@@ -1362,7 +1363,6 @@ Sources/
 │   │   ├── Joboptions/
 │   │   ├── Models/
 │   │   └── Services/
-│   ├── AppUI/
 │   ├── GhostscriptClient/
 │   ├── GhostscriptRuntime/
 │   │   ├── GhostscriptBridge/
@@ -1378,9 +1378,11 @@ Sources/
 │   └── Resources/
 └── Targets/
     ├── iOSApp/
+    │   └── AppUI/
     ├── iOSShareExtension/
     ├── iOSGhostscriptExtension/
     ├── MacOSApp/
+    │   └── Settings/
     ├── MacOSGhostscriptRuntime/
     ├── MacOSGhostscriptXPC/
     ├── MacOSQuickLookPreview/
@@ -1597,7 +1599,7 @@ build iPS2PDF
 Das Design verfolgt damit drei zentrale Prinzipien:
 
 1. **Ein einziger deterministischer Datei-Workflow für alle Eingaben.**
-2. **Klare Trennung zwischen SwiftUI, Workflow, Dateioperationen und Ghostscript.**
+2. **Klare Trennung zwischen plattformspezifischer UI, Workflow, Dateioperationen und Ghostscript.**
 3. **Möglichst geringe eigene Ghostscript-Buildlogik bei gleichzeitig reproduzierbarer iOS-Integration.**
 
 ---
@@ -1619,11 +1621,15 @@ Die akzeptierten Dateitypen werden gegenüber iOS nicht erweitert oder eingeschr
 
 Eine Datei kann über **Ablage > Öffnen**, Finder-Doppelklick bzw. **Öffnen mit** oder durch Ziehen auf das App-Icon übergeben werden. Jede Konvertierungsdatei erzeugt sofort ein eigenes `NSDocument`-Fenster. Mehrere Fenster dürfen unabhängig voneinander auf ihr PDF warten und bereits fertige PDFs anzeigen, obwohl Ghostscript-Jobs seriell abgearbeitet werden. Die inhaltliche Unterscheidung zwischen Joboptions-Import und Konvertierung erfolgt im gemeinsamen Router.
 
-## 31.3 SwiftUI und Einstellungen
+## 31.3 AppKit und Einstellungen
 
-Die sichtbare MacOS-Oberfläche wird möglichst vollständig in SwiftUI implementiert. AppKit bleibt auf die dokumentbasierte Fensterverwaltung, Lebenszyklus-Callbacks, Öffnen-Dialoge und die Einbettung von `PDFView` beschränkt.
+Die sichtbare MacOS-Oberfläche wird vollständig mit AppKit implementiert. Das MacOS-App-Target enthält weder `import SwiftUI` noch einen `NSHostingController` und linkt SwiftUI nicht.
 
-Das bisherige iOS-Einstellungs-UI erscheint auf MacOS ausschließlich im systemüblichen SwiftUI-`Settings`-Fenster unter **iPS2PDF > Einstellungen**. Ein leeres App-Fenster mit dem bisherigen iOS-Hauptscreen wird nicht erzeugt.
+Unter **iPS2PDF > Einstellungen** erscheint zunächst ein kompakter AppKit-Auswahlscreen für aktive Joboptions, PDF-Version und PDF/A-Kompatibilität. **Konfigurieren** öffnet einen nativen, Distiller-artig gegliederten Detail-Editor mit den Bereichen Allgemein, Bilder, Schriften, Farbe, Erweitert, Standards und Zusätzlich. Die Verwaltung der Joboptions und die Bildrichtlinien sind ebenfalls native AppKit-Sheets.
+
+Der Detail-Editor arbeitet in einer eigenen temporären Bearbeitungssitzung. Jede Änderung wird sofort und verlustfrei in eine isolierte Arbeitskopie geschrieben. Konsistenzreparaturen betreffen ebenfalls nur diese Kopie. **OK** übernimmt geänderte Benutzer-Joboptions atomar beziehungsweise legt für geänderte gebündelte Joboptions genau eine Benutzerkopie an; **Abbrechen** verwirft die gesamte Sitzung. Verwaiste Sitzungsverzeichnisse werden beim nächsten Öffnen der Einstellungen bereinigt.
+
+Die zugrunde liegende Joboptions-Schicht ist für beide Plattformen identisch: verschachtelte Schlüsselpfade, String- und Encoding-Erhalt, zusammengesetzte semantische Aktionen sowie die deterministische Konsistenzanalyse liegen unter `Shared/AppCore`. Der Konverter erhält ausschließlich einen bereits analysierten effektiven Snapshot und nimmt keine versteckten Zweitkorrekturen vor.
 
 ## 31.4 Ein gemeinsamer App-Group-Job und mehrere Fenster
 
@@ -1677,7 +1683,7 @@ Das Archiv und sein entpackter Inhalt werden nicht in den Projektbaum geschriebe
 
 ## 31.7 Anzeige- und Speicherlebenszyklus
 
-Solange noch kein PDF vorliegt, bleibt das Dokumentfenster zunächst ruhig. Nach exakt 0,5 Sekunden zeigt es einen SwiftUI-`ProgressView`, sofern die Konvertierung noch läuft. Sobald ein PDF vollständig geschrieben und mit PDFKit validiert wurde, zeigt das Fenster es mit `PDFView` an.
+Solange noch kein PDF vorliegt, bleibt das Dokumentfenster zunächst ruhig. Nach exakt 0,5 Sekunden zeigt es einen AppKit-Fortschrittsindikator, sofern die Konvertierung noch läuft. Sobald ein PDF vollständig geschrieben und mit PDFKit validiert wurde, zeigt das Fenster es mit `PDFView` an.
 
 Ein erzeugtes PDF ist zunächst ein ungespeichertes `NSDocument`; seine erste Speicherung ist daher **Sichern unter**. Beim Schließen eines ungespeicherten PDF-Fensters sowie beim Beenden der App verwendet AppKit die üblichen Optionen **Sichern**, **Nicht sichern** und **Abbrechen**. Während einer laufenden Konvertierung ist der Schließen-Button deaktiviert. Eine Beendigungsanforderung wartet ohne Abbruch des Ghostscript-Auftrags, bis alle laufenden Konvertierungen einen terminalen Zustand erreicht haben, und setzt danach den normalen Dokument-Speicherdialog fort.
 

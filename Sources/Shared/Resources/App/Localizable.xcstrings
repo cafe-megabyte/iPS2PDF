@@ -1,3229 +1,4372 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "/%@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "/%@"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "/%@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "/%@"
           }
         }
       }
     },
-    "%@ · %@ → %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%1$@ · %2$@ → %3$@"
+    "%@ · %@ → %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ · %2$@ → %3$@"
           }
         }
       }
     },
-    "%lld": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld"
+    "%lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld"
           }
         }
       }
     },
-    "Abort nonconforming PDF/A or PDF/X jobs": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nicht konforme PDF/A- oder PDF/X-Aufträge abbrechen"
+    "%lld inconsistent settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inkonsistente Einstellungen: %lld"
           }
         }
       }
     },
-    "AbsoluteColorimetric": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Absolut farbmetrisch"
+    "×" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "×"
           }
         }
       }
     },
-    "Actions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aktionen"
+    "2 bit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2 Bit"
           }
         }
       }
     },
-    "Active": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aktiv"
+    "4 bit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 Bit"
           }
         }
       }
     },
-    "Active Joboptions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aktive Joboptions"
+    "8 bit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "8 Bit"
           }
+        }
+      }
+    },
+    "A suitable installed output profile must be selected before conversion." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vor der Konvertierung muss ein geeignetes installiertes Ausgabeprofil ausgewählt werden."
+          }
+        }
+      }
+    },
+    "Abort nonconforming PDF/A or PDF/X jobs" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht konforme PDF/A- oder PDF/X-Aufträge abbrechen"
+          }
+        }
+      }
+    },
+    "above" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "darüber"
+          }
+        }
+      }
+    },
+    "AbsoluteColorimetric" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Absolut farbmetrisch"
+          }
+        }
+      }
+    },
+    "Actions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktionen"
+          }
+        }
+      }
+    },
+    "Active" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktiv"
+          }
+        }
+      }
+    },
+    "Active Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktive Joboptions"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Active Joboptions"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active Joboptions"
           }
         }
       }
     },
-    "Additional": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zusätzlich"
+    "Additional" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zusätzlich"
           }
         }
       }
     },
-    "Advanced": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erweitert"
+    "Advanced" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erweitert"
           }
         }
       }
     },
-    "All": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle"
+    "All" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle"
           }
         }
       }
     },
-    "Allow transparency operators": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transparenzoperatoren zulassen"
+    "All pages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Seiten"
           }
         }
       }
     },
-    "Allowed range: %@ - %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zulässiger Bereich: %1$@ - %2$@"
+    "Allow PostScript files to override PDF settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Dateien dürfen PDF-Einstellungen überschreiben"
           }
+        }
+      }
+    },
+    "Allow PostScript XObjects" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-XObjects zulassen"
+          }
+        }
+      }
+    },
+    "Allow transparency operators" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenzoperatoren zulassen"
+          }
+        }
+      }
+    },
+    "Allowed range: %@ - %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zulässiger Bereich: %1$@ - %2$@"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allowed range: %1$@ - %2$@"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allowed range: %1$@ - %2$@"
           }
         }
       }
     },
-    "Anti-alias color images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kantenglättung für Farbbilder"
+    "Anti-alias color images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kantenglättung für Farbbilder"
           }
         }
       }
     },
-    "Anti-alias grayscale images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kantenglättung für Graustufenbilder"
+    "Anti-alias grayscale images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kantenglättung für Graustufenbilder"
           }
         }
       }
     },
-    "Anti-alias monochrome images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kantenglättung für Schwarzweißbilder"
+    "Anti-alias monochrome images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kantenglättung für Schwarzweißbilder"
           }
         }
       }
     },
-    "Apply": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Anwenden"
+    "Apply" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anwenden"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Apply"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Apply"
+          }
+        }
+      }
+    },
+    "Apply description" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibung übernehmen"
+          }
+        }
+      }
+    },
+    "ASCII85-encode page streams" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenströme mit ASCII85 codieren"
           }
         }
       }
     },
-    "ASCII85-encode page streams": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seitenströme mit ASCII85 codieren"
+    "Auto-position EPS files" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPS-Dateien automatisch positionieren"
           }
         }
       }
     },
-    "Auto-position EPS files": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EPS-Dateien automatisch positionieren"
+    "Auto-rotate pages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seiten automatisch drehen"
           }
         }
       }
     },
-    "Auto-rotate pages": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seiten automatisch drehen"
+    "Automatic (JPEG)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatisch (JPEG)"
           }
         }
       }
     },
-    "Automatic color compression": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatische Farbbildkomprimierung"
+    "Automatic color compression" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische Farbbildkomprimierung"
           }
         }
       }
     },
-    "Automatic grayscale compression": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatische Graustufenkomprimierung"
+    "Automatic grayscale compression" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatische Graustufenkomprimierung"
           }
         }
       }
     },
-    "Automatic random seed": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatischer Zufalls-Seed"
+    "Automatic random seed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatischer Zufalls-Seed"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Automatic random seed"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automatic random seed"
+          }
+        }
+      }
+    },
+    "Available" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verfügbar"
+          }
+        }
+      }
+    },
+    "Average" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittelwert"
           }
         }
       }
     },
-    "Available": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verfügbar"
+    "Bicubic" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bikubisch"
           }
         }
       }
     },
-    "Average": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mittelwert"
+    "Binding" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bindung"
           }
         }
       }
     },
-    "Bicubic": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bikubisch"
+    "Bleed box offsets" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anschnittrahmenversatz"
           }
         }
       }
     },
-    "Binding": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bindung"
+    "Blend conversion strategy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strategie zur Verlaufskonvertierung"
           }
         }
       }
     },
-    "Blend conversion strategy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Strategie zur Verlaufskonvertierung"
+    "Bottom" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unten"
           }
         }
       }
     },
-    "Bundled": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mitgeliefert"
+    "Bundled" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitgeliefert"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bundled"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bundled"
           }
         }
       }
     },
-    "Bundled · read-only": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mitgeliefert · schreibgeschützt"
+    "Bundled · read-only" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mitgeliefert · schreibgeschützt"
           }
         }
       }
     },
-    "Cancel": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Abbrechen"
+    "Cancel" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abbrechen"
           }
         }
       }
     },
-    "CCITTFaxEncode": {
-      "shouldTranslate": false
+    "CCITT Group 4" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CCITT-Gruppe 4"
+          }
+        }
+      }
+    },
+    "CCITTFaxEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CCITTFaxEncode"
+          }
+        }
+      }
     },
-    "Check PDF/X-1": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-1 prüfen"
+    "Check PDF/X-1" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-1 prüfen"
           }
         }
       }
     },
-    "Check PDF/X-3": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-3 prüfen"
+    "Check PDF/X-3" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-3 prüfen"
           }
         }
       }
     },
-    "close": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schließen"
+    "Choose the minimum resolution and the action for images below it." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie die Mindestauflösung und die Aktion für Bilder, die darunter liegen."
           }
+        }
+      }
+    },
+    "close" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Close"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Close"
+          }
+        }
+      }
+    },
+    "CMYK" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CMYK"
+          }
+        }
+      }
+    },
+    "Collapse consistency details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsistenzdetails reduzieren"
+          }
+        }
+      }
+    },
+    "Color" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe"
+          }
+        }
+      }
+    },
+    "Color compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbildkomprimierung"
+          }
+        }
+      }
+    },
+    "Color conversion strategy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbkonvertierungsstrategie"
+          }
+        }
+      }
+    },
+    "Color downsample threshold" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellenwert für Farbbild-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Color downsampling" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbild-Neuberechnung"
+          }
+        }
+      }
+    },
+    "Color image resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbildauflösung"
           }
         }
       }
     },
-    "CMYK": {
-      "shouldTranslate": false
+    "Color images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder"
+          }
+        }
+      }
     },
-    "Color": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbe"
+    "Color management" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbmanagement"
           }
         }
       }
     },
-    "Color compression": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbbildkomprimierung"
+    "Color settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbeinstellungen"
           }
         }
       }
     },
-    "Color conversion strategy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbkonvertierungsstrategie"
+    "Color settings file" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbeinstellungsdatei"
           }
         }
       }
     },
-    "Color downsample threshold": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwellenwert für Farbbild-Neuberechnung"
+    "Compatibility adjustments" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kompatibilitätsanpassungen"
           }
         }
       }
     },
-    "Color downsampling": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbbild-Neuberechnung"
+    "Compress color images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder komprimieren"
           }
         }
       }
     },
-    "Color image resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbbildauflösung"
+    "Compress grayscale images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder komprimieren"
           }
         }
       }
     },
-    "Compatibility adjustments": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kompatibilitätsanpassungen"
+    "Compress monochrome images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbilder komprimieren"
           }
         }
       }
     },
-    "Compress color images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbbilder komprimieren"
+    "Compress object streams" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektströme komprimieren"
           }
         }
       }
     },
-    "Compress grayscale images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufenbilder komprimieren"
+    "Compress page streams" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenströme komprimieren"
           }
         }
       }
     },
-    "Compress monochrome images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarzweißbilder komprimieren"
+    "Compression" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komprimierung"
           }
         }
       }
     },
-    "Compress object streams": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Objektströme komprimieren"
+    "Compression and image quality" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Komprimierung und Bildqualität"
           }
         }
       }
     },
-    "Compress page streams": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seitenströme komprimieren"
+    "Configure..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konfigurieren..."
           }
         }
       }
     },
-    "Conformance": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konformität"
+    "Conformance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konformität"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conformance"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conformance"
           }
         }
       }
     },
-    "Conversion": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konvertierung"
+    "Conversion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung"
           }
         }
       }
     },
-    "Conversion failed": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konvertierung fehlgeschlagen"
+    "Conversion failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung fehlgeschlagen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conversion failed"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversion failed"
           }
         }
       }
     },
-    "conversion_failed": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konvertierung fehlgeschlagen"
+    "conversion_failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung fehlgeschlagen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conversion Failed"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversion Failed"
           }
         }
       }
     },
-    "Convert CMYK images to RGB": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CMYK-Bilder in RGB konvertieren"
+    "Convert CMYK images to RGB" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CMYK-Bilder in RGB konvertieren"
           }
         }
       }
     },
-    "Convert suitable images to indexed color": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geeignete Bilder in indizierte Farben konvertieren"
+    "Convert suitable images to indexed color" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geeignete Bilder in indizierte Farben konvertieren"
           }
         }
       }
     },
-    "Converting with Ghostscript...": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Konvertierung mit Ghostscript …"
+    "Converting with Ghostscript..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung mit Ghostscript …"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Converting with Ghostscript…"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Converting with Ghostscript…"
           }
         }
       }
     },
-    "Copied": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kopiert"
+    "Copied" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopiert"
           }
         }
       }
     },
-    "Copy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kopieren"
+    "Copy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kopieren"
           }
         }
       }
     },
-    "Could not open %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ konnte nicht geöffnet werden"
+    "Could not open %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ konnte nicht geöffnet werden"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Could not open %@"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not open %@"
+          }
+        }
+      }
+    },
+    "Create job ticket" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Job-Ticket erstellen"
+          }
+        }
+      }
+    },
+    "Crop color images to frames" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder auf Rahmen beschneiden"
           }
         }
       }
     },
-    "Create job ticket": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Job-Ticket erstellen"
+    "Crop grayscale images to frames" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder auf Rahmen beschneiden"
           }
         }
       }
     },
-    "Crop color images to frames": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbbilder auf Rahmen beschneiden"
+    "Crop monochrome images to frames" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbilder auf Rahmen beschneiden"
           }
         }
       }
     },
-    "Crop grayscale images to frames": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufenbilder auf Rahmen beschneiden"
+    "Curve detection tolerance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Toleranz der Kurvenerkennung"
           }
         }
       }
     },
-    "Crop monochrome images to frames": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarzweißbilder auf Rahmen beschneiden"
+    "Custom (preserved)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzerdefiniert (beibehalten)"
           }
         }
       }
     },
-    "Curve detection tolerance": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Toleranz der Kurvenerkennung"
+    "Custom: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzerdefiniert: %@"
           }
         }
       }
     },
-    "DCTEncode": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPEG"
+    "DCTEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPEG"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard"
+          }
+        }
+      }
+    },
+    "Default page size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardseitengröße"
           }
         }
       }
     },
-    "Default": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Standard"
+    "Default rendering intent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard-Wiedergabeabsicht"
           }
         }
       }
     },
-    "Default page size": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Standardseitengröße"
+    "Delete" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Löschen"
           }
         }
       }
     },
-    "Default rendering intent": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Standard-Wiedergabeabsicht"
+    "Description" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beschreibung"
           }
         }
       }
     },
-    "Delete": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Löschen"
+    "Details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
           }
         }
       }
     },
-    "Details": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Details"
+    "Detect blends" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verläufe erkennen"
           }
         }
       }
     },
-    "Detect blends": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verläufe erkennen"
+    "Device resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteauflösung"
           }
         }
       }
     },
-    "Device resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geräteauflösung"
+    "Device-dependent data" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteabhängige Daten"
           }
         }
       }
     },
-    "DeviceCMYK": {
-      "shouldTranslate": false
+    "DeviceCMYK" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeviceCMYK"
+          }
+        }
+      }
     },
-    "DeviceGray": {
-      "shouldTranslate": false
+    "DeviceGray" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeviceGray"
+          }
+        }
+      }
     },
-    "DeviceRGB": {
-      "shouldTranslate": false
+    "DeviceRGB" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeviceRGB"
+          }
+        }
+      }
     },
-    "Diagnostics": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diagnostik"
+    "Diagnostics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diagnostik"
           }
         }
       }
     },
-    "dismiss": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schließen"
+    "dismiss" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dismiss"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dismiss"
           }
         }
       }
     },
-    "Document permissions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dokumentberechtigungen"
+    "Document permissions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentberechtigungen"
           }
         }
       }
     },
-    "Done": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fertig"
+    "Done" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fertig"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Done"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
           }
         }
       }
     },
-    "Downsample 16-bit images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "16-Bit-Bilder neu berechnen"
+    "Downsample 16-bit images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "16-Bit-Bilder neu berechnen"
           }
         }
       }
     },
-    "Downsample color images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbbilder neu berechnen"
+    "Downsample color images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbbilder neu berechnen"
           }
         }
       }
     },
-    "Downsample grayscale images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufenbilder neu berechnen"
+    "Downsample grayscale images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder neu berechnen"
           }
         }
       }
     },
-    "Downsample monochrome images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarzweißbilder neu berechnen"
+    "Downsample monochrome images" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbilder neu berechnen"
           }
         }
       }
     },
-    "DSC reporting level": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DSC-Berichtsstufe"
+    "Downsampling" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Neuberechnung"
           }
         }
       }
     },
-    "Duplicate": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duplizieren"
+    "dpi" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "dpi"
           }
+        }
+      }
+    },
+    "DSC reporting level" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Berichtsstufe"
+          }
+        }
+      }
+    },
+    "Duplicate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplizieren"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Duplicate"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Duplicate"
+          }
+        }
+      }
+    },
+    "Embed all fonts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Schriften einbetten"
           }
         }
       }
     },
-    "Embed all fonts": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Alle Schriften einbetten"
+    "Embed Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions einbetten"
           }
         }
       }
     },
-    "Embed Joboptions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions einbetten"
+    "Embed OpenType fonts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenType-Schriften einbetten"
           }
         }
       }
     },
-    "Embed OpenType fonts": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OpenType-Schriften einbetten"
+    "Embed page thumbnails" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenminiaturen einbetten"
           }
         }
       }
     },
-    "Embed page thumbnails": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seitenminiaturen einbetten"
+    "Embed substitute fonts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersatzschriften einbetten"
           }
         }
       }
     },
-    "Embed substitute fonts": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ersatzschriften einbetten"
+    "Enable transparency device" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenzgerät aktivieren"
           }
         }
       }
     },
-    "Enable transparency device": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transparenzgerät aktivieren"
+    "Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardmäßig aktiviert: 15 Minuten, 1 GB PostScript-Eingabe und 2 GB PDF-Ausgabe. Prozessisolierung, SAFER, Diagnose, Abbruch und PDF-Validierung bleiben immer aktiv."
           }
         }
       }
     },
-    "Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Standardmäßig aktiviert: 15 Minuten, 1 GB PostScript-Eingabe und 2 GB PDF-Ausgabe. Prozessisolierung, SAFER, Diagnose, Abbruch und PDF-Validierung bleiben immer aktiv."
+    "Encrypt PDF" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF verschlüsseln"
           }
         }
       }
     },
-    "Encrypt PDF": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF verschlüsseln"
+    "Encryption revision" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselungsrevision"
           }
         }
       }
     },
-    "Encryption revision": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verschlüsselungsrevision"
+    "Enter a name for the new user Joboptions." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie einen Namen für die neuen Benutzer-Joboptions ein."
           }
         }
       }
     },
-    "Error": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Fehler"
+    "Error" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler"
           }
         }
       }
     },
-    "error_diagnostics_format": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript-Diagnose:\n%@"
+    "error_diagnostics_format" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript-Diagnose:\n%@"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript details:\n%@"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript details:\n%@"
           }
         }
       }
     },
-    "error_ghostscript_conversion": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript konnte die Datei nicht konvertieren."
+    "error_ghostscript_conversion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript konnte die Datei nicht konvertieren."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript could not convert the file."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript could not convert the file."
           }
         }
       }
     },
-    "error_ghostscript_initialization": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript konnte die Konvertierung nicht initialisieren."
+    "error_ghostscript_initialization" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript konnte die Konvertierung nicht initialisieren."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript could not initialize the conversion."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript could not initialize the conversion."
           }
         }
       }
     },
-    "error_ghostscript_instance": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript konnte keine Interpreter-Instanz erzeugen."
+    "error_ghostscript_instance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript konnte keine Interpreter-Instanz erzeugen."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript could not create an interpreter instance."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript could not create an interpreter instance."
           }
         }
       }
     },
-    "error_ghostscript_process_terminated": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der Ghostscript-Prozess wurde unerwartet beendet."
+    "error_ghostscript_process_terminated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Ghostscript-Prozess wurde unerwartet beendet."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The Ghostscript process terminated unexpectedly."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Ghostscript process terminated unexpectedly."
           }
         }
       }
     },
-    "error_input_copy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die ausgewählte Datei konnte nicht in das Arbeitsverzeichnis kopiert werden."
+    "error_input_copy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ausgewählte Datei konnte nicht in das Arbeitsverzeichnis kopiert werden."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The selected file could not be copied into the working directory."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selected file could not be copied into the working directory."
           }
         }
       }
     },
-    "error_input_not_regular_file": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Das ausgewählte Element ist keine reguläre Datei."
+    "error_input_not_regular_file" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das ausgewählte Element ist keine reguläre Datei."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The selected item is not a regular file."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selected item is not a regular file."
           }
         }
       }
     },
-    "error_input_unreadable": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die ausgewählte Datei kann nicht gelesen werden."
+    "error_input_unreadable" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ausgewählte Datei kann nicht gelesen werden."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The selected file cannot be read."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The selected file cannot be read."
           }
         }
       }
     },
-    "error_invalid_pdf": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die erzeugte Datei ist keine PDF-Datei, die PDFKit öffnen kann."
+    "error_invalid_pdf" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erzeugte Datei ist keine PDF-Datei, die PDFKit öffnen kann."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The generated file is not a PDF that PDFKit can open."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The generated file is not a PDF that PDFKit can open."
           }
         }
       }
     },
-    "error_joboptions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Joboptions konnten nicht importiert oder validiert werden."
+    "error_joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions konnten nicht importiert oder validiert werden."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The Joboptions could not be imported or validated."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The Joboptions could not be imported or validated."
           }
         }
       }
     },
-    "error_output_empty": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die erzeugte PDF-Datei ist leer."
+    "error_output_empty" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erzeugte PDF-Datei ist leer."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The generated PDF file is empty."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The generated PDF file is empty."
           }
         }
       }
     },
-    "error_output_missing": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript hat die erwartete PDF-Datei nicht erzeugt."
+    "error_output_missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript hat die erwartete PDF-Datei nicht erzeugt."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript did not create the expected PDF file."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript did not create the expected PDF file."
           }
         }
       }
     },
-    "error_return_code_format": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript-Rückgabecode: %d"
+    "error_return_code_format" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript-Rückgabecode: %d"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript return code: %d"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript return code: %d"
           }
         }
       }
     },
-    "error_startup_cleanup": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Bereinigung beim Start konnte nicht abgeschlossen werden."
+    "error_startup_cleanup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Bereinigung beim Start konnte nicht abgeschlossen werden."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The startup cleanup could not be completed."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The startup cleanup could not be completed."
           }
         }
       }
     },
-    "error_working_directory_cleanup": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Das Arbeitsverzeichnis konnte nicht bereinigt werden."
+    "error_working_directory_cleanup" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Arbeitsverzeichnis konnte nicht bereinigt werden."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The working directory could not be cleaned."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The working directory could not be cleaned."
+          }
+        }
+      }
+    },
+    "Expand consistency details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konsistenzdetails erweitern"
           }
         }
       }
     },
-    "Export with Save Dialog…": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mit Sichern-Dialog exportieren…"
+    "Export with Save Dialog…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Sichern-Dialog exportieren…"
           }
         }
       }
     },
-    "Export with Share Sheet…": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Über Teilen exportieren…"
+    "Export with Share Sheet…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Über Teilen exportieren…"
           }
         }
       }
     },
-    "Export...": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Exportieren …"
+    "Export..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportieren …"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Export…"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export…"
           }
         }
       }
     },
-    "False": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nein"
+    "False" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nein"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No"
+          }
+        }
+      }
+    },
+    "File options" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateioptionen"
+          }
+        }
+      }
+    },
+    "First page" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erste Seite"
+          }
+        }
+      }
+    },
+    "Flate" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flate"
           }
         }
       }
     },
-    "First page": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erste Seite"
+    "Flate image compression is not accepted by Ghostscript for PDF 1.1." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript akzeptiert die Flate-Bildkomprimierung nicht für PDF 1.1."
           }
         }
       }
     },
-    "FlateEncode": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ZIP"
+    "FlateEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZIP"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ZIP"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ZIP"
           }
         }
       }
     },
-    "Fonts": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schriften"
+    "Font embedding" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrifteinbettung"
           }
         }
       }
     },
-    "General": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Allgemein"
+    "Fonts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriften"
           }
         }
       }
     },
-    "Ghostscript return code: %lld": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript-Rückgabecode: %lld"
+    "For images above" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für Bilder über"
           }
+        }
+      }
+    },
+    "From" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Von"
+          }
+        }
+      }
+    },
+    "General" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Allgemein"
+          }
+        }
+      }
+    },
+    "Ghostscript return code: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript-Rückgabecode: %lld"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ghostscript return code: %lld"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript return code: %lld"
+          }
+        }
+      }
+    },
+    "Graphics ICC profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil für Grafiken"
+          }
+        }
+      }
+    },
+    "Gray" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Grau"
+          }
+        }
+      }
+    },
+    "Grayscale compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenkomprimierung"
+          }
+        }
+      }
+    },
+    "Grayscale downsample threshold" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellenwert für Graustufen-Neuberechnung"
           }
         }
       }
     },
-    "Graphics ICC profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC-Profil für Grafiken"
+    "Grayscale downsampling" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufen-Neuberechnung"
           }
         }
       }
     },
-    "Gray": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Grau"
+    "Grayscale image resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbildauflösung"
           }
         }
       }
     },
-    "Grayscale compression": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufenkomprimierung"
+    "Grayscale images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufenbilder"
           }
         }
       }
     },
-    "Grayscale downsample threshold": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwellenwert für Graustufen-Neuberechnung"
+    "Height" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Höhe"
           }
         }
       }
     },
-    "Grayscale downsampling": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufen-Neuberechnung"
+    "High" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hoch"
           }
         }
       }
     },
-    "Grayscale image resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufenbildauflösung"
+    "Honor ICC profiles in comments" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profile in Kommentaren berücksichtigen"
           }
         }
       }
     },
-    "Honor ICC profiles in comments": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC-Profile in Kommentaren berücksichtigen"
+    "ICC profiles" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profile"
           }
         }
       }
     },
-    "ICC profiles": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC-Profile"
+    "If bleed box is missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn der Anschnittrahmen fehlt"
           }
         }
       }
     },
-    "Ignore": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ignorieren"
+    "If trim box is missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn der Endformatrahmen fehlt"
           }
         }
       }
     },
-    "Image ICC profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC-Profil für Bilder"
+    "Ignore" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ignorieren"
           }
         }
       }
     },
-    "Images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bilder"
+    "Image ICC profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil für Bilder"
           }
         }
       }
     },
-    "Import ICC Profile…": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC-Profil importieren…"
+    "Image policies" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildrichtlinien"
           }
         }
       }
     },
-    "Import...": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importieren …"
+    "Image quality" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bildqualität"
           }
+        }
+      }
+    },
+    "Images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bilder"
+          }
+        }
+      }
+    },
+    "Import ICC Profile…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil importieren…"
+          }
+        }
+      }
+    },
+    "Import..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren …"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Import…"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Import…"
+          }
+        }
+      }
+    },
+    "Import…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Importieren…"
+          }
+        }
+      }
+    },
+    "Inches" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoll"
           }
         }
       }
     },
-    "Import…": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Importieren…"
+    "Inconsistent settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inkonsistente Einstellungen"
           }
         }
       }
     },
-    "iPS2PDF": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPS2PDF"
+    "iPS2PDF" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPS2PDF"
           }
         }
       }
     },
-    "Joboptions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions"
+    "Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions"
           }
         }
       }
     },
-    "Joboptions imported": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions importiert"
+    "Joboptions imported" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions importiert"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions imported"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions imported"
+          }
+        }
+      }
+    },
+    "JPEG" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG"
+          }
+        }
+      }
+    },
+    "JPEG 2000" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG 2000"
           }
         }
       }
     },
-    "JPXEncode": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPEG2000"
+    "JPXEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG2000"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPEG2000"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG2000"
           }
         }
       }
     },
-    "Last page": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Letzte Seite"
+    "Known additional settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bekannte zusätzliche Einstellungen"
           }
         }
       }
     },
-    "LeaveColorUnchanged": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Farbe unverändert lassen"
+    "Last page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Letzte Seite"
           }
         }
       }
     },
-    "Left": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Links"
+    "LeaveColorUnchanged" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbe unverändert lassen"
           }
         }
       }
     },
-    "Lock Distiller parameters": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Distiller-Parameter sperren"
+    "Left" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Links"
           }
         }
       }
     },
-    "Low color resolution policy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorgehen bei niedriger Farbauflösung"
+    "Lock Distiller parameters" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Distiller-Parameter sperren"
           }
         }
       }
     },
-    "Low grayscale resolution policy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorgehen bei niedriger Graustufenauflösung"
+    "Low" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Niedrig"
           }
         }
       }
     },
-    "Low monochrome resolution policy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorgehen bei niedriger Schwarzweißauflösung"
+    "Low color resolution policy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei niedriger Farbauflösung"
           }
         }
       }
     },
-    "Manage …": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verwalten …"
+    "Low grayscale resolution policy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei niedriger Graustufenauflösung"
           }
+        }
+      }
+    },
+    "Low monochrome resolution policy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgehen bei niedriger Schwarzweißauflösung"
+          }
+        }
+      }
+    },
+    "Manage …" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwalten …"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manage …"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage …"
           }
         }
       }
     },
-    "Manage Joboptions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions verwalten"
+    "Manage Joboptions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions verwalten"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manage Joboptions"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Joboptions"
           }
         }
       }
     },
-    "Manage Joboptions...": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions verwalten …"
+    "Manage Joboptions..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions verwalten …"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Manage Joboptions…"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage Joboptions…"
+          }
+        }
+      }
+    },
+    "Mandatory PDF version, encryption, font embedding, output intent and color-space dependencies are locked by the selected standard." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erforderliche PDF-Version sowie Verschlüsselung, Schrifteinbettung, Ausgabeprofil und Farbraumabhängigkeiten werden durch den gewählten Standard gesperrt."
+          }
+        }
+      }
+    },
+    "Manual selection required" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manuelle Auswahl erforderlich"
+          }
+        }
+      }
+    },
+    "Map device gray to black" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerätegrau auf Schwarz abbilden"
+          }
+        }
+      }
+    },
+    "Maximum" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximal"
+          }
+        }
+      }
+    },
+    "Medium" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mittel"
+          }
+        }
+      }
+    },
+    "Millimeters" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Millimeter"
+          }
+        }
+      }
+    },
+    "Minimum" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimal"
+          }
+        }
+      }
+    },
+    "Minimum color resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale Farbauflösung"
+          }
+        }
+      }
+    },
+    "Minimum grayscale resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale Graustufenauflösung"
+          }
+        }
+      }
+    },
+    "Minimum monochrome resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minimale Schwarzweißauflösung"
           }
         }
       }
     },
-    "Mandatory PDF version, encryption, font embedding, output intent and color-space dependencies are locked by the selected standard.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die erforderliche PDF-Version sowie Verschlüsselung, Schrifteinbettung, Ausgabeprofil und Farbraumabhängigkeiten werden durch den gewählten Standard gesperrt."
+    "Minimum resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mindestauflösung"
           }
         }
       }
     },
-    "Map device gray to black": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gerätegrau auf Schwarz abbilden"
+    "Missing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehlt"
           }
         }
       }
     },
-    "Minimum color resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Minimale Farbauflösung"
+    "Missing trim box behavior" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verhalten bei fehlendem Endformatrahmen"
           }
         }
       }
     },
-    "Minimum grayscale resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Minimale Graustufenauflösung"
+    "Monochrome compression" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißkomprimierung"
           }
         }
       }
     },
-    "Minimum monochrome resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Minimale Schwarzweißauflösung"
+    "Monochrome downsample threshold" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellenwert für Schwarzweiß-Neuberechnung"
           }
         }
       }
     },
-    "Monochrome compression": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarzweißkomprimierung"
+    "Monochrome downsampling" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweiß-Neuberechnung"
           }
         }
       }
     },
-    "Monochrome downsample threshold": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwellenwert für Schwarzweiß-Neuberechnung"
+    "Monochrome image depth" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbtiefe von Monochrombildern"
           }
         }
       }
     },
-    "Monochrome downsampling": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarzweiß-Neuberechnung"
+    "Monochrome image resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarzweißbildauflösung"
           }
         }
       }
     },
-    "Monochrome image resolution": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarzweißbildauflösung"
+    "Monochrome images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monochrombilder"
           }
         }
       }
     },
-    "Name": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Name"
+    "Name" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Name"
           }
         }
       }
     },
-    "None": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keine"
+    "None" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine"
           }
         }
       }
     },
-    "notice_busy_message": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die eingehende Datei wurde nicht angenommen, weil noch ein anderer Vorgang aktiv ist."
+    "notice_busy_message" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die eingehende Datei wurde nicht angenommen, weil noch ein anderer Vorgang aktiv ist."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The incoming file was not accepted because another operation is still active."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The incoming file was not accepted because another operation is still active."
           }
         }
       }
     },
-    "notice_busy_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPS2PDF ist beschäftigt"
+    "notice_busy_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPS2PDF ist beschäftigt"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "iPS2PDF Is Busy"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPS2PDF Is Busy"
           }
         }
       }
     },
-    "notice_multiple_files_message": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Es kann nur eine Datei gleichzeitig angenommen werden. Keine der übergebenen Dateien wurde verarbeitet."
+    "notice_multiple_files_message" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es kann nur eine Datei gleichzeitig angenommen werden. Keine der übergebenen Dateien wurde verarbeitet."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Only one file can be accepted at a time. None of the provided files was processed."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only one file can be accepted at a time. None of the provided files was processed."
           }
         }
       }
     },
-    "notice_multiple_files_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Mehrere Dateien"
+    "notice_multiple_files_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mehrere Dateien"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Multiple Files"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Multiple Files"
           }
         }
       }
     },
-    "Object compression": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Objektkomprimierung"
+    "Object compression" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektkomprimierung"
           }
         }
       }
     },
-    "Off": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Aus"
+    "Off" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus"
           }
         }
       }
     },
-    "OK": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
+    "OK" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OK"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OK"
           }
         }
       }
     },
-    "open_file": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Datei öffnen"
+    "open_file" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei öffnen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Open File"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open File"
+          }
+        }
+      }
+    },
+    "Optimize for fast web view" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für schnelle Webanzeige optimieren"
+          }
+        }
+      }
+    },
+    "Options" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Optionen"
+          }
+        }
+      }
+    },
+    "Original source" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Originalquelle"
+          }
+        }
+      }
+    },
+    "Output ICC profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgabe-ICC-Profil"
+          }
+        }
+      }
+    },
+    "Output intent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgabebedingung"
+          }
+        }
+      }
+    },
+    "Overprint mode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überdrucken-Modus"
           }
         }
       }
     },
-    "Optimize for fast web view": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Für schnelle Webanzeige optimieren"
+    "Owner password" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigentümerpasswort"
           }
         }
       }
     },
-    "Original source": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Originalquelle"
+    "Page boxes" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenrahmen"
           }
         }
       }
     },
-    "Output ICC profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ausgabe-ICC-Profil"
+    "Page range" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenbereich"
           }
         }
       }
     },
-    "Overprint mode": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Überdrucken-Modus"
+    "PageByPage" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenweise"
           }
         }
       }
     },
-    "Owner password": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eigentümerpasswort"
+    "Pages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seiten"
           }
         }
       }
     },
-    "PageByPage": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seitenweise"
+    "Pass through JPEG 2000 images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG-2000-Bilder unverändert übernehmen"
           }
         }
       }
     },
-    "Pass through JPEG 2000 images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPEG-2000-Bilder unverändert übernehmen"
+    "Pass through JPEG images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG-Bilder unverändert übernehmen"
           }
         }
       }
     },
-    "Pass through JPEG images": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "JPEG-Bilder unverändert übernehmen"
+    "PDF compatibility" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Kompatibilität"
           }
         }
       }
     },
-    "PDF compatibility": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF-Kompatibilität"
+    "PDF settings: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Einstellungen: %@"
           }
         }
       }
     },
-    "PDF standard": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF-Standard"
+    "PDF standard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Standard"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF standard"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF standard"
+          }
+        }
+      }
+    },
+    "PDF version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Version"
           }
         }
       }
     },
-    "pdf_version": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF-Version"
+    "pdf_version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Version"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF Version"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF Version"
           }
         }
       }
     },
-    "pdf_version_1_1_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "nur Kompatibilität"
+    "pdf_version_1_1_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nur Kompatibilität"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "compatibility only"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "compatibility only"
           }
         }
       }
     },
-    "pdf_version_1_1_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.1 - Acrobat 2"
+    "pdf_version_1_1_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.1 - Acrobat 2"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.1 - Acrobat 2"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.1 - Acrobat 2"
           }
         }
       }
     },
-    "pdf_version_1_2_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "nur Kompatibilität"
+    "pdf_version_1_2_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "nur Kompatibilität"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "compatibility only"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "compatibility only"
           }
         }
       }
     },
-    "pdf_version_1_2_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.2 - Acrobat 3"
+    "pdf_version_1_2_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.2 - Acrobat 3"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.2 - Acrobat 3"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.2 - Acrobat 3"
           }
         }
       }
     },
-    "pdf_version_1_3_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PostScript Standard"
+    "pdf_version_1_3_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript Standard"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PostScript standard"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript standard"
           }
         }
       }
     },
-    "pdf_version_1_3_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.3 - Acrobat 4"
+    "pdf_version_1_3_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.3 - Acrobat 4"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.3 - Acrobat 4"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.3 - Acrobat 4"
           }
         }
       }
     },
-    "pdf_version_1_4_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transparenz & PDFMark"
+    "pdf_version_1_4_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenz & PDFMark"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transparency & PDFMark"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparency & PDFMark"
           }
         }
       }
     },
-    "pdf_version_1_4_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.4 - Acrobat 5"
+    "pdf_version_1_4_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.4 - Acrobat 5"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.4 - Acrobat 5"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.4 - Acrobat 5"
           }
         }
       }
     },
-    "pdf_version_1_5_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Bessere Strukturkompression"
+    "pdf_version_1_5_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bessere Strukturkompression"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Better structure compression"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Better structure compression"
           }
         }
       }
     },
-    "pdf_version_1_5_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.5 - Acrobat 6"
+    "pdf_version_1_5_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.5 - Acrobat 6"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.5 - Acrobat 6"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.5 - Acrobat 6"
           }
         }
       }
     },
-    "pdf_version_1_6_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Großformat & OpenType"
+    "pdf_version_1_6_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Großformat & OpenType"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Large format & OpenType"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Large format & OpenType"
           }
         }
       }
     },
-    "pdf_version_1_6_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.6 - Acrobat 7"
+    "pdf_version_1_6_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.6 - Acrobat 7"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.6 - Acrobat 7"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.6 - Acrobat 7"
           }
         }
       }
     },
-    "pdf_version_1_7_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC v4 Profile"
+    "pdf_version_1_7_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC v4 Profile"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC v4 profiles"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC v4 profiles"
           }
         }
       }
     },
-    "pdf_version_1_7_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.7 - Acrobat 8"
+    "pdf_version_1_7_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.7 - Acrobat 8"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1.7 - Acrobat 8"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1.7 - Acrobat 8"
           }
         }
       }
     },
-    "pdf_version_2_0_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "2.0 - Acrobat X"
+    "pdf_version_2_0_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2.0 - Acrobat X"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "2.0 - Acrobat X"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "2.0 - Acrobat X"
+          }
+        }
+      }
+    },
+    "PDF/A and PDF/X do not permit these encryption settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A und PDF/X erlauben diese Verschlüsselungseinstellungen nicht."
+          }
+        }
+      }
+    },
+    "PDF/A and PDF/X require unrestricted document permissions." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A und PDF/X erfordern uneingeschränkte Dokumentberechtigungen."
+          }
+        }
+      }
+    },
+    "PDF/A compatibility" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-Kompatibilität"
           }
         }
       }
     },
-    "PDF/A compatibility policy": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-Kompatibilitätsrichtlinie"
+    "PDF/A compatibility policy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-Kompatibilitätsrichtlinie"
           }
         }
       }
     },
-    "PDF/X condition identifier": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-Ausgabebedingungskennung"
+    "PDF/X condition identifier" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabebedingungskennung"
           }
         }
       }
     },
-    "PDF/X output condition": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-Ausgabebedingung"
+    "PDF/X output condition" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabebedingung"
           }
         }
       }
     },
-    "PDF/X output intent profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-Ausgabeprofil"
+    "PDF/X output intent profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabeprofil"
           }
         }
       }
     },
-    "PDF/X registry": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-Registrierung"
+    "PDF/X registry" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Registrierung"
           }
         }
       }
     },
-    "PDF/X trapped state": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/X-Überfüllungsstatus"
+    "PDF/X trapped state" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Überfüllungsstatus"
           }
         }
       }
     },
-    "pdfa_compatibility": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A Kompatibilität"
+    "pdfa_compatibility" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A Kompatibilität"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A Compatibility"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A Compatibility"
           }
         }
       }
     },
-    "pdfa_compatibility_1b_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF 1.4 · ohne Transparenz"
+    "pdfa_compatibility_1b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.4 · ohne Transparenz"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF 1.4 · without transparency"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.4 · without transparency"
           }
         }
       }
     },
-    "pdfa_compatibility_1b_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-1b"
+    "pdfa_compatibility_1b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-1b"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-1b"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-1b"
           }
         }
       }
     },
-    "pdfa_compatibility_2b_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF 1.7 · mit Transparenz"
+    "pdfa_compatibility_2b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · mit Transparenz"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF 1.7 · with transparency"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · with transparency"
           }
         }
       }
     },
-    "pdfa_compatibility_2b_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-2b"
+    "pdfa_compatibility_2b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-2b"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-2b"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-2b"
           }
         }
       }
     },
-    "pdfa_compatibility_3b_detail": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF 1.7 · erlaubt eingebettete Dateien"
+    "pdfa_compatibility_3b_detail" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · erlaubt eingebettete Dateien"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF 1.7 · allows embedded files"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF 1.7 · allows embedded files"
           }
         }
       }
     },
-    "pdfa_compatibility_3b_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-3b"
+    "pdfa_compatibility_3b_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-3b"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PDF/A-3b"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/A-3b"
           }
         }
       }
     },
-    "pdfa_compatibility_none_title": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "keine"
+    "pdfa_compatibility_none_title" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "keine"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "none"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "none"
+          }
+        }
+      }
+    },
+    "Perceptual" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perzeptiv"
+          }
+        }
+      }
+    },
+    "Points" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Punkt"
+          }
+        }
+      }
+    },
+    "Policies..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Richtlinien..."
+          }
+        }
+      }
+    },
+    "Policy" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Richtlinie"
+          }
+        }
+      }
+    },
+    "PostScript value" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Wert"
           }
         }
       }
     },
-    "Perceptual": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Perzeptiv"
+    "ppi" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ppi"
           }
         }
       }
     },
-    "PostScript value": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "PostScript-Wert"
+    "Preserve" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beibehalten"
           }
         }
       }
     },
-    "Preserve": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Beibehalten"
+    "Preserve black" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwarz beibehalten"
           }
         }
       }
     },
-    "Preserve black": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schwarz beibehalten"
+    "Preserve CMYK values for calibrated CMYK color spaces" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CMYK-Werte für kalibrierte CMYK-Farbräume beibehalten"
           }
         }
       }
     },
-    "Preserve copy-page semantics": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "copy-page-Semantik beibehalten"
+    "Preserve copy-page semantics" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "copy-page-Semantik beibehalten"
           }
         }
       }
     },
-    "Preserve DeviceN colorants": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DeviceN-Farbmittel beibehalten"
+    "Preserve DeviceN colorants" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DeviceN-Farbmittel beibehalten"
           }
         }
       }
     },
-    "Preserve EPS information": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "EPS-Informationen beibehalten"
+    "Preserve EPS information" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EPS-Informationen beibehalten"
           }
         }
       }
     },
-    "Preserve flatness": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kurvenglättung beibehalten"
+    "Preserve flatness" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kurvenglättung beibehalten"
           }
         }
       }
     },
-    "Preserve halftone information": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rasterinformationen beibehalten"
+    "Preserve halftone information" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rasterinformationen beibehalten"
           }
         }
       }
     },
-    "Preserve OPI comments": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "OPI-Kommentare beibehalten"
+    "Preserve OPI comments" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OPI-Kommentare beibehalten"
           }
         }
       }
     },
-    "Preserve overprint settings": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Überdruckeinstellungen beibehalten"
+    "Preserve overprint settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überdruckeinstellungen beibehalten"
           }
         }
       }
     },
-    "Preserve separations": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Separationen beibehalten"
+    "Preserve separations" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Separationen beibehalten"
           }
         }
       }
     },
-    "Preserved settings": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Beibehaltene Einstellungen"
+    "Preserved settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beibehaltene Einstellungen"
           }
         }
       }
     },
-    "Preserved; ignored by Ghostscript": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wird beibehalten, von Ghostscript jedoch ignoriert"
+    "Preserved; ignored by Ghostscript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird beibehalten, von Ghostscript jedoch ignoriert"
           }
         }
       }
     },
-    "Preserved; not interpreted by Ghostscript pdfwrite": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wird beibehalten, von Ghostscript pdfwrite jedoch nicht ausgewertet"
+    "Preserved; not interpreted by Ghostscript pdfwrite" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird beibehalten, von Ghostscript pdfwrite jedoch nicht ausgewertet"
           }
         }
       }
     },
-    "Preset": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Vorgabe"
+    "Preset" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorgabe"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Preset"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Preset"
           }
         }
       }
     },
-    "Process color model": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prozessfarbmodell"
+    "Process color model" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prozessfarbmodell"
           }
         }
       }
     },
-    "Process DSC comments": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DSC-Kommentare verarbeiten"
+    "Process DSC comments" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Kommentare verarbeiten"
           }
         }
       }
     },
-    "processing": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Verarbeitung läuft"
+    "processing" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verarbeitung läuft"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Processing"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Processing"
           }
         }
       }
     },
-    "Random numbers": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zufallszahlen"
+    "Random numbers" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zufallszahlen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Random numbers"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Random numbers"
+          }
+        }
+      }
+    },
+    "RelativeColorimetric" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relativ farbmetrisch"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entfernen"
+          }
+        }
+      }
+    },
+    "Repair" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reparieren"
+          }
+        }
+      }
+    },
+    "Report an error" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fehler melden"
+          }
+        }
+      }
+    },
+    "Report DSC warnings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Warnungen melden"
           }
         }
       }
     },
-    "RelativeColorimetric": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Relativ farbmetrisch"
+    "Required PDF version, encryption, font embedding, output intent and color-space changes are listed as repairable consistency settings." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erforderliche Änderungen an PDF-Version, Verschlüsselung, Schrifteinbettung, Ausgabebedingung und Farbräumen werden als reparierbare Konsistenzeinstellungen aufgeführt."
           }
         }
       }
     },
-    "Remove": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Entfernen"
+    "Resolution" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auflösung"
           }
         }
       }
     },
-    "Report DSC warnings": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DSC-Warnungen melden"
+    "RGB" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RGB"
           }
         }
       }
     },
-    "RGB": {
-      "shouldTranslate": false
+    "Right" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rechts"
+          }
+        }
+      }
+    },
+    "Run Length" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lauflänge"
+          }
+        }
+      }
     },
-    "Right": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Rechts"
+    "RunLengthEncode" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RunLengthEncode"
           }
         }
       }
     },
-    "RunLengthEncode": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RunLengthEncode"
+    "Saturation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sättigung"
           }
         }
       }
     },
-    "Saturation": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sättigung"
+    "Save" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern"
           }
         }
       }
     },
-    "Save": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sichern"
+    "Save As..." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern unter..."
           }
         }
       }
     },
-    "Save As…": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sichern unter…"
+    "Save As…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern unter…"
           }
         }
       }
     },
-    "Save Joboptions As": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Joboptions sichern unter"
+    "Save Joboptions As" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Joboptions sichern unter"
           }
         }
       }
     },
-    "Security limits": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Sicherheitsbeschränkungen"
+    "Security limits" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherheitsbeschränkungen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Security limits"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Security limits"
           }
         }
       }
     },
-    "Seed": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seed"
+    "Seed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seed"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Seed"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seed"
+          }
+        }
+      }
+    },
+    "Set bleed box to media box" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anschnittrahmen auf Medienrahmen setzen"
+          }
+        }
+      }
+    },
+    "Set from media box with offsets" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Medienrahmen mit Versatz festlegen"
+          }
+        }
+      }
+    },
+    "Set from trim box with offsets" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aus Endformatrahmen mit Versatz festlegen"
+          }
+        }
+      }
+    },
+    "Set to media box" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auf Medienrahmen setzen"
           }
         }
       }
     },
-    "Settings": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Einstellungen"
+    "Settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Settings"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Settings"
           }
         }
       }
     },
-    "share": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Teilen"
+    "share" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teilen"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Share"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share"
+          }
+        }
+      }
+    },
+    "Show preserved PostScript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beibehaltenes PostScript anzeigen"
+          }
+        }
+      }
+    },
+    "Smooth monochrome images" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Monochrombilder glätten"
           }
         }
       }
     },
-    "Show preserved PostScript": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Beibehaltenes PostScript anzeigen"
+    "sRGB" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sRGB"
           }
         }
       }
     },
-    "sRGB": {
-      "shouldTranslate": false
+    "sRGB profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sRGB-Profil"
+          }
+        }
+      }
     },
-    "sRGB profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "sRGB-Profil"
+    "Standards" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standards"
           }
         }
       }
     },
-    "Standards": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Standards"
+    "Standards compliance" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardkonformität"
           }
         }
       }
     },
-    "Subsample": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unterabtastung"
+    "Subsample" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterabtastung"
           }
         }
       }
     },
-    "Subset embedded fonts": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Eingebettete Schriften als Untergruppen"
+    "Subset embedded fonts" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingebettete Schriften als Untergruppen"
           }
         }
       }
     },
-    "Subset fonts below": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Schriften unterhalb dieses Werts unterteilen"
+    "Subset fonts below" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriften unterhalb dieses Werts unterteilen"
           }
         }
       }
     },
-    "Tags": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Tags"
+    "Tags" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tags"
           }
         }
       }
     },
-    "Text ICC profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ICC-Profil für Text"
+    "Text ICC profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil für Text"
           }
         }
       }
     },
-    "The catalogue targets Ghostscript %@. Missing settings are inserted into the active user Joboptions; unrelated source bytes stay unchanged.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der Katalog gilt für Ghostscript %@. Fehlende Einstellungen werden in die aktiven Benutzer-Joboptions eingefügt; nicht betroffene Quelldaten bleiben unverändert."
+    "The catalogue targets Ghostscript %@. Missing settings are inserted into the active user Joboptions; unrelated source bytes stay unchanged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Katalog gilt für Ghostscript %@. Fehlende Einstellungen werden in die aktiven Benutzer-Joboptions eingefügt; nicht betroffene Quelldaten bleiben unverändert."
           }
         }
       }
     },
-    "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die aktuelle PDF-Version erfordert temporäre Anpassungen für die Konvertierung. Die aktiven Joboptions bleiben unverändert, solange du sie nicht anwendest."
+    "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die aktuelle PDF-Version erfordert temporäre Anpassungen für die Konvertierung. Die aktiven Joboptions bleiben unverändert, solange du sie nicht anwendest."
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them."
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them."
+          }
+        }
+      }
+    },
+    "The file does not contain a static Distiller parameter dictionary." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Datei enthält kein statisches Distiller-Parameterwörterbuch."
+          }
+        }
+      }
+    },
+    "The Joboptions encoding is not supported." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Codierung der Joboptions wird nicht unterstützt."
+          }
+        }
+      }
+    },
+    "The Joboptions file cannot be read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei kann nicht gelesen werden."
+          }
+        }
+      }
+    },
+    "The Joboptions file could not be saved." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei konnte nicht gesichert werden."
+          }
+        }
+      }
+    },
+    "The Joboptions file is empty." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei ist leer."
+          }
+        }
+      }
+    },
+    "The Joboptions file is larger than 16 MB." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Datei ist größer als 16 MB."
+          }
+        }
+      }
+    },
+    "The Joboptions require a manual correction before conversion: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für die Joboptions ist vor der Konvertierung eine manuelle Korrektur erforderlich: %@"
+          }
+        }
+      }
+    },
+    "The Joboptions structure is malformed: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Joboptions-Struktur ist fehlerhaft: %@"
+          }
+        }
+      }
+    },
+    "The PDF/X validation switches must match the selected standard." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Prüfschalter müssen dem ausgewählten Standard entsprechen."
+          }
+        }
+      }
+    },
+    "The selected PDF standard requires all fonts to be embedded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ausgewählte PDF-Standard erfordert die Einbettung aller Schriften."
+          }
+        }
+      }
+    },
+    "The selected PDF standard requires conversion to fail when a font cannot be embedded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ausgewählte PDF-Standard erfordert einen Abbruch der Konvertierung, wenn eine Schrift nicht eingebettet werden kann."
           }
         }
       }
     },
-    "The file does not contain a static Distiller parameter dictionary.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Datei enthält kein statisches Distiller-Parameterwörterbuch."
+    "The selected PDF standard requires this color conversion strategy." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ausgewählte PDF-Standard erfordert diese Farbkonvertierungsstrategie."
           }
         }
       }
     },
-    "The Joboptions encoding is not supported.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Codierung der Joboptions wird nicht unterstützt."
+    "The selected PDF standard requires this output profile." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ausgewählte PDF-Standard erfordert dieses Ausgabeprofil."
           }
         }
       }
     },
-    "The Joboptions file cannot be read.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Joboptions-Datei kann nicht gelesen werden."
+    "The selected PDF standard requires this PDF version." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ausgewählte PDF-Standard erfordert diese PDF-Version."
           }
         }
       }
     },
-    "The Joboptions file could not be saved.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Joboptions-Datei konnte nicht gesichert werden."
+    "The shared App Group container is unavailable." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der gemeinsame App-Group-Container ist nicht verfügbar."
           }
         }
       }
     },
-    "The Joboptions file is empty.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Joboptions-Datei ist leer."
+    "These recognizable keys are preserved even though they have no dedicated Distiller control." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese erkannten Schlüssel bleiben erhalten, obwohl sie kein eigenes Distiller-Bedienelement besitzen."
           }
         }
       }
     },
-    "The Joboptions file is larger than 16 MB.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Joboptions-Datei ist größer als 16 MB."
+    "to" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "auf"
           }
         }
       }
     },
-    "The Joboptions structure is malformed: %@": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Die Joboptions-Struktur ist fehlerhaft: %@"
+    "To" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bis"
           }
         }
       }
     },
-    "The shared App Group container is unavailable.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Der gemeinsame App-Group-Container ist nicht verfügbar."
+    "Top" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Oben"
           }
         }
       }
     },
-    "These recognizable keys are preserved even though they have no dedicated Distiller control.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Diese erkannten Schlüssel bleiben erhalten, obwohl sie kein eigenes Distiller-Bedienelement besitzen."
+    "Transfer functions" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transferfunktionen"
           }
         }
       }
     },
-    "Transfer functions": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Transferfunktionen"
+    "Transparency requires PDF 1.4 or newer." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Transparenz erfordert PDF 1.4 oder neuer."
           }
         }
       }
     },
-    "True": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ja"
+    "Trim box offsets" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endformatrahmenversatz"
           }
+        }
+      }
+    },
+    "True" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ja"
+          }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yes"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes"
+          }
+        }
+      }
+    },
+    "Unclassified PostScript fragments are read-only and are preserved byte-for-byte." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht klassifizierte PostScript-Fragmente sind schreibgeschützt und bleiben bytegenau erhalten."
+          }
+        }
+      }
+    },
+    "Undercolor removal and black generation" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterfarbenreduzierung und Schwarzaufbau"
+          }
+        }
+      }
+    },
+    "Unit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einheit"
+          }
+        }
+      }
+    },
+    "Unknown" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannt"
           }
         }
       }
     },
-    "Unclassified PostScript fragments are read-only and are preserved byte-for-byte.": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nicht klassifizierte PostScript-Fragmente sind schreibgeschützt und bleiben bytegenau erhalten."
+    "Use DSC comments for document info" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DSC-Kommentare für Dokumentinformationen verwenden"
           }
         }
       }
     },
-    "Undercolor removal and black generation": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unterfarbenreduzierung und Schwarzaufbau"
+    "Use media box" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medienrahmen verwenden"
           }
         }
       }
     },
-    "Unknown": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Unbekannt"
+    "Use media box with offsets" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Medienrahmen mit Versatz verwenden"
           }
         }
       }
     },
-    "Use DSC comments for document info": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "DSC-Kommentare für Dokumentinformationen verwenden"
+    "Use prologue" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prolog verwenden"
           }
         }
       }
     },
-    "Use prologue": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prolog verwenden"
+    "Use trim box with offsets" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endformatrahmen mit Versatz verwenden"
           }
         }
       }
     },
-    "UseDeviceIndependentColor": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geräteunabhängige Farbe verwenden"
+    "UseDeviceIndependentColor" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geräteunabhängige Farbe verwenden"
           }
         }
       }
     },
-    "User": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Benutzer"
+    "User" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzer"
           }
         },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "User"
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "User"
+          }
+        }
+      }
+    },
+    "User · editable" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzer · bearbeitbar"
+          }
+        }
+      }
+    },
+    "User password" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Benutzerpasswort"
+          }
+        }
+      }
+    },
+    "Value" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wert"
+          }
+        }
+      }
+    },
+    "Warning" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warnung"
           }
         }
       }
     },
-    "User · editable": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Benutzer · bearbeitbar"
+    "When embedding fails" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wenn das Einbetten fehlschlägt"
           }
         }
       }
     },
-    "User password": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Benutzerpasswort"
+    "Width" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Breite"
           }
         }
       }
     },
-    "Value": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wert"
+    "Working CMYK profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CMYK-Arbeitsprofil"
           }
         }
       }
     },
-    "Warning": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Warnung"
+    "Working grayscale profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Graustufen-Arbeitsprofil"
           }
         }
       }
     },
-    "When embedding fails": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wenn das Einbetten fehlschlägt"
+    "Working RGB profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RGB-Arbeitsprofil"
           }
         }
       }
     },
-    "Working CMYK profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "CMYK-Arbeitsprofil"
+    "Working spaces" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arbeitsfarbräume"
           }
         }
       }
     },
-    "Working grayscale profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Graustufen-Arbeitsprofil"
+    "Write cross-reference streams" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Querverweisströme schreiben"
           }
         }
       }
     },
-    "Working RGB profile": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "RGB-Arbeitsprofil"
+    "Write object streams" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektströme schreiben"
           }
         }
       }
     },
-    "Write cross-reference streams": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Querverweisströme schreiben"
+    "X" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "X"
           }
         }
       }
     },
-    "Write object streams": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Objektströme schreiben"
+    "Y" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Y"
           }
         }
       }
     }
   },
-  "version": "1.3"
+  "version" : "1.3"
 }

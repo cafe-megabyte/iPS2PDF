@@ -69,10 +69,6 @@ final class ConversionViewModel: ObservableObject {
     func setPDFVersion(_ version: PDFVersion) {
         guard !controlsAreDisabled else { return }
         do {
-            if selectedPDFACompatibility.requiredPDFVersion != version,
-               selectedPDFACompatibility != .none {
-                try joboptionsRepository.setStandard(.none)
-            }
             try joboptionsRepository.update(
                 key: "CompatibilityLevel",
                 value: .number(Double(version.rawValue) ?? 1.3, original: version.rawValue)

@@ -27,6 +27,16 @@ struct DistillerOptionEditor: View {
 
     @ViewBuilder
     private var control: some View {
+        switch definition.semanticEditor {
+        case .scalar:
+            scalarControl
+        default:
+            SemanticDistillerEditor(definition: definition, repository: repository)
+        }
+    }
+
+    @ViewBuilder
+    private var scalarControl: some View {
         switch definition.kind {
         case .boolean:
             Toggle(definition.localizedTitle, isOn: booleanBinding)
