@@ -78,7 +78,7 @@ struct DistillerOptionEditor: View {
             if isProfileSetting {
                 Picker(definition.localizedTitle, selection: profileBinding) {
                     if !currentText.isEmpty,
-                       !profileCandidates.contains(where: { $0.name == currentText }) {
+                       !profileCandidates.contains(where: { $0.matches(currentText) }) {
                         Text(currentText).tag(currentText)
                     }
                     ForEach(profileCandidates) { profile in
@@ -132,9 +132,13 @@ struct DistillerOptionEditor: View {
 
     private var profileBinding: Binding<String> {
         Binding(
-            get: { currentText },
+            get: { selectedProfileText },
             set: { update(.string($0)) }
         )
+    }
+
+    private var selectedProfileText: String {
+        profileCandidates.first { $0.matches(currentText) }?.name ?? currentText
     }
 
     private var booleanBinding: Binding<Bool> {

@@ -140,11 +140,11 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         }
         let bundledProfileDirectory = GhostscriptRuntimeResources.profilesDirectoryURL
         let definitionName = standard.hasPrefix("pdfa") ? "PDFA_def" : "PDFX_def"
-        let definitionURL = standard == "none"
+        let bundledDefinitionURL = standard == "none"
             ? nil
             : GhostscriptRuntimeResources.ghostscriptDefinitionURL(named: definitionName)
         if standard != "none",
-           definitionURL == nil || bundledProfileDirectory == nil {
+           bundledDefinitionURL == nil || bundledProfileDirectory == nil {
             throw HelperError.message(
                 "A standards resource is unavailable in the Ghostscript extension."
             )
@@ -155,7 +155,16 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             profileDirectory: bundledProfileDirectory,
             stagedUserProfiles: profileConfiguration.userProfiles
         )
-        let profileOverrideDirectory = profileConfiguration.userProfiles.isEmpty
+        let definitionURL = try standardDefinitionURL(
+            bundledDefinitionURL,
+            standard: standard,
+            profileSelections: profileConfiguration.selections,
+            bundledProfileDirectory: bundledProfileDirectory,
+            stagedUserProfiles: profileConfiguration.userProfiles,
+            profilesDirectory: profilesDirectory,
+            inputDirectory: inputDirectory
+        )
+        let profileOverrideDirectory = profileConfiguration.userProfiles.isEmpty && definitionURL == bundledDefinitionURL
             ? nil
             : profilesDirectory
         var ghostscriptCode: Int32 = 0
@@ -367,6 +376,61 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             : "<< \(profileEntries.joined(separator: " ")) >> setdistillerparams"
     }
 
+    private func standardDefinitionURL(
+        _ bundledDefinitionURL: URL?,
+        standard: String,
+        profileSelections: [(key: String, name: String)],
+        bundledProfileDirectory: URL?,
+        stagedUserProfiles: [String: URL],
+        profilesDirectory: URL,
+        inputDirectory: URL
+    ) throws -> URL? {
+        guard let bundledDefinitionURL,
+              let bundledProfileDirectory,
+              let configuration = standardProfileConfiguration(
+                  standard: standard,
+                  profileSelections: profileSelections
+              )
+        else { return bundledDefinitionURL }
+
+        let sourceProfileURL: URL
+        if let staged = stagedUserProfiles[configuration.key] {
+            sourceProfileURL = staged
+        } else {
+            let resolver = try GhostscriptProfileResolver(directoryURL: bundledProfileDirectory)
+            sourceProfileURL = try resolver.resolve(configuration.name)
+        }
+
+        let stagedProfileURL = profilesDirectory
+            .appendingPathComponent(Self.standardOutputProfileFileName)
+        try AppGroupWorkspace.publishFile(from: sourceProfileURL, to: stagedProfileURL)
+
+        let definitionData = try Data(contentsOf: bundledDefinitionURL, options: [.mappedIfSafe])
+        let definitionText = String(decoding: definitionData, as: UTF8.self)
+        let adjustedDefinition = configuration.originalFilenames.reduce(definitionText) { text, original in
+            text.replacingOccurrences(of: original, with: Self.standardOutputProfileFileName)
+        }
+        let adjustedDefinitionURL = inputDirectory
+            .appendingPathComponent(Self.standardDefinitionFileName)
+        try Data(adjustedDefinition.utf8).write(to: adjustedDefinitionURL, options: [.atomic])
+        return adjustedDefinitionURL
+    }
+
+    private func standardProfileConfiguration(
+        standard: String,
+        profileSelections: [(key: String, name: String)]
+    ) -> (key: String, name: String, originalFilenames: [String])? {
+        if standard.hasPrefix("pdfa"),
+           let selection = profileSelections.first(where: { $0.key == "OutputICCProfile" }) {
+            return (selection.key, selection.name, ["srgb.icc"])
+        }
+        if standard.hasPrefix("pdfx"),
+           let selection = profileSelections.first(where: { $0.key == "PDFXOutputIntentProfile" }) {
+            return (selection.key, selection.name, ["CoatedFOGRA39.icc", "ISO Coated sb.icc"])
+        }
+        return nil
+    }
+
     private static func compatibilityLevel(from descriptor: Int32) -> String? {
         distillerNameValue(
             from: descriptor,
@@ -466,6 +530,7 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             else { return nil }
             return [
                 "name": metadata.name,
+                "fileStem": metadata.fileStem,
                 "file": url.lastPathComponent,
                 "class": metadata.profileClass,
                 "colorSpace": metadata.colorSpace,
@@ -508,6 +573,9 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
     private static let allowedBlendConversionStrategies = Set([
         "None", "Simple", "Managed"
     ])
+
+    private static let standardDefinitionFileName = "ActiveStandardDefinition.ps"
+    private static let standardOutputProfileFileName = "SelectedOutputProfile.icc"
 
     private struct ProfileConfiguration {
         let selections: [(key: String, name: String)]

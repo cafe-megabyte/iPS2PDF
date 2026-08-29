@@ -9,6 +9,7 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
 
     let id: String
     let name: String
+    let fileStem: String
     let origin: Origin
     let url: URL
     let profileClass: String
@@ -16,6 +17,7 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
     let connectionSpace: String
 
     var isBundled: Bool { origin == .bundled }
+    func matches(_ value: String) -> Bool { name == value || fileStem == value }
 
     static func inspect(url: URL, origin: Origin) throws -> Self {
         let handle = try FileHandle(forReadingFrom: url)
@@ -38,9 +40,12 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
         }
 
         let prefix = origin == .bundled ? "bundled" : "user"
+        let fileStem = url.deletingPathExtension().lastPathComponent
+        let displayName = (try? ICCProfileDescriptionReader.descriptions(at: url).first) ?? fileStem
         return Self(
             id: "\(prefix):\(url.lastPathComponent)",
-            name: url.deletingPathExtension().lastPathComponent,
+            name: displayName,
+            fileStem: fileStem,
             origin: origin,
             url: url,
             profileClass: signature(12..<16),

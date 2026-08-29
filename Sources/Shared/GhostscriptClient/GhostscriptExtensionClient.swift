@@ -203,8 +203,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             let userProfiles = try availableUserProfiles()
             for selection in selections {
                 guard let sourceURL = userProfiles.first(where: {
-                    $0.deletingPathExtension().lastPathComponent
-                        .caseInsensitiveCompare(selection.name) == .orderedSame
+                    profileName($0, matches: selection.name)
                 }) else { continue }
                 let destinationURL = profilesDirectory
                     .appendingPathComponent("profile-\(userProfileKeys.count).icc")
@@ -235,6 +234,26 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         ).filter {
             try $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true
         }
+    }
+
+    private func profileName(_ url: URL, matches name: String) -> Bool {
+        let requested = normalizedProfileName(name)
+        let fileStem = normalizedProfileName(url.deletingPathExtension().lastPathComponent)
+        if fileStem == requested { return true }
+        guard let record = try? ICCProfileRecord.inspect(url: url, origin: .user) else {
+            return false
+        }
+        return normalizedProfileName(record.name) == requested
+            || normalizedProfileName(record.fileStem) == requested
+    }
+
+    private func normalizedProfileName(_ value: String) -> String {
+        value
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(
+                options: [.caseInsensitive, .diacriticInsensitive, .widthInsensitive],
+                locale: Locale(identifier: "en_US_POSIX")
+            )
     }
 
     private func selectedProfiles(document: LosslessJoboptionsDocument) -> [ProfileSelection] {

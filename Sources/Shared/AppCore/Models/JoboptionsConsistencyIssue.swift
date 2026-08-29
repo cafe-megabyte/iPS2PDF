@@ -10,6 +10,7 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
         case standardPDFXChecks
         case standardColorConversion
         case standardOutputProfile
+        case standardTransparency
         case missingOutputProfile
         case transparency
         case flatePDF11
@@ -32,6 +33,8 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
                 String(localized: "The selected PDF standard requires this color conversion strategy.")
             case .standardOutputProfile:
                 String(localized: "The selected PDF standard requires this output profile.")
+            case .standardTransparency:
+                String(localized: "The selected PDF standard does not permit transparency.")
             case .missingOutputProfile:
                 String(localized: "A suitable installed output profile must be selected before conversion.")
             case .transparency:

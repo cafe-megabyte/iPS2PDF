@@ -329,6 +329,7 @@ int gs_run_joboptions_with_fds(
     int file_system_added = 0;
     int current_stage = GS_BRIDGE_STAGE_NEW_INSTANCE;
     int standard_definition_fd = -1;
+    int original_directory_fd = -1;
     char compatibility_option[32];
     char standard_option[32];
     char blend_conversion_option[40];
@@ -458,6 +459,15 @@ int gs_run_joboptions_with_fds(
             return_code = -1;
             goto descriptor_finished;
         }
+        original_directory_fd = open(".", O_RDONLY | O_CLOEXEC);
+        const char *standard_profile_directory =
+            profile_override_directory != NULL && profile_override_directory[0] != '\0'
+                ? profile_override_directory
+                : profile_resource_directory;
+        if (original_directory_fd < 0 || chdir(standard_profile_directory) != 0) {
+            return_code = -1;
+            goto descriptor_finished;
+        }
     }
     const int has_profile_overrides = profile_overrides != NULL && profile_overrides[0] != '\0';
     if ((has_standard || has_profile_overrides) && profile_resource_directory == NULL) {
@@ -510,6 +520,7 @@ int gs_run_joboptions_with_fds(
         arguments[argument_count++] = standard_option;
         arguments[argument_count++] = is_pdfa ? "-dPDFACompatibilityPolicy=1" : "-dPDFXNoTrimBoxError=false";
         arguments[argument_count++] = is_pdfa ? "-sColorConversionStrategy=RGB" : "-sColorConversionStrategy=CMYK";
+        arguments[argument_count++] = "--permit-file-read=SelectedOutputProfile.icc";
         if (is_pdfa && allow_transparency && !validation_only) {
             arguments[argument_count++] = blend_conversion_option;
         }
@@ -588,6 +599,10 @@ descriptor_finished:
         gsapi_remove_fs(instance, &descriptor_file_system, &capture);
     }
     if (instance != NULL) gsapi_delete_instance(instance);
+    if (original_directory_fd >= 0) {
+        fchdir(original_directory_fd);
+        close(original_directory_fd);
+    }
     if (standard_definition_fd >= 0) close(standard_definition_fd);
     if (capture.limit_reason == 1) {
         return_code = -1001;

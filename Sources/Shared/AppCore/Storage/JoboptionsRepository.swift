@@ -379,7 +379,7 @@ final class JoboptionsRepository: ObservableObject {
         if let user = try? userProfilesDirectory() {
             loaded += inspectProfiles(in: user, origin: .user)
         }
-        profiles = loaded.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        profiles = sortedProfiles(loaded)
     }
 
     private func refreshBundledProfileMetadataFromHelper() async {
@@ -392,6 +392,7 @@ final class JoboptionsRepository: ObservableObject {
             return ICCProfileRecord(
                 id: "bundled:\(item.file)",
                 name: item.name,
+                fileStem: item.fileStem,
                 origin: .bundled,
                 url: url,
                 profileClass: item.profileClass,
@@ -400,9 +401,7 @@ final class JoboptionsRepository: ObservableObject {
             )
         }
         let users = profiles.filter { !$0.isBundled }
-        profiles = (bundled + users).sorted {
-            $0.name.localizedStandardCompare($1.name) == .orderedAscending
-        }
+        profiles = sortedProfiles(bundled + users)
     }
 
     private func inspectProfiles(in directory: URL, origin: ICCProfileRecord.Origin) -> [ICCProfileRecord] {
@@ -429,8 +428,16 @@ final class JoboptionsRepository: ObservableObject {
     private var consistencyContext: JoboptionsConsistencyContext {
         JoboptionsConsistencyContext(
             availableProfiles: profiles.map {
-                .init(name: $0.name, colorSpace: $0.colorSpace)
+                .init(name: $0.name, fileStem: $0.fileStem, colorSpace: $0.colorSpace)
             }
         )
+    }
+
+    private func sortedProfiles(_ profiles: [ICCProfileRecord]) -> [ICCProfileRecord] {
+        profiles.sorted {
+            let nameComparison = $0.name.localizedStandardCompare($1.name)
+            if nameComparison != .orderedSame { return nameComparison == .orderedAscending }
+            return $0.fileStem.localizedStandardCompare($1.fileStem) == .orderedAscending
+        }
     }
 }

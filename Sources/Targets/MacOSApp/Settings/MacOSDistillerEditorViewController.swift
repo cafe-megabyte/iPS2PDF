@@ -960,7 +960,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             default: true
             }
         }
-        if !current.isEmpty, !profiles.contains(where: { $0.name == current }) {
+        if !current.isEmpty, !profiles.contains(where: { $0.matches(current) }) {
             popup.addItem(withTitle: String.localizedStringWithFormat(
                 String(localized: "Custom: %@"), current
             ), representedObject: current)
@@ -968,7 +968,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         for profile in profiles {
             popup.addItem(withTitle: profile.name, representedObject: profile.name)
         }
-        popup.selectRepresentedObject(current)
+        let selected = profiles.first { $0.matches(current) }?.name ?? current
+        popup.selectRepresentedObject(selected)
         popup.onSelection = { [weak self, weak popup] in
             guard let name = popup?.selectedRepresentedObject as? String else { return }
             self?.apply(JoboptionsChangeSet([

@@ -1621,16 +1621,6 @@
         }
       }
     },
-    "For transfer functions" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Bei Druckkennlinien"
-          }
-        }
-      }
-    },
     "Export..." : {
       "localizations" : {
         "de" : {
@@ -1751,7 +1741,14 @@
       }
     },
     "For transfer functions" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei Druckkennlinien"
+          }
+        }
+      }
     },
     "From" : {
       "localizations" : {
@@ -3361,16 +3358,6 @@
         }
       }
     },
-    "Preserve undercolor removal and black generation" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unterfarbreduktion und Schwarzaufbau beibehalten"
-          }
-        }
-      }
-    },
     "Preserve OPI comments" : {
       "localizations" : {
         "de" : {
@@ -3402,7 +3389,14 @@
       }
     },
     "Preserve undercolor removal and black generation" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterfarbreduktion und Schwarzaufbau beibehalten"
+          }
+        }
+      }
     },
     "Preserved settings" : {
       "localizations" : {
@@ -3993,6 +3987,9 @@
           }
         }
       }
+    },
+    "The selected PDF standard does not permit transparency." : {
+
     },
     "The selected PDF standard requires all fonts to be embedded." : {
       "localizations" : {

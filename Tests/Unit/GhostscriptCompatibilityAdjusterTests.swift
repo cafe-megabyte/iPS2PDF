@@ -135,6 +135,26 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         )
     }
 
+    func testPDFA1DisablesTransparencyFromNormalProfile() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfa1b
+          /CompatibilityLevel 1.7
+          /AllowTransparency true
+          /OutputICCProfile (Missing)
+        >> setdistillerparams
+        """.utf8))
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [.init(name: "sRGB Profile", colorSpace: "RGB")]
+        )
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
+
+        XCTAssertEqual(effective.value(forKey: "CompatibilityLevel")?.textualValue, "1.4")
+        XCTAssertEqual(effective.value(forKey: "AllowTransparency")?.boolValue, false)
+        XCTAssertEqual(effective.value(forKey: "OutputICCProfile")?.textualValue, "sRGB Profile")
+    }
+
     private func document(
         compatibilityLevel: String,
         entries: String

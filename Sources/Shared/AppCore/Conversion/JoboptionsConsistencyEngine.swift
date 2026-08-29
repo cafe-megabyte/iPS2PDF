@@ -130,6 +130,14 @@ enum JoboptionsConsistencyEngine {
                     reason: .standardColorConversion,
                     rule: "standard.pdfa.color"
                 )
+                if standard == .pdfa1b {
+                    propose(
+                        path: "/AllowTransparency",
+                        value: .boolean(false),
+                        reason: .standardTransparency,
+                        rule: "standard.pdfa1.transparency"
+                    )
+                }
                 evaluatePDFAProfile()
             } else if standard.ghostscriptPDFXValue != nil {
                 let strategy = standard == .pdfx1 ? "CMYK" : "UseDeviceIndependentColor"
@@ -176,7 +184,7 @@ enum JoboptionsConsistencyEngine {
             let current = working.value(forPath: path)?.textualValue
             if let current,
                context.availableProfiles.contains(where: {
-                   $0.colorSpace == "RGB" && $0.name == current
+                   $0.colorSpace == "RGB" && $0.matches(current)
                }) {
                 return
             }
@@ -203,7 +211,7 @@ enum JoboptionsConsistencyEngine {
             let current = working.value(forPath: path)?.textualValue
             if let current,
                context.availableProfiles.contains(where: {
-                   $0.colorSpace == "CMYK" && $0.name == current
+                   $0.colorSpace == "CMYK" && $0.matches(current)
                }) {
                 return
             }

@@ -4,6 +4,7 @@ import Foundation
 struct GhostscriptExtensionProfileMetadata: Codable, Sendable {
     let file: String
     let name: String
+    let fileStem: String
     let profileClass: String
     let colorSpace: String
     let connectionSpace: String
@@ -11,6 +12,7 @@ struct GhostscriptExtensionProfileMetadata: Codable, Sendable {
     init(record: ICCProfileRecord) {
         file = record.url.lastPathComponent
         name = record.name
+        fileStem = record.fileStem
         profileClass = record.profileClass
         colorSpace = record.colorSpace
         connectionSpace = record.connectionSpace
