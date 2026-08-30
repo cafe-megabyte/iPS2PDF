@@ -48,4 +48,8 @@ enum PDFStandard: String, CaseIterable, Identifiable, Sendable {
         default: nil
         }
     }
+
+    var isPDFX: Bool {
+        ghostscriptPDFXValue != nil
+    }
 }

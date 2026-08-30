@@ -354,7 +354,7 @@ final class ConversionViewModel: ObservableObject {
         var detailsParts: [String] = []
         if let diagnostics = failure.diagnostics {
             let format = String(localized: "error_diagnostics_format")
-            let tail = String(diagnostics.suffix(2_000))
+            let tail = String(diagnostics.suffix(8_000))
             messageParts.append(String(format: format, tail))
             detailsParts.append(diagnostics)
         }

@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsCategoryView: View {
     let category: DistillerCategory
     @ObservedObject var viewModel: ConversionViewModel
+    @State private var showsPDFXOutputIntentNotice = false
 
     private var repository: JoboptionsRepository { viewModel.joboptionsRepository }
 
@@ -38,6 +39,14 @@ struct SettingsCategoryView: View {
             Button("OK") { repository.lastError = nil }
         } message: {
             Text(repository.lastError ?? "")
+        }
+        .alert(
+            "PDF/X output intent",
+            isPresented: $showsPDFXOutputIntentNotice
+        ) {
+            Button("OK") {}
+        } message: {
+            Text("Generic CMYK Profile has been selected as the PDF/X output intent. Check whether this profile matches the intended print condition.")
         }
     }
 
@@ -159,7 +168,12 @@ struct SettingsCategoryView: View {
         Binding(
             get: { repository.activeStandard },
             set: { standard in
-                do { try repository.setStandard(standard) }
+                do {
+                    let showsNotice = try repository.setStandard(standard)
+                    if showsNotice {
+                        showsPDFXOutputIntentNotice = true
+                    }
+                }
                 catch { repository.lastError = error.localizedDescription }
             }
         )

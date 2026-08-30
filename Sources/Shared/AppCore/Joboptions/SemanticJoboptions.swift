@@ -1,6 +1,8 @@
 import Foundation
 
 struct SemanticJoboptions: Sendable {
+    static let defaultPDFXOutputIntentProfile = "Generic CMYK Profile"
+
     struct DeviceResolution: Equatable, Sendable {
         let x: Double
         let y: Double
@@ -402,6 +404,30 @@ struct SemanticJoboptions: Sendable {
         JoboptionsChangeSet([
             JoboptionsChange("/iPS2PDFStandard", .name(standard.rawValue))
         ])
+    }
+
+    static func changeStandard(
+        _ standard: PDFStandard,
+        in document: LosslessJoboptionsDocument
+    ) -> JoboptionsChangeSet {
+        var changes = [JoboptionsChange("/iPS2PDFStandard", .name(standard.rawValue))]
+        if standard.isPDFX, needsDefaultPDFXOutputIntentProfile(in: document) {
+            changes.append(JoboptionsChange(
+                "/PDFXOutputIntentProfile",
+                .string(defaultPDFXOutputIntentProfile)
+            ))
+        }
+        return JoboptionsChangeSet(changes)
+    }
+
+    static func needsDefaultPDFXOutputIntentProfile(
+        in document: LosslessJoboptionsDocument
+    ) -> Bool {
+        guard let value = document.value(forKey: "PDFXOutputIntentProfile")?.textualValue else {
+            return true
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty || trimmed.caseInsensitiveCompare("None") == .orderedSame
     }
 
     static func changePDFXBoxRules(

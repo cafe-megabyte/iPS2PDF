@@ -181,21 +181,15 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let inputDirectory = try AppGroupWorkspace.inputDirectoryURL()
         let joboptionsDestination = inputDirectory
             .appendingPathComponent(AppGroupWorkspace.joboptionsFileName)
-        try AppGroupWorkspace.publishFile(from: joboptionsURL, to: joboptionsDestination)
 
         let document = try LosslessJoboptionsDocument(data: Data(contentsOf: joboptionsURL))
-        let selections = inputURL == nil ? [] : selectedProfiles(document: document)
+        let selections = selectedProfiles(document: document)
         var userProfileKeys: [String] = []
+        var stagedUserProfiles: [String: URL] = [:]
 
-        if let inputURL {
-            if stagesInputFile {
-                try AppGroupWorkspace.publishFile(
-                    from: inputURL,
-                    to: inputDirectory.appendingPathComponent(AppGroupWorkspace.inputFileName)
-                )
-            }
-            let profilesDirectory = inputDirectory
-                .appendingPathComponent(AppGroupWorkspace.profilesDirectoryName, isDirectory: true)
+        let profilesDirectory = inputDirectory
+            .appendingPathComponent(AppGroupWorkspace.profilesDirectoryName, isDirectory: true)
+        if !selections.isEmpty {
             try FileManager.default.createDirectory(
                 at: profilesDirectory,
                 withIntermediateDirectories: true
@@ -209,6 +203,23 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
                     .appendingPathComponent("profile-\(userProfileKeys.count).icc")
                 try AppGroupWorkspace.publishFile(from: sourceURL, to: destinationURL)
                 userProfileKeys.append(selection.key)
+                stagedUserProfiles[selection.key] = destinationURL
+            }
+        }
+
+        let runtimeDocument = try runtimeDocument(
+            from: document,
+            profileSelections: selections,
+            stagedUserProfiles: stagedUserProfiles
+        )
+        try runtimeDocument.data.write(to: joboptionsDestination, options: [.atomic])
+
+        if let inputURL {
+            if stagesInputFile {
+                try AppGroupWorkspace.publishFile(
+                    from: inputURL,
+                    to: inputDirectory.appendingPathComponent(AppGroupWorkspace.inputFileName)
+                )
             }
         }
 
@@ -221,6 +232,64 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             epsCrop: document.value(forKey: "AutoPositionEPSFiles")?.boolValue ?? false,
             profileSelections: selections,
             userProfileKeys: userProfileKeys
+        )
+    }
+
+    private func runtimeDocument(
+        from document: LosslessJoboptionsDocument,
+        profileSelections: [ProfileSelection],
+        stagedUserProfiles: [String: URL]
+    ) throws -> LosslessJoboptionsDocument {
+        var runtimeDocument = try document.removingValues(forKeys: Self.runtimeExcludedJoboptionsKeys)
+        guard !profileSelections.isEmpty else { return runtimeDocument }
+
+        for selection in profileSelections {
+            let replacement: String
+            if let stagedURL = stagedUserProfiles[selection.key] {
+                replacement = stagedURL.path
+            } else {
+                replacement = try bundledProfileFileName(matching: selection.name)
+            }
+            runtimeDocument = try runtimeDocument.replacingValue(
+                forKey: selection.key,
+                with: .string(replacement)
+            )
+        }
+        return runtimeDocument
+    }
+
+    private func bundledProfileFileName(matching name: String) throws -> String {
+        guard let directory = GhostscriptRuntimeResources.profilesDirectoryURL else {
+            throw ConversionFailure.ghostscriptInitialization(
+                returnCode: 0,
+                diagnostics: "The bundled ICC profile directory is unavailable."
+            )
+        }
+
+        let requested = normalizedProfileName(name)
+        let urls = try FileManager.default.contentsOfDirectory(
+            at: directory,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        )
+        for url in urls {
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
+            guard values.isRegularFile == true else { continue }
+            if normalizedProfileName(url.deletingPathExtension().lastPathComponent) == requested {
+                return url.lastPathComponent
+            }
+            guard let record = try? ICCProfileRecord.inspect(url: url, origin: .bundled) else {
+                continue
+            }
+            if normalizedProfileName(record.name) == requested
+                || normalizedProfileName(record.fileStem) == requested {
+                return url.lastPathComponent
+            }
+        }
+
+        throw ConversionFailure.ghostscriptInitialization(
+            returnCode: 0,
+            diagnostics: "The selected ICC profile could not be resolved: \(name)"
         )
     }
 
@@ -491,6 +560,10 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         "OutputICCProfile", "GraphicICCProfile", "ImageICCProfile",
         "TextICCProfile", "PDFXOutputIntentProfile"
     ]
+
+    private static let runtimeExcludedJoboptionsKeys = Set([
+        "iPS2PDFStandard"
+    ])
 
     private struct PreparedJob {
         let allowTransparency: Bool

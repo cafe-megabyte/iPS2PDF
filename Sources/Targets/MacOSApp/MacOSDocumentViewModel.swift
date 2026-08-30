@@ -138,7 +138,7 @@ final class MacOSDocumentViewModel {
             )
         }
         if let diagnostics = failure.diagnostics {
-            parts.append(String(diagnostics.suffix(4_000)))
+            parts.append(String(diagnostics.suffix(8_000)))
         }
         return parts.joined(separator: "\n\n")
     }

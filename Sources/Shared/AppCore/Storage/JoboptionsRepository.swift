@@ -106,8 +106,13 @@ final class JoboptionsRepository: ObservableObject {
         refreshUserRecordsPreservingSelection()
     }
 
-    func setStandard(_ standard: PDFStandard) throws {
-        try apply(SemanticJoboptions.changeStandard(standard))
+    @discardableResult
+    func setStandard(_ standard: PDFStandard) throws -> Bool {
+        guard let document = activeDocument else { throw JoboptionsError.unreadable }
+        let usesDefaultPDFXOutputIntent = standard.isPDFX
+            && SemanticJoboptions.needsDefaultPDFXOutputIntentProfile(in: document)
+        try apply(SemanticJoboptions.changeStandard(standard, in: document))
+        return usesDefaultPDFXOutputIntent
     }
 
     func setAutomaticRandomSeed(_ enabled: Bool) {

@@ -180,6 +180,17 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         } catch { present(error) }
     }
 
+    private func setStandard(_ standard: PDFStandard) {
+        guard commitPendingDescription() else { return }
+        do {
+            let showsNotice = try session.setStandard(standard)
+            buildSelectedCategory()
+            if showsNotice {
+                presentPDFXOutputIntentNotice()
+            }
+        } catch { present(error) }
+    }
+
     @discardableResult
     private func commitPendingDescription() -> Bool {
         guard let pendingDescription else { return true }
@@ -741,7 +752,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             guard let raw = popup?.selectedRepresentedObject as? String,
                   let standard = PDFStandard(rawValue: raw)
             else { return }
-            self?.apply(SemanticJoboptions.changeStandard(standard))
+            self?.setStandard(standard)
         }
         return labeledRow(definition.localizedTitle, popup)
     }
@@ -1362,6 +1373,15 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     private func present(_ error: Error) {
         guard let window = view.window else { return }
         NSAlert(error: error).beginSheetModal(for: window)
+    }
+
+    private func presentPDFXOutputIntentNotice() {
+        guard let window = view.window else { return }
+        let alert = NSAlert()
+        alert.messageText = String(localized: "PDF/X output intent")
+        alert.informativeText = String(localized: "Generic CMYK Profile has been selected as the PDF/X output intent. Check whether this profile matches the intended print condition.")
+        alert.addButton(withTitle: String(localized: "OK"))
+        alert.beginSheetModal(for: window)
     }
 
     private final class ActionButton: NSButton {

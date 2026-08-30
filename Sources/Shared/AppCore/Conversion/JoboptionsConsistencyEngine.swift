@@ -147,6 +147,14 @@ enum JoboptionsConsistencyEngine {
                     reason: .standardColorConversion,
                     rule: "standard.pdfx.color"
                 )
+                if standard == .pdfx1 || standard == .pdfx3 {
+                    propose(
+                        path: "/AllowTransparency",
+                        value: .boolean(false),
+                        reason: .standardTransparency,
+                        rule: "standard.pdfx.transparency"
+                    )
+                }
                 evaluatePDFXProfile()
             }
         }
@@ -213,6 +221,23 @@ enum JoboptionsConsistencyEngine {
                context.availableProfiles.contains(where: {
                    $0.colorSpace == "CMYK" && $0.matches(current)
                }) {
+                return
+            }
+            let isMissing = current?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
+            if isMissing || current?.caseInsensitiveCompare("None") == .orderedSame,
+               let profile = context.availableProfiles.first(where: {
+                   $0.colorSpace == "CMYK"
+                       && (
+                           $0.name == SemanticJoboptions.defaultPDFXOutputIntentProfile
+                           || $0.fileStem == SemanticJoboptions.defaultPDFXOutputIntentProfile
+                       )
+               }) {
+                propose(
+                    path: path.description,
+                    value: .string(profile.name),
+                    reason: .standardOutputProfile,
+                    rule: "standard.pdfx.output-profile"
+                )
                 return
             }
             reportUnresolved(

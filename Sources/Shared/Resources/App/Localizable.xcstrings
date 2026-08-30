@@ -1770,6 +1770,16 @@
         }
       }
     },
+    "Generic CMYK Profile has been selected as the PDF/X output intent. Check whether this profile matches the intended print condition." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generic CMYK Profile wurde als PDF/X-Ausgabeprofil ausgewählt. Prüfe, ob dieses Profil zur vorgesehenen Druckbedingung passt."
+          }
+        }
+      }
+    },
     "Ghostscript return code: %lld" : {
       "localizations" : {
         "de" : {
@@ -3056,6 +3066,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF/X-Ausgabebedingung"
+          }
+        }
+      }
+    },
+    "PDF/X output intent" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X-Ausgabeprofil"
           }
         }
       }

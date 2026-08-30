@@ -140,6 +140,7 @@ final class MacOSDocumentViewController: NSViewController {
         textView.isEditable = false
         textView.isSelectable = true
         textView.drawsBackground = false
+        textView.font = .monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
         textView.textContainerInset = NSSize(width: 0, height: 0)
 
         let scrollView = NSScrollView()
@@ -160,8 +161,8 @@ final class MacOSDocumentViewController: NSViewController {
             stackView.centerYAnchor.constraint(equalTo: contentContainer.centerYAnchor),
             stackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentContainer.leadingAnchor, constant: 24),
             stackView.trailingAnchor.constraint(lessThanOrEqualTo: contentContainer.trailingAnchor, constant: -24),
-            scrollView.widthAnchor.constraint(equalTo: contentContainer.widthAnchor, multiplier: 0.82),
-            scrollView.heightAnchor.constraint(lessThanOrEqualToConstant: 260)
+            scrollView.widthAnchor.constraint(equalTo: contentContainer.widthAnchor, multiplier: 0.9),
+            scrollView.heightAnchor.constraint(lessThanOrEqualToConstant: 420)
         ])
     }
 

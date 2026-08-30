@@ -113,15 +113,34 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         XCTAssertEqual(document.data, original)
     }
 
-    func testPDFXWithoutSelectedCMYKProfileIsNotSilentlyRepairable() throws {
+    func testPDFXWithoutSelectedCMYKProfileUsesDefaultGenericCMYKProfile() throws {
         let document = try LosslessJoboptionsDocument(data: Data("""
         << /iPS2PDFStandard /pdfx1 /CompatibilityLevel 1.4 /PDFXOutputIntentProfile () >> setdistillerparams
         """.utf8))
         let context = JoboptionsConsistencyContext(
             availableProfiles: [
                 .init(name: "Profile A", colorSpace: "CMYK"),
-                .init(name: "Profile B", colorSpace: "CMYK")
+                .init(name: "Generic CMYK Profile", fileStem: "Generic CMYK Profile", colorSpace: "CMYK")
             ]
+        )
+
+        let issues = JoboptionsConsistencyEngine.issues(in: document, context: context)
+        let profileIssue = try XCTUnwrap(
+            issues.first { $0.path.description == "/PDFXOutputIntentProfile" }
+        )
+        XCTAssertTrue(profileIssue.isAutomaticallyRepairable)
+        XCTAssertEqual(profileIssue.proposedValue?.textualValue, "Generic CMYK Profile")
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
+        XCTAssertEqual(effective.value(forKey: "PDFXOutputIntentProfile")?.textualValue, "Generic CMYK Profile")
+    }
+
+    func testPDFXWithoutGenericCMYKProfileRemainsUnresolved() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        << /iPS2PDFStandard /pdfx1 /CompatibilityLevel 1.4 /PDFXOutputIntentProfile () >> setdistillerparams
+        """.utf8))
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [.init(name: "Profile A", colorSpace: "CMYK")]
         )
 
         let issues = JoboptionsConsistencyEngine.issues(in: document, context: context)
@@ -130,9 +149,30 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         )
         XCTAssertFalse(profileIssue.isAutomaticallyRepairable)
         XCTAssertNil(profileIssue.proposedValue)
-        XCTAssertThrowsError(
-            try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
+    }
+
+    func testPDFX1DisablesTransparencyWhenProfileIsSelected() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfx1
+          /CompatibilityLevel 1.7
+          /AllowTransparency true
+          /ColorConversionStrategy /LeaveColorUnchanged
+          /PDFXOutputIntentProfile (Coated FOGRA27)
+        >> setdistillerparams
+        """.utf8))
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [
+                .init(name: "Coated FOGRA27", fileStem: "CoatedFOGRA27", colorSpace: "CMYK")
+            ]
         )
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
+
+        XCTAssertEqual(effective.value(forKey: "CompatibilityLevel")?.textualValue, "1.4")
+        XCTAssertEqual(effective.value(forKey: "AllowTransparency")?.boolValue, false)
+        XCTAssertEqual(effective.value(forKey: "ColorConversionStrategy")?.textualValue, "CMYK")
+        XCTAssertEqual(effective.value(forKey: "PDFXOutputIntentProfile")?.textualValue, "Coated FOGRA27")
     }
 
     func testPDFA1DisablesTransparencyFromNormalProfile() throws {

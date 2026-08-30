@@ -52,6 +52,10 @@ if [[ "$resource_set" == "all" || "$resource_set" == "profiles" ]]; then
         echo "Bundled ICC profiles are missing. Run prepare_bundled_resources.sh." >&2
         exit 1
     }
+    [[ -s "$profiles_source/Generic CMYK Profile.icc" ]] || {
+        echo "Bundled Generic CMYK Profile.icc is missing. Run prepare_bundled_resources.sh." >&2
+        exit 1
+    }
     copy_matching_files "$profiles_source" "$destination_root/Profiles" \( -name "*.icc" -o -name "*.icm" \)
     printf 'installed_resource_set=profiles\n' > "$destination_root/Profiles/.install.stamp"
 fi
