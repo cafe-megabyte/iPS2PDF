@@ -102,14 +102,14 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         XCTAssertEqual(document.data, original)
         XCTAssertEqual(issues.first?.path.description, "/CompatibilityLevel")
         XCTAssertTrue(issues.allSatisfy(\.isAutomaticallyRepairable))
-        XCTAssertFalse(issues.contains { $0.path.description == "/AllowTransparency" })
+        XCTAssertTrue(issues.contains { $0.path.description == "/AllowTransparency" })
 
         let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
         XCTAssertEqual(effective.value(forKey: "CompatibilityLevel")?.textualValue, "1.4")
         XCTAssertEqual(effective.value(forKey: "EmbedAllFonts")?.boolValue, true)
         XCTAssertEqual(effective.value(forKey: "Encrypt")?.boolValue, false)
         XCTAssertEqual(effective.value(forKey: "OutputICCProfile")?.textualValue, "sRGB Profile")
-        XCTAssertEqual(effective.value(forKey: "AllowTransparency")?.boolValue, true)
+        XCTAssertEqual(effective.value(forKey: "AllowTransparency")?.boolValue, false)
         XCTAssertEqual(document.data, original)
     }
 

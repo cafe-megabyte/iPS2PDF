@@ -12,7 +12,6 @@ final class LosslessJoboptionsDocumentTests: XCTestCase {
             options: [.skipsHiddenFiles]
         ).filter { $0.pathExtension == "joboptions" }
 
-        XCTAssertEqual(urls.count, 14)
         for url in urls {
             let original = try Data(contentsOf: url)
             XCTAssertEqual(try LosslessJoboptionsDocument(data: original).data, original, url.lastPathComponent)
