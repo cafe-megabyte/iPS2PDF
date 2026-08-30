@@ -5,9 +5,7 @@ actor MacOSDocumentWorkspace {
     private let directoryURL: URL
 
     init(identifier: UUID = UUID(), fileManager: FileManager = .default) {
-        directoryURL = fileManager.temporaryDirectory
-            .appendingPathComponent("iPS2PDF", isDirectory: true)
-            .appendingPathComponent("MacOS Documents", isDirectory: true)
+        directoryURL = Self.rootDirectory(fileManager: fileManager)
             .appendingPathComponent(identifier.uuidString, isDirectory: true)
     }
 
@@ -52,5 +50,18 @@ actor MacOSDocumentWorkspace {
             AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
             try fileManager.removeItem(at: directoryURL)
         }
+    }
+
+    static func clearStaleDirectories(fileManager: FileManager = .default) throws {
+        let root = rootDirectory(fileManager: fileManager)
+        guard fileManager.fileExists(atPath: root.path) else { return }
+        AppGroupWorkspace.prepareForRemoval(at: root, fileManager: fileManager)
+        try fileManager.removeItem(at: root)
+    }
+
+    private static func rootDirectory(fileManager: FileManager) -> URL {
+        fileManager.temporaryDirectory
+            .appendingPathComponent("iPS2PDF", isDirectory: true)
+            .appendingPathComponent("MacOS Documents", isDirectory: true)
     }
 }

@@ -2,6 +2,8 @@ import Foundation
 import PDFKit
 
 actor WorkingDirectoryService {
+    private static let stagingDirectoryNames = ["Incoming drops", "Incoming shares"]
+
     private let fileManager: FileManager
     private let directoryURL: URL
 
@@ -60,7 +62,7 @@ actor WorkingDirectoryService {
     }
 
     func removeStagingDirectory(_ stagingDirectoryURL: URL) {
-        let expectedParents = ["Incoming drops", "Incoming shares"].map {
+        let expectedParents = Self.stagingDirectoryNames.map {
             fileManager.temporaryDirectory
                 .appendingPathComponent($0, isDirectory: true)
                 .standardizedFileURL
@@ -72,6 +74,16 @@ actor WorkingDirectoryService {
         }
 
         try? fileManager.removeItem(at: stagingDirectoryURL)
+    }
+
+    static func clearStaleStagingDirectories(fileManager: FileManager = .default) throws {
+        for directoryName in stagingDirectoryNames {
+            let directoryURL = fileManager.temporaryDirectory
+                .appendingPathComponent(directoryName, isDirectory: true)
+            guard fileManager.fileExists(atPath: directoryURL.path) else { continue }
+            AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
+            try fileManager.removeItem(at: directoryURL)
+        }
     }
 
     func outputURL(for localSourceURL: URL) throws -> URL {

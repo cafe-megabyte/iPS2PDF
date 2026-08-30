@@ -7,6 +7,8 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        try? MacOSDocumentWorkspace.clearStaleDirectories()
+        JoboptionsEditingSession.cleanupStaleDirectories()
         try? AppGroupWorkspace.clearStaleDataPreservingShareInbox()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))

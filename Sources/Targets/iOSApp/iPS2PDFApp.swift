@@ -5,6 +5,7 @@ struct iPS2PDFApp: App {
     @StateObject private var viewModel: ConversionViewModel
 
     init() {
+        try? WorkingDirectoryService.clearStaleStagingDirectories()
         _viewModel = StateObject(wrappedValue: ConversionViewModel())
     }
 
