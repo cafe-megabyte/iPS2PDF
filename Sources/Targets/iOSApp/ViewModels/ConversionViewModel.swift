@@ -380,7 +380,8 @@ final class ConversionViewModel: ObservableObject {
         default: .none
         }
         selectedPDFACompatibility = compatibility
-        selectedPDFVersion = compatibility.requiredPDFVersion
+        selectedPDFVersion = PDFVersion(rawValue: joboptionsRepository.activeStandard.requiredCompatibilityLevel ?? "")
+            ?? compatibility.requiredPDFVersion
             ?? PDFVersion(rawValue: joboptionsRepository.compatibilityLevel)
             ?? .v13
     }

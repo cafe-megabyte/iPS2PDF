@@ -143,7 +143,8 @@ final class MacOSSettingsViewController: NSViewController {
             item.representedObject = version.rawValue
             versionPopup.menu?.addItem(item)
         }
-        let displayedVersion = selectedPDFACompatibility.requiredPDFVersion?.rawValue
+        let displayedVersion = repository.activeStandard.requiredCompatibilityLevel
+            ?? selectedPDFACompatibility.requiredPDFVersion?.rawValue
             ?? repository.compatibilityLevel
         if let index = PDFVersion.allCases.firstIndex(where: {
             $0.rawValue == displayedVersion
