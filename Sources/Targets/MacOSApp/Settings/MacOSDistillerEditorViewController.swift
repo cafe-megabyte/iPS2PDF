@@ -965,6 +965,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                 String(localized: "Custom: %@"), current
             ), representedObject: current)
         }
+        popup.addItem(withTitle: String(localized: "None"), representedObject: "")
         for profile in profiles {
             popup.addItem(withTitle: profile.name, representedObject: profile.name)
         }
