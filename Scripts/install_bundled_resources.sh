@@ -20,6 +20,8 @@ copy_matching_files() {
     while IFS= read -r -d '' file; do
         install -m 0644 "$file" "$destination_directory/$(basename "$file")"
     done < <(find "$source_directory" -maxdepth 1 -type f "$@" -print0 | sort -z)
+
+    xattr -cr "$destination_directory" 2>/dev/null || true
 }
 
 case "$resource_set" in
