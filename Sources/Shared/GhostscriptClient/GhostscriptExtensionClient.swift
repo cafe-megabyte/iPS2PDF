@@ -107,6 +107,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
         )
         addProfiles(prepared, to: &request)
+        addOutputIntent(prepared, to: &request)
         let reply = try await sendRun(request)
         try requireSuccess(reply, diagnostics: journalText())
     }
@@ -157,6 +158,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             postScriptRandomSeed: postScriptRandomSeed
         )
         addProfiles(prepared, to: &request)
+        addOutputIntent(prepared, to: &request)
         let reply = try await sendRun(request, inputFileHandle: inputFileHandle)
         try requireSuccess(reply, diagnostics: journalText())
         try copyOutput(to: outputURL)
@@ -231,7 +233,13 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             allowTransparency: document.value(forKey: "AllowTransparency")?.boolValue ?? false,
             epsCrop: document.value(forKey: "AutoPositionEPSFiles")?.boolValue ?? false,
             profileSelections: selections,
-            userProfileKeys: userProfileKeys
+            userProfileKeys: userProfileKeys,
+            embedOutputIntentProfile: SemanticJoboptions.embedsOutputIntentProfile(in: document),
+            pdfXOutputCondition: document.value(forKey: "PDFXOutputCondition")?.textualValue,
+            pdfXOutputConditionIdentifier: document
+                .value(forKey: "PDFXOutputConditionIdentifier")?.textualValue,
+            pdfXRegistryName: document.value(forKey: "PDFXRegistryName")?.textualValue,
+            pdfXTrapped: document.value(forKey: "PDFXTrapped")?.textualValue
         )
     }
 
@@ -368,6 +376,23 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         request[GhostscriptExtensionEnvelope.userProfileCount] = Int64(prepared.userProfileKeys.count)
         for (index, key) in prepared.userProfileKeys.enumerated() {
             request[GhostscriptExtensionEnvelope.userProfileKey(index)] = key
+        }
+    }
+
+    private func addOutputIntent(_ prepared: PreparedJob, to request: inout XPCDictionary) {
+        request[GhostscriptExtensionEnvelope.embedOutputIntentProfile] =
+            prepared.embedOutputIntentProfile
+        if let value = prepared.pdfXOutputCondition {
+            request[GhostscriptExtensionEnvelope.pdfXOutputCondition] = value
+        }
+        if let value = prepared.pdfXOutputConditionIdentifier {
+            request[GhostscriptExtensionEnvelope.pdfXOutputConditionIdentifier] = value
+        }
+        if let value = prepared.pdfXRegistryName {
+            request[GhostscriptExtensionEnvelope.pdfXRegistryName] = value
+        }
+        if let value = prepared.pdfXTrapped {
+            request[GhostscriptExtensionEnvelope.pdfXTrapped] = value
         }
     }
 
@@ -562,7 +587,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
     ]
 
     private static let runtimeExcludedJoboptionsKeys = Set([
-        "iPS2PDFStandard"
+        "iPS2PDFStandard", SemanticJoboptions.embedOutputIntentProfileKey
     ])
 
     private struct PreparedJob {
@@ -570,5 +595,10 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let epsCrop: Bool
         let profileSelections: [ProfileSelection]
         let userProfileKeys: [String]
+        let embedOutputIntentProfile: Bool
+        let pdfXOutputCondition: String?
+        let pdfXOutputConditionIdentifier: String?
+        let pdfXRegistryName: String?
+        let pdfXTrapped: String?
     }
 }

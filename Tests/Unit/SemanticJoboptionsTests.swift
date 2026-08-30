@@ -216,6 +216,16 @@ final class SemanticJoboptionsTests: XCTestCase {
         XCTAssertEqual(edited.value(forKey: "Encrypt")?.boolValue, true)
     }
 
+    func testOutputIntentEmbeddingDefaultsOffAndCanBeChanged() throws {
+        let document = try makeDocument("/iPS2PDFStandard /none")
+
+        XCTAssertFalse(SemanticJoboptions.embedsOutputIntentProfile(in: document))
+
+        let edited = try SemanticJoboptions.changeEmbedsOutputIntentProfile(true)
+            .applying(to: document)
+        XCTAssertTrue(SemanticJoboptions.embedsOutputIntentProfile(in: edited))
+    }
+
     private func makeDocument(_ entries: String) throws -> LosslessJoboptionsDocument {
         try LosslessJoboptionsDocument(data: Data("<<\n  \(entries)\n>> setdistillerparams\n".utf8))
     }

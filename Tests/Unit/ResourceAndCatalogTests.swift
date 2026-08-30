@@ -16,6 +16,17 @@ final class ResourceAndCatalogTests: XCTestCase {
         for url in profiles {
             XCTAssertNoThrow(try ICCProfileRecord.inspect(url: url, origin: .bundled), url.lastPathComponent)
         }
+
+        let metadata = try Dictionary(uniqueKeysWithValues: profiles.map { url in
+            let profile = try ICCProfileRecord.inspect(url: url, origin: .bundled)
+            return (profile.fileStem, profile)
+        })
+        XCTAssertEqual(metadata["PSOcoated_v3"]?.outputConditionIdentifier, "FOGRA51")
+        XCTAssertEqual(metadata["ISOcoated_v2_eci"]?.outputConditionIdentifier, "FOGRA39")
+        XCTAssertEqual(metadata["CoatedGRACoL2006"]?.outputConditionIdentifier, "CGATS TR 006")
+        XCTAssertEqual(metadata["CoatedFOGRA27"]?.outputConditionIdentifier, "FOGRA27")
+        XCTAssertNil(metadata["Generic CMYK Profile"]?.outputConditionIdentifier)
+        XCTAssertEqual(metadata["ISOcoated_v2_to_PSOcoated_v3_DeviceLink"]?.profileClass, "link")
     }
 
     func testCatalogueIsVersionedAndHasUniqueKeys() {

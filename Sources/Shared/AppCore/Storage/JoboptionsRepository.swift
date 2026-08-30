@@ -74,6 +74,16 @@ final class JoboptionsRepository: ObservableObject {
         consistencyContext
     }
 
+    var effectiveDisplayDocument: LosslessJoboptionsDocument? {
+        guard let activeDocument else { return nil }
+        let issues = JoboptionsConsistencyEngine.issues(
+            in: activeDocument,
+            context: consistencyContext
+        )
+        return (try? JoboptionsConsistencyEngine.repair(activeDocument, applying: issues))
+            ?? activeDocument
+    }
+
     func waitUntilReady() async {
         if isReady { return }
         await withCheckedContinuation { readinessWaiters.append($0) }
@@ -402,7 +412,8 @@ final class JoboptionsRepository: ObservableObject {
                 url: url,
                 profileClass: item.profileClass,
                 colorSpace: item.colorSpace,
-                connectionSpace: item.connectionSpace
+                connectionSpace: item.connectionSpace,
+                outputConditionIdentifier: item.outputConditionIdentifier
             )
         }
         let users = profiles.filter { !$0.isBundled }
@@ -433,7 +444,13 @@ final class JoboptionsRepository: ObservableObject {
     private var consistencyContext: JoboptionsConsistencyContext {
         JoboptionsConsistencyContext(
             availableProfiles: profiles.map {
-                .init(name: $0.name, fileStem: $0.fileStem, colorSpace: $0.colorSpace)
+                .init(
+                    name: $0.name,
+                    fileStem: $0.fileStem,
+                    colorSpace: $0.colorSpace,
+                    profileClass: $0.profileClass,
+                    outputConditionIdentifier: $0.outputConditionIdentifier
+                )
             }
         )
     }

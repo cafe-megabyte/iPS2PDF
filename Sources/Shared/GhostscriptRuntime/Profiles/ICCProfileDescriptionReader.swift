@@ -35,6 +35,84 @@ enum ICCProfileDescriptionReader {
         return Array(Set(results)).sorted()
     }
 
+    static func outputConditionIdentifier(at url: URL) throws -> String? {
+        let data = try validatedData(at: url)
+        guard let target = textTag("targ", in: data) else { return nil }
+        let normalized = target.trimmingCharacters(
+            in: CharacterSet.whitespacesAndNewlines.union(.controlCharacters)
+        )
+        if normalized.hasPrefix("ICCHDAT ") {
+            let value = String(normalized.dropFirst("ICCHDAT ".count))
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return value.isEmpty ? nil : value
+        }
+
+        let pattern = #"(?:FILE_)?DESCRIPTOR\s+[\"']([^\"']+)[\"']"#
+        guard let expression = try? NSRegularExpression(
+            pattern: pattern,
+            options: [.caseInsensitive]
+        ) else { return nil }
+        let range = NSRange(normalized.startIndex..., in: normalized)
+        guard let match = expression.firstMatch(in: normalized, range: range),
+              let descriptorRange = Range(match.range(at: 1), in: normalized)
+        else { return nil }
+        return outputConditionIdentifier(forCharacterizationDescriptor: String(
+            normalized[descriptorRange]
+        ))
+    }
+
+    private static func validatedData(at url: URL) throws -> Data {
+        let data = try Data(contentsOf: url, options: [.mappedIfSafe])
+        guard data.count >= 132,
+              let declaredSize = unsignedInteger(in: data, at: 0),
+              declaredSize >= 132,
+              declaredSize <= data.count,
+              String(data: data[36..<40], encoding: .ascii) == "acsp",
+              let tagCount = unsignedInteger(in: data, at: 128),
+              tagCount <= 4_096,
+              132 + tagCount * 12 <= declaredSize
+        else { throw CocoaError(.fileReadCorruptFile) }
+        return data
+    }
+
+    private static func textTag(_ signature: String, in data: Data) -> String? {
+        guard let declaredSize = unsignedInteger(in: data, at: 0),
+              let tagCount = unsignedInteger(in: data, at: 128)
+        else { return nil }
+        for index in 0..<tagCount {
+            let recordOffset = 132 + index * 12
+            guard String(data: data[recordOffset..<(recordOffset + 4)], encoding: .ascii)
+                    == signature,
+                  let tagOffset = unsignedInteger(in: data, at: recordOffset + 4),
+                  let tagSize = unsignedInteger(in: data, at: recordOffset + 8),
+                  tagSize >= 8,
+                  tagOffset <= declaredSize,
+                  tagSize <= declaredSize - tagOffset,
+                  String(data: data[tagOffset..<(tagOffset + 4)], encoding: .ascii) == "text"
+            else { continue }
+            return String(
+                data: data[(tagOffset + 8)..<(tagOffset + tagSize)],
+                encoding: .isoLatin1
+            )
+        }
+        return nil
+    }
+
+    private static func outputConditionIdentifier(
+        forCharacterizationDescriptor descriptor: String
+    ) -> String? {
+        let value = descriptor.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        if value == "FOGRA39L_CG" { return "FOGRA50" }
+        if value == "FOGRA39L_CM" { return "FOGRA49" }
+        guard value.hasPrefix("FOGRA") else { return nil }
+        let suffix = value.dropFirst("FOGRA".count)
+        let digits = suffix.prefix(while: \Character.isNumber)
+        guard !digits.isEmpty else { return nil }
+        let remainder = suffix.dropFirst(digits.count)
+        guard remainder.isEmpty || remainder == "L" else { return nil }
+        return "FOGRA\(digits)"
+    }
+
     private static func descriptions(
         in data: Data,
         tagOffset: Int,

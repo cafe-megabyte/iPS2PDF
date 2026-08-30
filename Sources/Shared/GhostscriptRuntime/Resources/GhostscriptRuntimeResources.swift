@@ -25,7 +25,8 @@ enum GhostscriptRuntimeResources {
     }
 
     static var profilesDirectoryURL: URL? {
-        bundle.url(forResource: "Profiles", withExtension: nil)
+        bundle.url(forResource: "Profiles", withExtension: nil)?
+            .resolvingSymlinksInPath()
     }
 
     static var ghostscriptDirectoryURL: URL? {

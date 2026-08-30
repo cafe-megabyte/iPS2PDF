@@ -52,6 +52,74 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         XCTAssertGreaterThan(uncroppedBox.height, croppedBox.height)
     }
 
+    func testOutputIntentEmbeddingToggleControlsNormalPDF() async throws {
+        let disabled = try await convert(
+            joboptions: """
+            <<
+              /PDFXOutputIntentProfile (PSOcoated_v3)
+              /iPS2PDFEmbedOutputIntentProfile false
+            >> setdistillerparams
+            """,
+            standard: .none
+        )
+        let enabled = try await convert(
+            joboptions: """
+            <<
+              /PDFXOutputIntentProfile (PSOcoated_v3)
+              /iPS2PDFEmbedOutputIntentProfile true
+            >> setdistillerparams
+            """,
+            standard: .none
+        )
+
+        XCTAssertNil(try outputIntent(in: disabled))
+        let intent = try XCTUnwrap(outputIntent(in: enabled))
+        XCTAssertEqual(intent.identifier, "FOGRA51")
+        XCTAssertEqual(intent.info, "PSOcoated_v3")
+        XCTAssertTrue(intent.hasEmbeddedProfile)
+    }
+
+    func testPDFAMayEmbedOrOmitItsSelectedOutputProfile() async throws {
+        for embeds in [false, true] {
+            let output = try await convert(
+                joboptions: """
+                <<
+                  /OutputICCProfile (sRGB Profile)
+                  /PDFXOutputIntentProfile (sRGB Profile)
+                  /iPS2PDFEmbedOutputIntentProfile \(embeds)
+                >> setdistillerparams
+                """,
+                standard: .pdfa2b
+            )
+
+            XCTAssertEqual(try outputIntent(in: output) != nil, embeds)
+        }
+    }
+
+    func testPDFXAlwaysEmbedsProfileAndUsesEffectiveMetadata() async throws {
+        let output = try await convert(
+            joboptions: """
+            <<
+              /PDFXOutputIntentProfile (PSOcoated_v3)
+              /PDFXOutputCondition (Offset printing on premium coated paper)
+              /PDFXOutputConditionIdentifier (FOGRA51)
+              /PDFXRegistryName (https://registry.color.org)
+              /PDFXTrapped /True
+              /iPS2PDFEmbedOutputIntentProfile false
+            >> setdistillerparams
+            """,
+            standard: .pdfx4
+        )
+
+        let intent = try XCTUnwrap(outputIntent(in: output))
+        XCTAssertEqual(intent.identifier, "FOGRA51")
+        XCTAssertEqual(intent.outputCondition, "Offset printing on premium coated paper")
+        XCTAssertEqual(intent.registryName, "https://registry.color.org")
+        XCTAssertEqual(intent.info, "PSOcoated_v3")
+        XCTAssertTrue(intent.hasEmbeddedProfile)
+        XCTAssertEqual(try documentInfoName("Trapped", in: output), "True")
+    }
+
     private func convert(allowTransparency: Bool) async throws -> Data {
         try await convert(
             input: Data(Self.transparencyPostScript.utf8),
@@ -92,6 +160,76 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         )
 
         return try Data(contentsOf: outputURL)
+    }
+
+    private func convert(joboptions: String, standard: PDFStandard) async throws -> Data {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iPS2PDF-OutputIntent-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let joboptionsURL = directory.appendingPathComponent("OutputIntent.joboptions")
+        let inputURL = directory.appendingPathComponent("OutputIntent.ps")
+        let outputURL = directory.appendingPathComponent("OutputIntent.pdf")
+        try Data(joboptions.utf8).write(to: joboptionsURL)
+        try Data(Self.simplePostScript.utf8).write(to: inputURL)
+
+        try await GhostscriptExtensionClient().convert(
+            inputURL: inputURL,
+            outputURL: outputURL,
+            joboptionsURL: joboptionsURL,
+            standard: standard,
+            limitsEnabled: true,
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
+        )
+        return try Data(contentsOf: outputURL)
+    }
+
+    private func outputIntent(in data: Data) throws -> OutputIntent? {
+        guard let provider = CGDataProvider(data: data as CFData),
+              let document = CGPDFDocument(provider),
+              let catalog = document.catalog
+        else { throw XCTSkip("Core Graphics could not open the generated PDF.") }
+
+        var intents: CGPDFArrayRef?
+        guard CGPDFDictionaryGetArray(catalog, "OutputIntents", &intents),
+              let intents,
+              CGPDFArrayGetCount(intents) > 0
+        else { return nil }
+
+        var dictionary: CGPDFDictionaryRef?
+        guard CGPDFArrayGetDictionary(intents, 0, &dictionary), let dictionary else {
+            XCTFail("The first output intent is not a dictionary.")
+            return nil
+        }
+        var profile: CGPDFStreamRef?
+        return OutputIntent(
+            identifier: pdfString("OutputConditionIdentifier", in: dictionary),
+            outputCondition: pdfString("OutputCondition", in: dictionary),
+            registryName: pdfString("RegistryName", in: dictionary),
+            info: pdfString("Info", in: dictionary),
+            hasEmbeddedProfile: CGPDFDictionaryGetStream(
+                dictionary,
+                "DestOutputProfile",
+                &profile
+            ) && profile != nil
+        )
+    }
+
+    private func pdfString(_ key: String, in dictionary: CGPDFDictionaryRef) -> String? {
+        var value: CGPDFStringRef?
+        guard CGPDFDictionaryGetString(dictionary, key, &value), let value else { return nil }
+        return CGPDFStringCopyTextString(value) as String?
+    }
+
+    private func documentInfoName(_ key: String, in data: Data) throws -> String? {
+        guard let provider = CGDataProvider(data: data as CFData),
+              let document = CGPDFDocument(provider),
+              let info = document.info
+        else { throw XCTSkip("Core Graphics could not open the generated PDF info dictionary.") }
+        var value: UnsafePointer<CChar>?
+        guard CGPDFDictionaryGetName(info, key, &value), let value else { return nil }
+        return String(cString: value)
     }
 
     private func mediaBox(in data: Data) throws -> CGRect {
@@ -144,4 +282,20 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
     showpage
     %%EOF
     """
+
+    private static let simplePostScript = """
+    %!PS-Adobe-3.0
+    << /PageSize [200 200] >> setpagedevice
+    0.2 0.4 0.8 setrgbcolor
+    20 20 160 160 rectfill
+    showpage
+    """
+
+    private struct OutputIntent {
+        let identifier: String?
+        let outputCondition: String?
+        let registryName: String?
+        let info: String?
+        let hasEmbeddedProfile: Bool
+    }
 }

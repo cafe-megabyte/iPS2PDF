@@ -10,6 +10,10 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
         case standardPDFXChecks
         case standardColorConversion
         case standardOutputProfile
+        case standardOutputProfileEmbedding
+        case missingOutputProfileDisablesEmbedding
+        case standardOutputConditionIdentifier
+        case standardTrappedState
         case standardTransparency
         case missingOutputProfile
         case transparency
@@ -33,6 +37,14 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
                 String(localized: "The selected PDF standard requires this color conversion strategy.")
             case .standardOutputProfile:
                 String(localized: "The selected PDF standard requires this output profile.")
+            case .standardOutputProfileEmbedding:
+                String(localized: "PDF/X requires the selected output intent profile to be embedded.")
+            case .missingOutputProfileDisablesEmbedding:
+                String(localized: "An output intent profile cannot be embedded when no output profile is selected.")
+            case .standardOutputConditionIdentifier:
+                String(localized: "The PDF/X output condition identifier must match the selected output intent profile.")
+            case .standardTrappedState:
+                String(localized: "PDF/X requires the trapped state to be True or False.")
             case .standardTransparency:
                 String(localized: "The selected PDF standard does not permit transparency.")
             case .missingOutputProfile:

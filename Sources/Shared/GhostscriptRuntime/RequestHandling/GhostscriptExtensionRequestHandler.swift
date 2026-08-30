@@ -65,6 +65,10 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             request[GhostscriptExtensionEnvelope.allowTransparency] ?? false
         let epsCrop: Bool = request[GhostscriptExtensionEnvelope.epsCrop] ?? false
         let standard: String = request[GhostscriptExtensionEnvelope.standard] ?? "none"
+        let requestedEmbedding: Bool =
+            request[GhostscriptExtensionEnvelope.embedOutputIntentProfile] ?? false
+        let embedsOutputIntentProfile = standard.hasPrefix("pdfx") || requestedEmbedding
+        let pdfXMetadata = try pdfXMetadata(from: request)
         let postScriptRandomSeed: Int64 =
             request[GhostscriptExtensionEnvelope.postScriptRandomSeed] ?? 1
         let deadline: Int64 = request[GhostscriptExtensionEnvelope.deadline]
@@ -99,6 +103,12 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             request,
             profilesDirectory: profilesDirectory
         )
+        if standard.hasPrefix("pdfx"),
+           !profileConfiguration.selections.contains(where: {
+               $0.key == "PDFXOutputIntentProfile"
+           }) {
+            throw HelperError.message("A PDF/X output intent profile is required.")
+        }
 
         var joboptions = try openRegularFile(at: joboptionsURL, flags: O_RDONLY | O_CLOEXEC)
         var journal = try openRegularFile(
@@ -139,11 +149,10 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             )
         }
         let bundledProfileDirectory = GhostscriptRuntimeResources.profilesDirectoryURL
-        let definitionName = standard.hasPrefix("pdfa") ? "PDFA_def" : "PDFX_def"
-        let bundledDefinitionURL = standard == "none"
-            ? nil
-            : GhostscriptRuntimeResources.ghostscriptDefinitionURL(named: definitionName)
-        if standard != "none",
+        let bundledDefinitionURL = standard.hasPrefix("pdfx")
+            ? GhostscriptRuntimeResources.ghostscriptDefinitionURL(named: "PDFX_def")
+            : nil
+        if standard.hasPrefix("pdfx"),
            bundledDefinitionURL == nil || bundledProfileDirectory == nil {
             throw HelperError.message(
                 "A standards resource is unavailable in the Ghostscript extension."
@@ -153,7 +162,9 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         let profileOverrides = try profileOverrides(
             profileSelections: profileConfiguration.selections,
             profileDirectory: bundledProfileDirectory,
-            stagedUserProfiles: profileConfiguration.userProfiles
+            stagedUserProfiles: profileConfiguration.userProfiles,
+            standard: standard,
+            embedsOutputIntentProfile: embedsOutputIntentProfile
         )
         let definitionURL = try standardDefinitionURL(
             bundledDefinitionURL,
@@ -162,7 +173,8 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             bundledProfileDirectory: bundledProfileDirectory,
             stagedUserProfiles: profileConfiguration.userProfiles,
             profilesDirectory: profilesDirectory,
-            inputDirectory: inputDirectory
+            inputDirectory: inputDirectory,
+            metadata: pdfXMetadata
         )
         let profileOverrideDirectory = profileConfiguration.userProfiles.isEmpty && definitionURL == bundledDefinitionURL
             ? nil
@@ -357,23 +369,42 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
     private func profileOverrides(
         profileSelections: [(key: String, name: String)],
         profileDirectory: URL?,
-        stagedUserProfiles: [String: URL]
+        stagedUserProfiles: [String: URL],
+        standard: String,
+        embedsOutputIntentProfile: Bool
     ) throws -> String? {
         let resolver = try profileDirectory.map(GhostscriptProfileResolver.init(directoryURL:))
+        var resolvedProfiles: [String: (name: String, url: URL, origin: ICCProfileRecord.Origin)] = [:]
         let profileEntries = try profileSelections.map { selection -> String in
             let url: URL
+            let origin: ICCProfileRecord.Origin
             if let staged = stagedUserProfiles[selection.key] {
                 url = staged
+                origin = .user
             } else if let resolver {
                 url = try resolver.resolve(selection.name)
+                origin = .bundled
             } else {
                 throw HelperError.message("The bundled ICC profile directory is unavailable.")
             }
+            resolvedProfiles[selection.key] = (selection.name, url, origin)
             return "/\(selection.key) (\(Self.postScriptLiteral(url.path)))"
         }
-        return profileEntries.isEmpty
-            ? nil
-            : "<< \(profileEntries.joined(separator: " ")) >> setdistillerparams"
+        var programs: [String] = []
+        if !profileEntries.isEmpty {
+            programs.append("<< \(profileEntries.joined(separator: " ")) >> setdistillerparams")
+        }
+        if embedsOutputIntentProfile,
+           !standard.hasPrefix("pdfx"),
+           let outputProfile = resolvedProfiles["PDFXOutputIntentProfile"] {
+            programs.append(try Self.outputIntentProgram(
+                profileURL: outputProfile.url,
+                profileName: outputProfile.name,
+                profileOrigin: outputProfile.origin,
+                standard: standard
+            ))
+        }
+        return programs.isEmpty ? nil : programs.joined(separator: "\n")
     }
 
     private func standardDefinitionURL(
@@ -383,7 +414,8 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         bundledProfileDirectory: URL?,
         stagedUserProfiles: [String: URL],
         profilesDirectory: URL,
-        inputDirectory: URL
+        inputDirectory: URL,
+        metadata: PDFXMetadata
     ) throws -> URL? {
         guard let bundledDefinitionURL,
               let bundledProfileDirectory,
@@ -394,11 +426,23 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         else { return bundledDefinitionURL }
 
         let sourceProfileURL: URL
+        let profileOrigin: ICCProfileRecord.Origin
         if let staged = stagedUserProfiles[configuration.key] {
             sourceProfileURL = staged
+            profileOrigin = .user
         } else {
             let resolver = try GhostscriptProfileResolver(directoryURL: bundledProfileDirectory)
             sourceProfileURL = try resolver.resolve(configuration.name)
+            profileOrigin = .bundled
+        }
+        let selectedProfile = try ICCProfileRecord.inspect(
+            url: sourceProfileURL,
+            origin: profileOrigin
+        )
+        guard selectedProfile.profileClass == "prtr", selectedProfile.colorSpace == "CMYK" else {
+            throw HelperError.message(
+                "The selected PDF/X output intent must be a CMYK output-device profile."
+            )
         }
 
         let stagedProfileURL = profilesDirectory
@@ -407,9 +451,14 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
 
         let definitionData = try Data(contentsOf: bundledDefinitionURL, options: [.mappedIfSafe])
         let definitionText = String(decoding: definitionData, as: UTF8.self)
-        let adjustedDefinition = configuration.originalFilenames.reduce(definitionText) { text, original in
+        let profileAdjustedDefinition = configuration.originalFilenames.reduce(definitionText) { text, original in
             text.replacingOccurrences(of: original, with: Self.standardOutputProfileFileName)
         }
+        let adjustedDefinition = Self.adjustedPDFXDefinition(
+            profileAdjustedDefinition,
+            profileName: configuration.name,
+            metadata: metadata
+        )
         let adjustedDefinitionURL = inputDirectory
             .appendingPathComponent(Self.standardDefinitionFileName)
         try Data(adjustedDefinition.utf8).write(to: adjustedDefinitionURL, options: [.atomic])
@@ -420,10 +469,6 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         standard: String,
         profileSelections: [(key: String, name: String)]
     ) -> (key: String, name: String, originalFilenames: [String])? {
-        if standard.hasPrefix("pdfa"),
-           let selection = profileSelections.first(where: { $0.key == "OutputICCProfile" }) {
-            return (selection.key, selection.name, ["srgb.icc"])
-        }
         if standard.hasPrefix("pdfx"),
            let selection = profileSelections.first(where: { $0.key == "PDFXOutputIntentProfile" }) {
             return (selection.key, selection.name, ["CoatedFOGRA39.icc", "ISO Coated sb.icc"])
@@ -514,6 +559,103 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "(", with: "\\(")
             .replacingOccurrences(of: ")", with: "\\)")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\t", with: "\\t")
+    }
+
+    private func pdfXMetadata(from request: XPCDictionary) throws -> PDFXMetadata {
+        func value(_ key: String) throws -> String {
+            let result: String = request[key] ?? ""
+            guard result.utf8.count <= 4_096 else {
+                throw HelperError.message("A PDF/X output-intent value is too long.")
+            }
+            return result.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let trapped = try value(GhostscriptExtensionEnvelope.pdfXTrapped)
+        guard trapped.isEmpty || trapped == "True" || trapped == "False" else {
+            throw HelperError.message("The PDF/X trapped state is invalid.")
+        }
+        return PDFXMetadata(
+            outputCondition: try value(GhostscriptExtensionEnvelope.pdfXOutputCondition),
+            outputConditionIdentifier: try value(
+                GhostscriptExtensionEnvelope.pdfXOutputConditionIdentifier
+            ),
+            registryName: try value(GhostscriptExtensionEnvelope.pdfXRegistryName),
+            trapped: trapped.isEmpty ? "False" : trapped
+        )
+    }
+
+    private static func outputIntentProgram(
+        profileURL: URL,
+        profileName: String,
+        profileOrigin: ICCProfileRecord.Origin,
+        standard: String
+    ) throws -> String {
+        let profile = try ICCProfileRecord.inspect(url: profileURL, origin: profileOrigin)
+        let components: Int
+        switch profile.colorSpace {
+        case "GRAY": components = 1
+        case "RGB", "Lab", "XYZ": components = 3
+        case "CMYK": components = 4
+        default:
+            throw HelperError.message(
+                "The selected output intent profile has an unsupported color space."
+            )
+        }
+        let subtype = standard.hasPrefix("pdfa") ? "GTS_PDFA1" : "GTS_PDFX"
+        let identifier = profile.outputConditionIdentifier ?? "Custom"
+        return """
+        [/_objdef {icc_iPS2PDF} /type /stream /OBJ pdfmark
+        [{icc_iPS2PDF} << /N \(components) >> /PUT pdfmark
+        [{icc_iPS2PDF} (\(postScriptLiteral(profileURL.path))) (r) file /PUT pdfmark
+        [/_objdef {OutputIntent_iPS2PDF} /type /dict /OBJ pdfmark
+        [{OutputIntent_iPS2PDF} <<
+          /Type /OutputIntent
+          /S /\(subtype)
+          /OutputConditionIdentifier (\(postScriptLiteral(identifier)))
+          /Info (\(postScriptLiteral(profileName)))
+          /DestOutputProfile {icc_iPS2PDF}
+        >> /PUT pdfmark
+        [{Catalog} << /OutputIntents [ {OutputIntent_iPS2PDF} ] >> /PUT pdfmark
+        """
+    }
+
+    private static func adjustedPDFXDefinition(
+        _ source: String,
+        profileName: String,
+        metadata: PDFXMetadata
+    ) -> String {
+        let identifier = metadata.outputConditionIdentifier.isEmpty
+            ? "Custom"
+            : metadata.outputConditionIdentifier
+        return source.split(separator: "\n", omittingEmptySubsequences: false).map { line in
+            let text = String(line)
+            let trimmed = text.trimmingCharacters(in: .whitespaces)
+            let indentation = String(text.prefix { $0 == " " || $0 == "\t" })
+            if trimmed.hasPrefix("/Trapped ") {
+                return "\(indentation)/Trapped /\(metadata.trapped)"
+            }
+            if trimmed.hasPrefix("/OutputCondition ") {
+                guard !metadata.outputCondition.isEmpty else {
+                    return "\(indentation)% /OutputCondition omitted"
+                }
+                return "\(indentation)/OutputCondition (\(postScriptLiteral(metadata.outputCondition)))"
+            }
+            if trimmed.hasPrefix("/Info ") {
+                return "\(indentation)/Info (\(postScriptLiteral(profileName)))"
+            }
+            if trimmed.hasPrefix("/OutputConditionIdentifier ") {
+                return "\(indentation)/OutputConditionIdentifier (\(postScriptLiteral(identifier)))"
+            }
+            if trimmed.hasPrefix("/RegistryName ") {
+                guard !metadata.registryName.isEmpty else {
+                    return "\(indentation)% /RegistryName omitted"
+                }
+                return "\(indentation)/RegistryName (\(postScriptLiteral(metadata.registryName)))"
+            }
+            return text
+        }.joined(separator: "\n")
     }
 
     private static func bundledProfileMetadataJSON() -> String {
@@ -528,14 +670,18 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         let profiles: [[String: Any]] = urls.compactMap { url in
             guard let metadata = try? ICCProfileRecord.inspect(url: url, origin: .bundled)
             else { return nil }
-            return [
+            var result: [String: Any] = [
                 "name": metadata.name,
                 "fileStem": metadata.fileStem,
                 "file": url.lastPathComponent,
-                "class": metadata.profileClass,
+                "profileClass": metadata.profileClass,
                 "colorSpace": metadata.colorSpace,
                 "connectionSpace": metadata.connectionSpace
             ]
+            if let identifier = metadata.outputConditionIdentifier {
+                result["outputConditionIdentifier"] = identifier
+            }
+            return result
         }
         guard let data = try? JSONSerialization.data(
             withJSONObject: profiles,
@@ -580,6 +726,13 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
     private struct ProfileConfiguration {
         let selections: [(key: String, name: String)]
         let userProfiles: [String: URL]
+    }
+
+    private struct PDFXMetadata {
+        let outputCondition: String
+        let outputConditionIdentifier: String
+        let registryName: String
+        let trapped: String
     }
 
     private enum HelperError: LocalizedError {

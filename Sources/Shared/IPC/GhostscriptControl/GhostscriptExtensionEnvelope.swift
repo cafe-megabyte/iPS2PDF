@@ -2,7 +2,7 @@ import Foundation
 
 /// Keys shared by the app-side Ghostscript extension client.
 enum GhostscriptExtensionEnvelope {
-    static let version: Int64 = 3
+    static let version: Int64 = 4
     static let operation = "operation"
     static let envelopeVersion = "envelopeVersion"
     static let validate = "validate"
@@ -15,6 +15,11 @@ enum GhostscriptExtensionEnvelope {
     static let postScriptRandomSeed = "postScriptRandomSeed"
     static let deadline = "deadline"
     static let maximumOutputBytes = "maximumOutputBytes"
+    static let embedOutputIntentProfile = "embedOutputIntentProfile"
+    static let pdfXOutputCondition = "pdfXOutputCondition"
+    static let pdfXOutputConditionIdentifier = "pdfXOutputConditionIdentifier"
+    static let pdfXRegistryName = "pdfXRegistryName"
+    static let pdfXTrapped = "pdfXTrapped"
     static let status = "status"
     static let ghostscriptCode = "ghostscriptCode"
     static let stage = "stage"

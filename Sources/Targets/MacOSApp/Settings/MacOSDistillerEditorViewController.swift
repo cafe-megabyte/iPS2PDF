@@ -398,7 +398,10 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private func makeScalarEditor(_ definition: DistillerOptionDefinition) -> NSView {
-        let value = session.document.value(forKey: definition.key)
+        let document = definition.category == .standards
+            ? session.effectiveDisplayDocument
+            : session.document
+        let value = document.value(forKey: definition.key)
         let control: NSView
         switch definition.kind {
         case .boolean:
@@ -867,6 +870,12 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private func buildAdditional(in formStack: NSStackView) {
+        let embedOutputIntentProfile = ActionButton.checkbox(
+            title: String(localized: "Embed output intent profile"),
+            state: SemanticJoboptions.embedsOutputIntentProfile(in: session.document)
+        ) { [weak self] value in
+            self?.apply(SemanticJoboptions.changeEmbedsOutputIntentProfile(value))
+        }
         let limits = ActionButton.checkbox(
             title: String(localized: "Security limits"),
             state: session.securityLimitsEnabled
@@ -878,7 +887,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             self?.session.setAutomaticRandomSeed(value)
             self?.buildSelectedCategory()
         }
-        var appRows: [NSView] = [limits, automatic]
+        var appRows: [NSView] = [embedOutputIntentProfile, limits, automatic]
         if !session.automaticRandomSeed {
             let seed = CommitTextField(String(session.manualRandomSeed)) { [weak self] text in
                 guard let value = Int(text) else { return }
@@ -962,11 +971,16 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     private func makeProfileEditor(_ definition: DistillerOptionDefinition) -> NSView {
         let popup = ActionPopUpButton()
-        let current = session.document.value(forKey: definition.key)?.textualValue ?? ""
+        let document = definition.category == .standards
+            ? session.effectiveDisplayDocument
+            : session.document
+        let current = document.value(forKey: definition.key)?.textualValue ?? ""
         let profiles = repository.profiles.filter { profile in
             switch definition.key {
             case "CalGrayProfile": profile.colorSpace == "GRAY"
-            case "CalCMYKProfile", "PDFXOutputIntentProfile": profile.colorSpace == "CMYK"
+            case "PDFXOutputIntentProfile":
+                profile.colorSpace == "CMYK" && profile.profileClass == "prtr"
+            case "CalCMYKProfile": profile.colorSpace == "CMYK"
             case "CalRGBProfile", "sRGBProfile", "OutputICCProfile": profile.colorSpace == "RGB"
             default: true
             }

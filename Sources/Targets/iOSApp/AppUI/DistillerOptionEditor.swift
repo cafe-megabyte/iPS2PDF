@@ -98,7 +98,10 @@ struct DistillerOptionEditor: View {
     }
 
     private var currentValue: JoboptionsValue? {
-        repository.activeDocument?.value(forKey: definition.key)
+        let document = definition.category == .standards
+            ? repository.effectiveDisplayDocument
+            : repository.activeDocument
+        return document?.value(forKey: definition.key)
     }
 
     private func localizedChoice(_ choice: String) -> String {
@@ -120,7 +123,9 @@ struct DistillerOptionEditor: View {
             switch definition.key {
             case "CalGrayProfile":
                 return profile.colorSpace == "GRAY"
-            case "CalCMYKProfile", "PDFXOutputIntentProfile":
+            case "PDFXOutputIntentProfile":
+                return profile.colorSpace == "CMYK" && profile.profileClass == "prtr"
+            case "CalCMYKProfile":
                 return profile.colorSpace == "CMYK"
             case "CalRGBProfile", "sRGBProfile":
                 return profile.colorSpace == "RGB"

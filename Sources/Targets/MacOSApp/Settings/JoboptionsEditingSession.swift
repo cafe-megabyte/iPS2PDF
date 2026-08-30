@@ -31,6 +31,10 @@ final class JoboptionsEditingSession {
             || manualRandomSeed != originalManualRandomSeed
     }
 
+    var effectiveDisplayDocument: LosslessJoboptionsDocument {
+        (try? JoboptionsConsistencyEngine.repair(document, applying: issues)) ?? document
+    }
+
     init(
         repository: JoboptionsRepository,
         fileManager: FileManager = .default

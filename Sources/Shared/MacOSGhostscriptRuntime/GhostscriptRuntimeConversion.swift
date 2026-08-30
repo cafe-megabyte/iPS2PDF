@@ -39,6 +39,11 @@ enum GhostscriptRuntimeConversion {
 
         let joboptionsData = try Data(contentsOf: joboptionsURL, options: [.mappedIfSafe])
         let document = try LosslessJoboptionsDocument(data: joboptionsData)
+        let runtimeDocument = try document.removingValues(forKeys: runtimeExcludedJoboptionsKeys)
+        let runtimeJoboptionsURL = outputURL.deletingLastPathComponent()
+            .appendingPathComponent("QuickLookRuntime.joboptions")
+        try runtimeDocument.data.write(to: runtimeJoboptionsURL, options: [.atomic])
+        defer { try? FileManager.default.removeItem(at: runtimeJoboptionsURL) }
         guard let ghostscriptDirectory = GhostscriptRuntimeResources.ghostscriptDirectoryURL else {
             throw Failure.missingResource("Ghostscript")
         }
@@ -59,7 +64,7 @@ enum GhostscriptRuntimeConversion {
             mode: 0o600
         )
         var joboptions = try openRegularFile(
-            at: joboptionsURL,
+            at: runtimeJoboptionsURL,
             flags: O_RDONLY | O_CLOEXEC | O_NOFOLLOW
         )
         var journal = try openRegularFile(
@@ -216,6 +221,10 @@ enum GhostscriptRuntimeConversion {
         "OutputICCProfile", "GraphicICCProfile", "ImageICCProfile",
         "TextICCProfile", "PDFXOutputIntentProfile"
     ]
+
+    private static let runtimeExcludedJoboptionsKeys = Set([
+        "iPS2PDFStandard", SemanticJoboptions.embedOutputIntentProfileKey
+    ])
 
     private static let allowedCompatibilityLevels = Set([
         "1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"

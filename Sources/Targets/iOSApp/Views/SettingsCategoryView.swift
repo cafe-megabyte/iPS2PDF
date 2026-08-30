@@ -97,6 +97,22 @@ struct SettingsCategoryView: View {
     private var additionalSection: some View {
         Group {
             Section("iPS2PDF") {
+                Toggle("Embed output intent profile", isOn: Binding(
+                    get: {
+                        guard let document = repository.activeDocument else { return false }
+                        return SemanticJoboptions.embedsOutputIntentProfile(in: document)
+                    },
+                    set: { value in
+                        do {
+                            try repository.apply(
+                                SemanticJoboptions.changeEmbedsOutputIntentProfile(value)
+                            )
+                        } catch {
+                            repository.lastError = error.localizedDescription
+                        }
+                    }
+                ))
+
                 Toggle("Security limits", isOn: Binding(
                     get: { repository.securityLimitsEnabled },
                     set: { repository.securityLimitsEnabled = $0 }

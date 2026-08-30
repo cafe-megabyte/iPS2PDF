@@ -15,6 +15,7 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
     let profileClass: String
     let colorSpace: String
     let connectionSpace: String
+    let outputConditionIdentifier: String?
 
     var isBundled: Bool { origin == .bundled }
     func matches(_ value: String) -> Bool { name == value || fileStem == value }
@@ -42,6 +43,8 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
         let prefix = origin == .bundled ? "bundled" : "user"
         let fileStem = url.deletingPathExtension().lastPathComponent
         let displayName = (try? ICCProfileDescriptionReader.descriptions(at: url).first) ?? fileStem
+        let embeddedOutputConditionIdentifier = try? ICCProfileDescriptionReader
+            .outputConditionIdentifier(at: url)
         return Self(
             id: "\(prefix):\(url.lastPathComponent)",
             name: displayName,
@@ -50,7 +53,21 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
             url: url,
             profileClass: signature(12..<16),
             colorSpace: signature(16..<20),
-            connectionSpace: signature(20..<24)
+            connectionSpace: signature(20..<24),
+            outputConditionIdentifier: embeddedOutputConditionIdentifier
+                ?? (origin == .bundled ? bundledOutputConditionIdentifiers[fileStem] : nil)
         )
     }
+
+    private static let bundledOutputConditionIdentifiers: [String: String] = [
+        "CoatedFOGRA27": "FOGRA27",
+        "EuroscaleCoated": "FOGRA1",
+        "EuroscaleUncoated": "FOGRA4",
+        "JapanColor2001Coated": "JC200103",
+        "JapanColor2001Uncoated": "JC200104",
+        "JapanColor2002Newspaper": "JCN2002",
+        "USWebCoatedSWOP": "CGATS TR 001",
+        "UncoatedFOGRA29": "FOGRA29",
+        "WebCoatedFOGRA28": "FOGRA28"
+    ]
 }

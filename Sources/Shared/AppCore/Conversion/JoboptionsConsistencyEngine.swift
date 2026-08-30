@@ -7,6 +7,7 @@ enum JoboptionsConsistencyEngine {
     ) -> [JoboptionsConsistencyIssue] {
         var evaluator = Evaluator(document: document, context: context)
         evaluator.evaluateStandardRules()
+        evaluator.evaluateOutputIntentEmbeddingRules()
         evaluator.evaluateCompatibilityRules()
         return evaluator.issues
     }
@@ -156,6 +157,38 @@ enum JoboptionsConsistencyEngine {
                     )
                 }
                 evaluatePDFXProfile()
+                evaluatePDFXOutputIntentMetadata()
+            }
+        }
+
+        mutating func evaluateOutputIntentEmbeddingRules() {
+            let rawStandard = working.value(forKey: "iPS2PDFStandard")?.textualValue
+            let standard = rawStandard.flatMap(PDFStandard.init(rawValue:)) ?? .none
+            let profile = working.value(forKey: "PDFXOutputIntentProfile")?.textualValue?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let hasProfile = profile.map {
+                !$0.isEmpty && $0.caseInsensitiveCompare("None") != .orderedSame
+            } ?? false
+
+            if !hasProfile {
+                if SemanticJoboptions.embedsOutputIntentProfile(in: working) {
+                    propose(
+                        path: "/\(SemanticJoboptions.embedOutputIntentProfileKey)",
+                        value: .boolean(false),
+                        reason: .missingOutputProfileDisablesEmbedding,
+                        rule: "output-intent.missing-profile"
+                    )
+                }
+                return
+            }
+
+            if standard.isPDFX {
+                propose(
+                    path: "/\(SemanticJoboptions.embedOutputIntentProfileKey)",
+                    value: .boolean(true),
+                    reason: .standardOutputProfileEmbedding,
+                    rule: "standard.pdfx.embed-output-profile"
+                )
             }
         }
 
@@ -219,7 +252,9 @@ enum JoboptionsConsistencyEngine {
             let current = working.value(forPath: path)?.textualValue
             if let current,
                context.availableProfiles.contains(where: {
-                   $0.colorSpace == "CMYK" && $0.matches(current)
+                   $0.colorSpace == "CMYK"
+                       && ($0.profileClass.isEmpty || $0.profileClass == "prtr")
+                       && $0.matches(current)
                }) {
                 return
             }
@@ -227,6 +262,7 @@ enum JoboptionsConsistencyEngine {
             if isMissing || current?.caseInsensitiveCompare("None") == .orderedSame,
                let profile = context.availableProfiles.first(where: {
                    $0.colorSpace == "CMYK"
+                       && ($0.profileClass.isEmpty || $0.profileClass == "prtr")
                        && (
                            $0.name == SemanticJoboptions.defaultPDFXOutputIntentProfile
                            || $0.fileStem == SemanticJoboptions.defaultPDFXOutputIntentProfile
@@ -245,6 +281,49 @@ enum JoboptionsConsistencyEngine {
                 reason: .missingOutputProfile,
                 rule: "standard.pdfx.output-profile.missing"
             )
+        }
+
+        private mutating func evaluatePDFXOutputIntentMetadata() {
+            guard let selected = working.value(forKey: "PDFXOutputIntentProfile")?.textualValue,
+                  !selected.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                  selected.caseInsensitiveCompare("None") != .orderedSame
+            else { return }
+
+            let profile = context.availableProfiles.first {
+                $0.colorSpace == "CMYK"
+                    && ($0.profileClass.isEmpty || $0.profileClass == "prtr")
+                    && $0.matches(selected)
+            }
+            let currentIdentifier = working
+                .value(forKey: "PDFXOutputConditionIdentifier")?
+                .textualValue?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            let identifier: String
+            if let known = profile?.outputConditionIdentifier, !known.isEmpty {
+                identifier = known
+            } else if let currentIdentifier,
+                      !currentIdentifier.isEmpty,
+                      currentIdentifier.caseInsensitiveCompare("None") != .orderedSame {
+                identifier = currentIdentifier
+            } else {
+                identifier = "Custom"
+            }
+            propose(
+                path: "/PDFXOutputConditionIdentifier",
+                value: .string(identifier),
+                reason: .standardOutputConditionIdentifier,
+                rule: "standard.pdfx.output-condition-identifier"
+            )
+
+            let trapped = working.value(forKey: "PDFXTrapped")?.textualValue
+            if trapped != "True", trapped != "False" {
+                propose(
+                    path: "/PDFXTrapped",
+                    value: .name("False"),
+                    reason: .standardTrappedState,
+                    rule: "standard.pdfx.trapped"
+                )
+            }
         }
 
         private mutating func propose(

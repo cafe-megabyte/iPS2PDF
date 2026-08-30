@@ -91,6 +91,16 @@
         }
       }
     },
+    "An output intent profile cannot be embedded when no output profile is selected." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Output-Intent-Profil kann nicht eingebettet werden, wenn kein Ausgabeprofil ausgewählt ist."
+          }
+        }
+      }
+    },
     "Abort nonconforming PDF/A or PDF/X jobs" : {
       "localizations" : {
         "de" : {
@@ -417,7 +427,14 @@
       }
     },
     "Bleed box" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anschnittrahmen"
+          }
+        }
+      }
     },
     "Bleed box offsets" : {
       "localizations" : {
@@ -1267,6 +1284,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "OpenType-Schriften einbetten"
+          }
+        }
+      }
+    },
+    "Embed output intent profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output-Intent-Profil einbetten"
           }
         }
       }
@@ -3110,6 +3137,36 @@
         }
       }
     },
+    "PDF/X requires the selected output intent profile to be embedded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X erfordert das Einbetten des ausgewählten Output-Intent-Profils."
+          }
+        }
+      }
+    },
+    "PDF/X requires the trapped state to be True or False." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X erfordert für den Überfüllungsstatus den Wert „True“ oder „False“."
+          }
+        }
+      }
+    },
+    "The PDF/X output condition identifier must match the selected output intent profile." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Ausgabebedingungskennung muss zum ausgewählten Output-Intent-Profil passen."
+          }
+        }
+      }
+    },
     "pdfa_compatibility" : {
       "localizations" : {
         "de" : {
@@ -4009,7 +4066,14 @@
       }
     },
     "The selected PDF standard does not permit transparency." : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ausgewählte PDF-Standard erlaubt keine Transparenz."
+          }
+        }
+      }
     },
     "The selected PDF standard requires all fonts to be embedded." : {
       "localizations" : {
@@ -4133,7 +4197,14 @@
       }
     },
     "Trim box" : {
-
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Endformatrahmen"
+          }
+        }
+      }
     },
     "Trim box offsets" : {
       "localizations" : {

@@ -117,6 +117,15 @@ enum DistillerOptionCatalog {
         option("CreateJobTicket", "Create job ticket", .advanced, .boolean, compatibility: "Preserved; ignored by Ghostscript"),
         option("EmbedJobOptions", "Embed Joboptions", .advanced, .boolean, compatibility: "Preserved; not interpreted by Ghostscript pdfwrite"),
 
+        option(
+            "iPS2PDFEmbedOutputIntentProfile",
+            "Embed output intent profile",
+            .additional,
+            .boolean,
+            section: .application,
+            classification: .preserved
+        ),
+
         option("iPS2PDFStandard", "PDF standard", .standards, .name(PDFStandard.allCases.map(\.rawValue)), section: .conformance, semanticEditor: .standard),
         option("PDFACompatibilityPolicy", "PDF/A compatibility policy", .standards, .integer(0...2)),
         option("PDFX1aCheck", "Check PDF/X-1", .standards, .boolean),

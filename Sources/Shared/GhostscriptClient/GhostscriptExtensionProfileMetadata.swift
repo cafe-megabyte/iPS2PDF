@@ -8,6 +8,7 @@ struct GhostscriptExtensionProfileMetadata: Codable, Sendable {
     let profileClass: String
     let colorSpace: String
     let connectionSpace: String
+    let outputConditionIdentifier: String?
 
     init(record: ICCProfileRecord) {
         file = record.url.lastPathComponent
@@ -16,5 +17,6 @@ struct GhostscriptExtensionProfileMetadata: Codable, Sendable {
         profileClass = record.profileClass
         colorSpace = record.colorSpace
         connectionSpace = record.connectionSpace
+        outputConditionIdentifier = record.outputConditionIdentifier
     }
 }

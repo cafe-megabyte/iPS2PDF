@@ -195,6 +195,197 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         XCTAssertEqual(effective.value(forKey: "OutputICCProfile")?.textualValue, "sRGB Profile")
     }
 
+    func testPDFXForcesEmbeddingMappedIdentifierAndValidTrappedState() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfx4
+          /CompatibilityLevel 1.6
+          /PDFXOutputIntentProfile (PSO Coated v3)
+          /PDFXOutputConditionIdentifier (Wrong)
+          /PDFXTrapped /Unknown
+          /iPS2PDFEmbedOutputIntentProfile false
+        >> setdistillerparams
+        """.utf8))
+        let original = document.data
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [
+                .init(
+                    name: "PSO Coated v3",
+                    fileStem: "PSOcoated_v3",
+                    colorSpace: "CMYK",
+                    profileClass: "prtr",
+                    outputConditionIdentifier: "FOGRA51"
+                )
+            ]
+        )
+
+        let issues = JoboptionsConsistencyEngine.issues(in: document, context: context)
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(
+            from: document,
+            context: context
+        )
+
+        XCTAssertTrue(issues.contains {
+            $0.path.description == "/iPS2PDFEmbedOutputIntentProfile"
+                && $0.proposedValue?.boolValue == true
+        })
+        XCTAssertTrue(issues.contains {
+            $0.path.description == "/PDFXOutputConditionIdentifier"
+                && $0.proposedValue?.textualValue == "FOGRA51"
+        })
+        XCTAssertTrue(issues.contains {
+            $0.path.description == "/PDFXTrapped"
+                && $0.proposedValue?.textualValue == "False"
+        })
+        XCTAssertEqual(
+            effective.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,
+            true
+        )
+        XCTAssertEqual(
+            effective.value(forKey: "PDFXOutputConditionIdentifier")?.textualValue,
+            "FOGRA51"
+        )
+        XCTAssertEqual(effective.value(forKey: "PDFXTrapped")?.textualValue, "False")
+        XCTAssertEqual(document.data, original)
+    }
+
+    func testPDFXPreservesManualIdentifierForUnmappedProfile() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfx4
+          /CompatibilityLevel 1.6
+          /PDFXOutputIntentProfile (My Press Profile)
+          /PDFXOutputConditionIdentifier (My registered condition)
+          /PDFXTrapped /True
+          /iPS2PDFEmbedOutputIntentProfile false
+        >> setdistillerparams
+        """.utf8))
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [
+                .init(
+                    name: "My Press Profile",
+                    colorSpace: "CMYK",
+                    profileClass: "prtr"
+                )
+            ]
+        )
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(
+            from: document,
+            context: context
+        )
+
+        XCTAssertEqual(
+            effective.value(forKey: "PDFXOutputConditionIdentifier")?.textualValue,
+            "My registered condition"
+        )
+        XCTAssertEqual(effective.value(forKey: "PDFXTrapped")?.textualValue, "True")
+        XCTAssertEqual(
+            effective.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,
+            true
+        )
+    }
+
+    func testPDFXUsesCustomForUnmappedProfileWithoutManualIdentifier() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfx4
+          /CompatibilityLevel 1.6
+          /PDFXOutputIntentProfile (Generic CMYK Profile)
+          /PDFXOutputConditionIdentifier ()
+          /PDFXTrapped /False
+        >> setdistillerparams
+        """.utf8))
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [
+                .init(
+                    name: "Generic CMYK Profile",
+                    colorSpace: "CMYK",
+                    profileClass: "prtr"
+                )
+            ]
+        )
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(
+            from: document,
+            context: context
+        )
+
+        XCTAssertEqual(
+            effective.value(forKey: "PDFXOutputConditionIdentifier")?.textualValue,
+            "Custom"
+        )
+    }
+
+    func testMissingOutputIntentProfileMakesEmbeddingEffectivelyOff() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /none
+          /PDFXOutputIntentProfile /None
+          /iPS2PDFEmbedOutputIntentProfile true
+        >> setdistillerparams
+        """.utf8))
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document)
+
+        XCTAssertEqual(
+            effective.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,
+            false
+        )
+        XCTAssertEqual(
+            document.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,
+            true
+        )
+    }
+
+    func testNormalPDFRecognizesSelectedOutputIntentProfile() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /none
+          /PDFXOutputIntentProfile (PSOcoated_v3)
+          /iPS2PDFEmbedOutputIntentProfile true
+        >> setdistillerparams
+        """.utf8))
+
+        let issues = JoboptionsConsistencyEngine.issues(in: document)
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document)
+
+        XCTAssertFalse(issues.contains {
+            $0.path.description == "/iPS2PDFEmbedOutputIntentProfile"
+        })
+        XCTAssertEqual(
+            effective.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,
+            true
+        )
+    }
+
+    func testPDFAMayFreelyEmbedOrNotEmbedSelectedOutputProfile() throws {
+        let context = JoboptionsConsistencyContext(
+            availableProfiles: [.init(name: "sRGB Profile", colorSpace: "RGB")]
+        )
+        for expected in [false, true] {
+            let document = try LosslessJoboptionsDocument(data: Data("""
+            <<
+              /iPS2PDFStandard /pdfa2b
+              /CompatibilityLevel 1.7
+              /OutputICCProfile (sRGB Profile)
+              /PDFXOutputIntentProfile (sRGB Profile)
+              /iPS2PDFEmbedOutputIntentProfile \(expected)
+            >> setdistillerparams
+            """.utf8))
+
+            let effective = try JoboptionsConsistencyEngine.effectiveDocument(
+                from: document,
+                context: context
+            )
+
+            XCTAssertEqual(
+                effective.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,
+                expected
+            )
+        }
+    }
+
     private func document(
         compatibilityLevel: String,
         entries: String

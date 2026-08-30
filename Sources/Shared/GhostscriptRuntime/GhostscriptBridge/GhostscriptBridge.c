@@ -392,6 +392,8 @@ int gs_run_joboptions_with_fds(
     const int has_standard = standard != NULL && strcmp(standard, "none") != 0;
     const int is_pdfa = has_standard && strncmp(standard, "pdfa", 4) == 0;
     const int is_pdfx = has_standard && strncmp(standard, "pdfx", 4) == 0;
+    const int has_standard_definition =
+        standard_definition_path != NULL && standard_definition_path[0] != '\0';
     const int has_compatibility_level =
         compatibility_level != NULL && compatibility_level[0] != '\0';
     const int has_blend_conversion_strategy =
@@ -442,7 +444,7 @@ int gs_run_joboptions_with_fds(
         "-sBlendConversionStrategy=%s",
         has_blend_conversion_strategy ? blend_conversion_strategy : "Simple"
     );
-    if (has_standard && (standard_definition_path == NULL || profile_resource_directory == NULL)) {
+    if (has_standard_definition && profile_resource_directory == NULL) {
         return_code = -1;
         goto descriptor_finished;
     }
@@ -453,7 +455,7 @@ int gs_run_joboptions_with_fds(
         const char *generation = standard[4] == '1' ? "1" : (standard[4] == '3' ? "3" : "4");
         snprintf(standard_option, sizeof(standard_option), "-dPDFX=%s", generation);
     }
-    if (has_standard) {
+    if (has_standard_definition) {
         standard_definition_fd = open(standard_definition_path, O_RDONLY);
         if (standard_definition_fd < 0) {
             return_code = -1;
@@ -470,13 +472,18 @@ int gs_run_joboptions_with_fds(
         }
     }
     const int has_profile_overrides = profile_overrides != NULL && profile_overrides[0] != '\0';
-    if ((has_standard || has_profile_overrides) && profile_resource_directory == NULL) {
+    if ((has_standard_definition || has_profile_overrides) && profile_resource_directory == NULL) {
         return_code = -1;
         goto descriptor_finished;
     }
-    if (has_standard || has_profile_overrides) {
+    if (has_standard_definition || has_profile_overrides) {
         snprintf(profile_include, sizeof(profile_include), "-I%s", profile_resource_directory);
-        snprintf(permit_profiles, sizeof(permit_profiles), "--permit-file-read=%s", profile_resource_directory);
+        snprintf(
+            permit_profiles,
+            sizeof(permit_profiles),
+            "--permit-file-read=%s/",
+            profile_resource_directory
+        );
     }
     const int has_profile_override_directory =
         profile_override_directory != NULL && profile_override_directory[0] != '\0';
@@ -484,7 +491,7 @@ int gs_run_joboptions_with_fds(
         snprintf(
             permit_profile_overrides,
             sizeof(permit_profile_overrides),
-            "--permit-file-read=%s",
+            "--permit-file-read=%s/",
             profile_override_directory
         );
     }
@@ -512,7 +519,7 @@ int gs_run_joboptions_with_fds(
     arguments[argument_count++] = ghostscript_include;
     arguments[argument_count++] = generic_resource_option;
     arguments[argument_count++] = permit_ghostscript;
-    if (has_standard || has_profile_overrides) {
+    if (has_standard_definition || has_profile_overrides) {
         arguments[argument_count++] = profile_include;
         arguments[argument_count++] = permit_profiles;
     }
@@ -520,7 +527,9 @@ int gs_run_joboptions_with_fds(
         arguments[argument_count++] = standard_option;
         arguments[argument_count++] = is_pdfa ? "-dPDFACompatibilityPolicy=1" : "-dPDFXNoTrimBoxError=false";
         arguments[argument_count++] = is_pdfa ? "-sColorConversionStrategy=RGB" : "-sColorConversionStrategy=CMYK";
-        arguments[argument_count++] = "--permit-file-read=SelectedOutputProfile.icc";
+        if (has_standard_definition) {
+            arguments[argument_count++] = "--permit-file-read=SelectedOutputProfile.icc";
+        }
         if (is_pdfa && allow_transparency && !validation_only) {
             arguments[argument_count++] = blend_conversion_option;
         }
@@ -580,7 +589,7 @@ int gs_run_joboptions_with_fds(
         return_code = descriptor_run_bytes(instance, profile_overrides, &capture);
         if (return_code != 0) goto descriptor_finished;
     }
-    if (has_standard) {
+    if (has_standard_definition) {
         return_code = descriptor_run_stream(instance, standard_definition_fd, &capture);
         if (return_code != 0) goto descriptor_finished;
     }

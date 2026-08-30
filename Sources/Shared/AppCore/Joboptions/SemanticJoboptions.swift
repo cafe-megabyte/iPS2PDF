@@ -2,6 +2,7 @@ import Foundation
 
 struct SemanticJoboptions: Sendable {
     static let defaultPDFXOutputIntentProfile = "Generic CMYK Profile"
+    static let embedOutputIntentProfileKey = "iPS2PDFEmbedOutputIntentProfile"
 
     struct DeviceResolution: Equatable, Sendable {
         let x: Double
@@ -408,16 +409,19 @@ struct SemanticJoboptions: Sendable {
 
     static func changeStandard(
         _ standard: PDFStandard,
-        in document: LosslessJoboptionsDocument
+        in _: LosslessJoboptionsDocument
     ) -> JoboptionsChangeSet {
-        var changes = [JoboptionsChange("/iPS2PDFStandard", .name(standard.rawValue))]
-        if standard.isPDFX, needsDefaultPDFXOutputIntentProfile(in: document) {
-            changes.append(JoboptionsChange(
-                "/PDFXOutputIntentProfile",
-                .string(defaultPDFXOutputIntentProfile)
-            ))
-        }
-        return JoboptionsChangeSet(changes)
+        changeStandard(standard)
+    }
+
+    static func embedsOutputIntentProfile(in document: LosslessJoboptionsDocument) -> Bool {
+        document.value(forKey: embedOutputIntentProfileKey)?.boolValue == true
+    }
+
+    static func changeEmbedsOutputIntentProfile(_ embeds: Bool) -> JoboptionsChangeSet {
+        JoboptionsChangeSet([
+            JoboptionsChange("/\(embedOutputIntentProfileKey)", .boolean(embeds))
+        ])
     }
 
     static func needsDefaultPDFXOutputIntentProfile(

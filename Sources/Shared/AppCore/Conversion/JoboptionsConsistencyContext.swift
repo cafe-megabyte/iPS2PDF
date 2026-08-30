@@ -5,6 +5,8 @@ struct JoboptionsConsistencyContext: Equatable, Sendable {
         let name: String
         var fileStem: String? = nil
         let colorSpace: String
+        var profileClass: String = ""
+        var outputConditionIdentifier: String? = nil
 
         func matches(_ value: String) -> Bool {
             name == value || fileStem == value
