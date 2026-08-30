@@ -13,6 +13,10 @@ struct SettingsCategoryView: View {
                 standardSection
             }
 
+            if category == .additional {
+                applicationSection
+            }
+
             Section {
                 ForEach(visibleDefinitions) { definition in
                     DistillerOptionEditor(
@@ -20,6 +24,10 @@ struct SettingsCategoryView: View {
                         repository: repository,
                         isLocked: isLocked(definition)
                     )
+                }
+            } header: {
+                if category == .additional {
+                    Text("Known additional settings")
                 }
             } footer: {
                 Text("The catalogue targets Ghostscript \(DistillerOptionCatalog.ghostscriptVersion). Missing settings are inserted into the active user Joboptions; unrelated source bytes stay unchanged.")
@@ -30,7 +38,7 @@ struct SettingsCategoryView: View {
             }
 
             if category == .additional {
-                additionalSection
+                additionalDetailsSection
             }
         }
         .formStyle(.grouped)
@@ -94,54 +102,56 @@ struct SettingsCategoryView: View {
         }
     }
 
-    private var additionalSection: some View {
-        Group {
-            Section("iPS2PDF") {
-                Toggle("Embed output intent profile", isOn: Binding(
-                    get: {
-                        guard let document = repository.activeDocument else { return false }
-                        return SemanticJoboptions.embedsOutputIntentProfile(in: document)
-                    },
-                    set: { value in
-                        do {
-                            try repository.apply(
-                                SemanticJoboptions.changeEmbedsOutputIntentProfile(value)
-                            )
-                        } catch {
-                            repository.lastError = error.localizedDescription
-                        }
+    private var applicationSection: some View {
+        Section("iPS2PDF") {
+            Toggle("Embed output intent profile", isOn: Binding(
+                get: {
+                    guard let document = repository.activeDocument else { return false }
+                    return SemanticJoboptions.embedsOutputIntentProfile(in: document)
+                },
+                set: { value in
+                    do {
+                        try repository.apply(
+                            SemanticJoboptions.changeEmbedsOutputIntentProfile(value)
+                        )
+                    } catch {
+                        repository.lastError = error.localizedDescription
                     }
-                ))
+                }
+            ))
 
-                Toggle("Security limits", isOn: Binding(
-                    get: { repository.securityLimitsEnabled },
-                    set: { repository.securityLimitsEnabled = $0 }
-                ))
-                Text("Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active.")
+            Toggle("Security limits", isOn: Binding(
+                get: { repository.securityLimitsEnabled },
+                set: { repository.securityLimitsEnabled = $0 }
+            ))
+            Text("Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active.")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+
+            Toggle("Random numbers", isOn: Binding(
+                get: { repository.automaticRandomSeed },
+                set: { repository.setAutomaticRandomSeed($0) }
+            ))
+
+            if !repository.automaticRandomSeed {
+                LabeledContent("Seed") {
+                    TextField(
+                        "Seed",
+                        value: manualRandomSeedBinding,
+                        formatter: randomSeedFormatter
+                    )
+                    .keyboardType(.numberPad)
+                    .multilineTextAlignment(.trailing)
+                }
+                Text(Self.randomSeedRangeDescription)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-
-                Toggle("Random numbers", isOn: Binding(
-                    get: { repository.automaticRandomSeed },
-                    set: { repository.setAutomaticRandomSeed($0) }
-                ))
-
-                if !repository.automaticRandomSeed {
-                    LabeledContent("Seed") {
-                        TextField(
-                            "Seed",
-                            value: manualRandomSeedBinding,
-                            formatter: randomSeedFormatter
-                        )
-                        .keyboardType(.numberPad)
-                        .multilineTextAlignment(.trailing)
-                    }
-                    Text(Self.randomSeedRangeDescription)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
             }
+        }
+    }
 
+    private var additionalDetailsSection: some View {
+        Group {
             if !additionalKeys.isEmpty {
                 Section {
                     ForEach(additionalKeys, id: \.self) { key in
