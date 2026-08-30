@@ -109,7 +109,8 @@ final class MacOSSettingsViewController: NSViewController {
 
         addJoboptionsSection(
             title: String(localized: "Bundled"),
-            records: repository.records.filter(\.isBundled)
+            records: repository.records.filter(\.isBundled),
+            separatesAfterNormal: true
         )
         addJoboptionsSection(
             title: String(localized: "User"),
@@ -126,13 +127,22 @@ final class MacOSSettingsViewController: NSViewController {
         }
     }
 
-    private func addJoboptionsSection(title: String, records: [JoboptionsRecord]) {
+    private func addJoboptionsSection(
+        title: String,
+        records: [JoboptionsRecord],
+        separatesAfterNormal: Bool = false
+    ) {
         guard !records.isEmpty else { return }
         joboptionsPopup.menu?.addItem(.sectionHeader(title: title))
         for record in records {
             let item = NSMenuItem(title: record.name, action: nil, keyEquivalent: "")
             item.representedObject = record.id
             joboptionsPopup.menu?.addItem(item)
+            if separatesAfterNormal,
+               record.name == "Normal",
+               record.id != records.last?.id {
+                joboptionsPopup.menu?.addItem(.separator())
+            }
         }
     }
 

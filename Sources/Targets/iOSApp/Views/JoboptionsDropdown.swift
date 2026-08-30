@@ -6,16 +6,21 @@ struct JoboptionsDropdown: View {
 
     var body: some View {
         Menu {
-            Section("Bundled") {
-                ForEach(repository.records.filter(\.isBundled)) { record in
-                    recordButton(record)
-                }
+            ForEach(userRecords.reversed()) { record in
+                recordButton(record)
             }
-            Section("User") {
-                ForEach(repository.records.filter { !$0.isBundled }) { record in
-                    recordButton(record)
-                }
+            menuHeader("User")
+
+            ForEach(otherBundledRecords.reversed()) { record in
+                recordButton(record)
             }
+            if normalRecord != nil, !otherBundledRecords.isEmpty {
+                Divider()
+            }
+            if let normalRecord {
+                recordButton(normalRecord)
+            }
+            menuHeader("Bundled")
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: repository.activeRecord?.isBundled == true ? "shippingbox.fill" : "person.crop.circle")
@@ -35,16 +40,33 @@ struct JoboptionsDropdown: View {
         .allowsHitTesting(!isDisabled && repository.isReady)
     }
 
+    private var bundledRecords: [JoboptionsRecord] {
+        repository.records.filter(\.isBundled)
+    }
+
+    private var normalRecord: JoboptionsRecord? {
+        bundledRecords.first { $0.name == "Normal" }
+    }
+
+    private var otherBundledRecords: [JoboptionsRecord] {
+        bundledRecords.filter { $0.name != "Normal" }
+    }
+
+    private var userRecords: [JoboptionsRecord] {
+        repository.records.filter { !$0.isBundled }
+    }
+
+    private func menuHeader(_ title: LocalizedStringKey) -> some View {
+        Text(title)
+            .foregroundStyle(.secondary)
+    }
+
     private func recordButton(_ record: JoboptionsRecord) -> some View {
         Button {
             do { try repository.activate(record) }
             catch { repository.lastError = error.localizedDescription }
         } label: {
-            if repository.activeRecord?.id == record.id {
-                Label(record.name, systemImage: "checkmark")
-            } else {
-                Text(record.name)
-            }
+            Text(repository.activeRecord?.id == record.id ? "✓ \(record.name)" : record.name)
         }
     }
 }
