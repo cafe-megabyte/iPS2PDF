@@ -9,6 +9,8 @@ import Foundation
 /// Prepares one shared conversion job and uses XPC only to control its
 /// isolated ExtensionKit process.
 final class GhostscriptExtensionClient: @unchecked Sendable {
+    private static let profileCatalog = GhostscriptExtensionProfileCatalog()
+
     private enum MacOSConnectionError: LocalizedError {
         case unavailable
         case invalidReply
@@ -80,6 +82,9 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
     private let timeout: TimeInterval = 15 * 60
 
     func profileMetadata() async throws -> [GhostscriptExtensionProfileMetadata] {
+        if let cached = await Self.profileCatalog.value() {
+            return cached
+        }
         let reply = try await send(baseRequest(operation: GhostscriptExtensionEnvelope.profiles))
         let status: Int64 = reply[GhostscriptExtensionEnvelope.status] ?? -1
         guard status == 0,
@@ -91,11 +96,16 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
                 diagnostics: "The Ghostscript extension profile catalogue is unavailable."
             )
         }
-        return try JSONDecoder().decode([GhostscriptExtensionProfileMetadata].self, from: data)
+        let profiles = try JSONDecoder().decode(
+            [GhostscriptExtensionProfileMetadata].self,
+            from: data
+        )
+        await Self.profileCatalog.store(profiles)
+        return profiles
     }
 
     func validate(joboptionsURL: URL) async throws {
-        let prepared = try prepareWorkspace(inputURL: nil, joboptionsURL: joboptionsURL)
+        let prepared = try await prepareWorkspace(inputURL: nil, joboptionsURL: joboptionsURL)
         defer { try? AppGroupWorkspace.clearConversionDirectories() }
 
         var request = runRequest(
@@ -134,14 +144,14 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 #if os(macOS)
         inputFileHandle = try openInputFileHandle(at: inputURL)
         defer { try? inputFileHandle?.close() }
-        let prepared = try prepareWorkspace(
+        let prepared = try await prepareWorkspace(
             inputURL: inputURL,
             joboptionsURL: joboptionsURL,
             stagesInputFile: false
         )
 #else
         inputFileHandle = nil
-        let prepared = try prepareWorkspace(
+        let prepared = try await prepareWorkspace(
             inputURL: inputURL,
             joboptionsURL: joboptionsURL,
             stagesInputFile: true
@@ -178,7 +188,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         inputURL: URL?,
         joboptionsURL: URL,
         stagesInputFile: Bool = true
-    ) throws -> PreparedJob {
+    ) async throws -> PreparedJob {
         try AppGroupWorkspace.prepareConversionDirectories()
         let inputDirectory = try AppGroupWorkspace.inputDirectoryURL()
         let joboptionsDestination = inputDirectory
@@ -186,6 +196,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
         let document = try LosslessJoboptionsDocument(data: Data(contentsOf: joboptionsURL))
         let selections = selectedProfiles(document: document)
+        let bundledProfiles = selections.isEmpty ? [] : try await profileMetadata()
         var userProfileKeys: [String] = []
         var stagedUserProfiles: [String: URL] = [:]
 
@@ -212,7 +223,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let runtimeDocument = try runtimeDocument(
             from: document,
             profileSelections: selections,
-            stagedUserProfiles: stagedUserProfiles
+            stagedUserProfiles: stagedUserProfiles,
+            bundledProfiles: bundledProfiles
         )
         try runtimeDocument.data.write(to: joboptionsDestination, options: [.atomic])
 
@@ -246,7 +258,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
     private func runtimeDocument(
         from document: LosslessJoboptionsDocument,
         profileSelections: [ProfileSelection],
-        stagedUserProfiles: [String: URL]
+        stagedUserProfiles: [String: URL],
+        bundledProfiles: [GhostscriptExtensionProfileMetadata]
     ) throws -> LosslessJoboptionsDocument {
         var runtimeDocument = try document.removingValues(forKeys: Self.runtimeExcludedJoboptionsKeys)
         guard !profileSelections.isEmpty else { return runtimeDocument }
@@ -256,7 +269,10 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             if let stagedURL = stagedUserProfiles[selection.key] {
                 replacement = stagedURL.path
             } else {
-                replacement = try bundledProfileFileName(matching: selection.name)
+                replacement = try bundledProfileFileName(
+                    matching: selection.name,
+                    in: bundledProfiles
+                )
             }
             runtimeDocument = try runtimeDocument.replacingValue(
                 forKey: selection.key,
@@ -266,33 +282,27 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         return runtimeDocument
     }
 
-    private func bundledProfileFileName(matching name: String) throws -> String {
-        guard let directory = GhostscriptRuntimeResources.profilesDirectoryURL else {
-            throw ConversionFailure.ghostscriptInitialization(
-                returnCode: 0,
-                diagnostics: "The bundled ICC profile directory is unavailable."
-            )
-        }
-
+    private func bundledProfileFileName(
+        matching name: String,
+        in profiles: [GhostscriptExtensionProfileMetadata]
+    ) throws -> String {
         let requested = normalizedProfileName(name)
-        let urls = try FileManager.default.contentsOfDirectory(
-            at: directory,
-            includingPropertiesForKeys: [.isRegularFileKey],
-            options: [.skipsHiddenFiles]
-        )
-        for url in urls {
-            let values = try url.resourceValues(forKeys: [.isRegularFileKey])
-            guard values.isRegularFile == true else { continue }
-            if normalizedProfileName(url.deletingPathExtension().lastPathComponent) == requested {
-                return url.lastPathComponent
-            }
-            guard let record = try? ICCProfileRecord.inspect(url: url, origin: .bundled) else {
-                continue
-            }
-            if normalizedProfileName(record.name) == requested
-                || normalizedProfileName(record.fileStem) == requested {
-                return url.lastPathComponent
-            }
+        if let exact = profiles.first(where: {
+            normalizedProfileName($0.fileStem) == requested
+        }) {
+            return exact.file
+        }
+        if let preferredFile = Self.preferredBundledProfileFiles.first(where: {
+            normalizedProfileName($0.name) == requested
+        })?.file,
+           profiles.contains(where: { $0.file == preferredFile }) {
+            return preferredFile
+        }
+        let descriptions = profiles.filter {
+            normalizedProfileName($0.name) == requested
+        }
+        if descriptions.count == 1, let profile = descriptions.first {
+            return profile.file
         }
 
         throw ConversionFailure.ghostscriptInitialization(
@@ -590,6 +600,11 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         "iPS2PDFStandard", SemanticJoboptions.embedOutputIntentProfileKey
     ])
 
+    private static let preferredBundledProfileFiles = [
+        (name: "Gray Gamma 2.2", file: "Generic Gray Gamma 2.2 Profile.icc"),
+        (name: "sRGB IEC61966-2.1", file: "sRGB Profile.icc")
+    ]
+
     private struct PreparedJob {
         let allowTransparency: Bool
         let epsCrop: Bool
@@ -600,5 +615,17 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let pdfXOutputConditionIdentifier: String?
         let pdfXRegistryName: String?
         let pdfXTrapped: String?
+    }
+}
+
+private actor GhostscriptExtensionProfileCatalog {
+    private var profiles: [GhostscriptExtensionProfileMetadata]?
+
+    func value() -> [GhostscriptExtensionProfileMetadata]? {
+        profiles
+    }
+
+    func store(_ profiles: [GhostscriptExtensionProfileMetadata]) {
+        self.profiles = profiles
     }
 }

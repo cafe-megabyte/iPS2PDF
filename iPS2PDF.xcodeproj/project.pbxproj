@@ -524,7 +524,7 @@
 				A60000000000000000000004 /* Sources */,
 				A60000000000000000000001 /* Frameworks */,
 				A60000000000000000000005 /* Resources */,
-				E00000000000000000000003 /* Install Joboptions and Profiles */,
+				E00000000000000000000003 /* Install Joboptions */,
 				F6000000000000000000000D /* Embed Foundation Extensions */,
 				B60000000000000000000004 /* Embed Foundation Extensions */,
 				A60000000000000000000006 /* Remove Spurious Extension Point Output */,
@@ -1098,7 +1098,7 @@
 			shellPath = /bin/bash;
 			shellScript = "\"$SRCROOT/Scripts/build_ghostscript_MacOS.sh\" \"$MACOSX_DEPLOYMENT_TARGET\" \"$SDK_NAME\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/Scripts/ghostscript_MacOS_static.patch\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
 		};
-		E00000000000000000000003 /* Install Joboptions and Profiles */ = {
+		E00000000000000000000003 /* Install Joboptions */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -1109,14 +1109,13 @@
 			inputPaths = (
 				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
 			);
-			name = "Install Joboptions and Profiles";
+			name = "Install Joboptions";
 			outputPaths = (
 				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Joboptions/.install.stamp",
-				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/Profiles/.install.stamp",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\" joboptions\n";
 		};
 		F60000000000000000000008 /* Install Profiles */ = {
 			isa = PBXShellScriptBuildPhase;

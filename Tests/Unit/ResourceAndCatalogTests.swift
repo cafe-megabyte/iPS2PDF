@@ -14,7 +14,9 @@ final class ResourceAndCatalogTests: XCTestCase {
         XCTAssertTrue(joboptions.contains { $0.deletingPathExtension().lastPathComponent == "Normal" })
 
         for url in profiles {
-            XCTAssertNoThrow(try ICCProfileRecord.inspect(url: url, origin: .bundled), url.lastPathComponent)
+            let profile = try ICCProfileRecord.inspect(url: url, origin: .bundled)
+            XCTAssertEqual(profile.fileName, url.lastPathComponent)
+            XCTAssertEqual(profile.url, url)
         }
 
         let metadata = try Dictionary(uniqueKeysWithValues: profiles.map { url in
@@ -50,6 +52,48 @@ final class ResourceAndCatalogTests: XCTestCase {
         XCTAssertEqual(
             DistillerOptionCatalog.byKey["ColorSettingsFile"]?.classification,
             .preserved
+        )
+    }
+
+    func testRemoteBundledProfileCatalogueSurvivesUserProfileReload() {
+        let bundled = ICCProfileRecord(
+            id: "bundled:sRGB.icc",
+            name: "sRGB",
+            fileStem: "sRGB",
+            fileName: "sRGB.icc",
+            origin: .bundled,
+            url: nil,
+            profileClass: "mntr",
+            colorSpace: "RGB ",
+            connectionSpace: "XYZ ",
+            outputConditionIdentifier: nil
+        )
+        let user = ICCProfileRecord(
+            id: "user:Imported.icc",
+            name: "Imported",
+            fileStem: "Imported",
+            fileName: "Imported.icc",
+            origin: .user,
+            url: URL(fileURLWithPath: "/tmp/Imported.icc"),
+            profileClass: "mntr",
+            colorSpace: "RGB ",
+            connectionSpace: "XYZ ",
+            outputConditionIdentifier: nil
+        )
+
+        XCTAssertEqual(
+            ICCProfileRecord.bundledProfilesForReload(
+                localBundled: nil,
+                current: [bundled, user]
+            ),
+            [bundled]
+        )
+        XCTAssertEqual(
+            ICCProfileRecord.bundledProfilesForReload(
+                localBundled: [],
+                current: [bundled, user]
+            ),
+            []
         )
     }
 

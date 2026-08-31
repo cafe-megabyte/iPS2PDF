@@ -266,7 +266,7 @@ ConversionOutput/Ghostscript-Extension → Haupt-App
 
 Es gibt keine Job-UUID, keine Queue und keine parallelen Jobs. Die Haupt-App legt `ConversionInput/ready` erst nach vollständiger Vorbereitung des Jobs an. Die XPC-Nachricht startet lediglich die Verarbeitung und enthält keinen Dokumentinhalt.
 
-Dauerhafte Joboptions und ICC-Profile liegen ausschließlich im privaten Application-Support-Verzeichnis der Haupt-App. Für einen aktiven Job benötigte Daten werden nach `ConversionInput` kopiert.
+Dauerhafte benutzerdefinierte Joboptions und ICC-Profile liegen ausschließlich im privaten Application-Support-Verzeichnis der Haupt-App. Für einen aktiven Job benötigte Benutzerprofile werden nach `ConversionInput` kopiert. Die mitgelieferten ICC-Profile liegen unter iOS ausschließlich im Bundle von `iPS2PDFSecurity`; die Haupt-App bezieht ihren Katalog ohne Profildateien per XPC vom Helper.
 
 ---
 
@@ -887,7 +887,7 @@ Die erzeugte `libgs.a` wird vor dem Linken bereitgestellt und aus dem gemeinsame
 
 Die statische Library wird nicht nachträglich als ungenutzte `.a`-Datei in das fertige App-Bundle kopiert.
 
-Der Helper besitzt eine kleine, inkrementelle Build-Phase `Install Ghostscript Resources`. Sie kopiert die benötigten Ghostscript-Ressourcen aus dem gemeinsamen Artefaktverzeichnis in sein Bundle. Der ressourcenspezifische Kopiervorgang ist vom Ghostscript-Compiler-Build getrennt. Das Bundle der Share Extension enthält keine Ghostscript-Ressourcen.
+Der Helper besitzt eine kleine, inkrementelle Build-Phase `Install Ghostscript Resources`. Sie kopiert die benötigten Ghostscript-Ressourcen aus dem gemeinsamen Artefaktverzeichnis in sein Bundle. Eine separate Build-Phase `Install Profiles` installiert dort außerdem die mitgelieferten ICC-Profile. Die Haupt-App installiert aus `BundledResources` nur die Joboptions und liest den Profilkatalog per XPC; dadurch existiert jede mitgelieferte Profildatei im fertigen iOS-App-Bundle genau einmal. Der ressourcenspezifische Kopiervorgang ist vom Ghostscript-Compiler-Build getrennt. Das Bundle der Share Extension enthält keine Ghostscript-Ressourcen oder ICC-Profile.
 
 ---
 

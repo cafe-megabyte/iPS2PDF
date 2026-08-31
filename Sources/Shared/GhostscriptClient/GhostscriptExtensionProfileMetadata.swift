@@ -11,7 +11,7 @@ struct GhostscriptExtensionProfileMetadata: Codable, Sendable {
     let outputConditionIdentifier: String?
 
     init(record: ICCProfileRecord) {
-        file = record.url.lastPathComponent
+        file = record.fileName
         name = record.name
         fileStem = record.fileStem
         profileClass = record.profileClass

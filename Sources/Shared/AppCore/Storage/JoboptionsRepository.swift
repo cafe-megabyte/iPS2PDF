@@ -248,8 +248,8 @@ final class JoboptionsRepository: ObservableObject {
     }
 
     func deleteProfile(_ profile: ICCProfileRecord) throws {
-        guard !profile.isBundled else { return }
-        try fileManager.removeItem(at: profile.url)
+        guard !profile.isBundled, let url = profile.url else { return }
+        try fileManager.removeItem(at: url)
         loadProfiles()
     }
 
@@ -388,9 +388,13 @@ final class JoboptionsRepository: ObservableObject {
 
     private func loadProfiles() {
         var loaded: [ICCProfileRecord] = []
-        if let bundled = GhostscriptRuntimeResources.profilesDirectoryURL {
-            loaded += inspectProfiles(in: bundled, origin: .bundled)
+        let localBundled = GhostscriptRuntimeResources.profilesDirectoryURL.map {
+            inspectProfiles(in: $0, origin: .bundled)
         }
+        loaded += ICCProfileRecord.bundledProfilesForReload(
+            localBundled: localBundled,
+            current: profiles
+        )
         if let user = try? userProfilesDirectory() {
             loaded += inspectProfiles(in: user, origin: .user)
         }
@@ -398,18 +402,21 @@ final class JoboptionsRepository: ObservableObject {
     }
 
     private func refreshBundledProfileMetadataFromHelper() async {
-        guard let bundledDirectory = GhostscriptRuntimeResources.profilesDirectoryURL,
-              let metadata = try? await GhostscriptExtensionClient().profileMetadata()
+        guard let metadata = try? await GhostscriptExtensionClient().profileMetadata()
         else { return }
-        let bundled: [ICCProfileRecord] = metadata.compactMap { item in
-            let url = bundledDirectory.appendingPathComponent(item.file)
-            guard fileManager.fileExists(atPath: url.path) else { return nil }
+        let bundledDirectory = GhostscriptRuntimeResources.profilesDirectoryURL
+        let bundled: [ICCProfileRecord] = metadata.map { item in
+            let localURL = bundledDirectory.flatMap { directory -> URL? in
+                let candidate = directory.appendingPathComponent(item.file)
+                return fileManager.fileExists(atPath: candidate.path) ? candidate : nil
+            }
             return ICCProfileRecord(
                 id: "bundled:\(item.file)",
                 name: item.name,
                 fileStem: item.fileStem,
+                fileName: item.file,
                 origin: .bundled,
-                url: url,
+                url: localURL,
                 profileClass: item.profileClass,
                 colorSpace: item.colorSpace,
                 connectionSpace: item.connectionSpace,

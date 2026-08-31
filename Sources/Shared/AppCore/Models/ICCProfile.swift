@@ -9,8 +9,9 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
     let fileStem: String
+    let fileName: String
     let origin: Origin
-    let url: URL
+    let url: URL?
     let profileClass: String
     let colorSpace: String
     let connectionSpace: String
@@ -40,14 +41,16 @@ struct ICCProfileRecord: Identifiable, Hashable, Sendable {
         }
 
         let prefix = origin == .bundled ? "bundled" : "user"
+        let fileName = url.lastPathComponent
         let fileStem = url.deletingPathExtension().lastPathComponent
         let displayName = (try? ICCProfileDisplayNameReader.descriptions(at: url).first) ?? fileStem
         let embeddedOutputConditionIdentifier = try? ICCProfileDisplayNameReader
             .outputConditionIdentifier(at: url)
         return Self(
-            id: "\(prefix):\(url.lastPathComponent)",
+            id: "\(prefix):\(fileName)",
             name: displayName,
             fileStem: fileStem,
+            fileName: fileName,
             origin: origin,
             url: url,
             profileClass: signature(12..<16),
@@ -250,5 +253,16 @@ private enum ICCProfileDisplayNameReader {
                 .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines.union(.controlCharacters))
             return normalized.isEmpty ? nil : normalized
         }
+    }
+}
+
+extension ICCProfileRecord {
+    static func bundledProfilesForReload(
+        localBundled: [Self]?,
+        current: [Self]
+    ) -> [Self] {
+        // On iOS the bundled profile files live only in the security extension.
+        // Keep its XPC-provided catalogue while reloading user imports.
+        localBundled ?? current.filter(\.isBundled)
     }
 }
