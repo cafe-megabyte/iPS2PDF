@@ -2,38 +2,32 @@ import SwiftUI
 
 struct GhostscriptCompatibilityBanner: View {
     @ObservedObject var repository: JoboptionsRepository
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var isExpanded = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .center, spacing: 10) {
-                Image(systemName: "wrench.and.screwdriver.fill")
-                    .foregroundStyle(Color.appTint)
-                DisclosureGroup(isExpanded: $isExpanded) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ForEach(repository.compatibilityIssues) { issue in
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(issue.summary)
-                                    .font(.caption.monospaced())
-                                Text(issue.reason)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                                if !issue.isAutomaticallyRepairable {
-                                    Label(
-                                        String(localized: "Manual selection required"),
-                                        systemImage: "hand.raised.fill"
-                                    )
-                                    .font(.caption2)
-                                    .foregroundStyle(.orange)
-                                }
-                            }
-                        }
-                    }
-                    .padding(.top, 6)
+                Button {
+                    isExpanded.toggle()
                 } label: {
-                    Text(issueCountTitle)
-                        .font(.subheadline.weight(.semibold))
+                    HStack(spacing: 8) {
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                        Image(systemName: "wrench.and.screwdriver.fill")
+                            .foregroundStyle(Color.appTint)
+                        Text(issueCountTitle)
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .accessibilityHint(
+                    isExpanded
+                        ? String(localized: "Collapse consistency details")
+                        : String(localized: "Expand consistency details")
+                )
                 Spacer(minLength: 8)
                 Button(String(localized: "Repair")) {
                     do {
@@ -44,12 +38,36 @@ struct GhostscriptCompatibilityBanner: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-                .disabled(!repository.compatibilityIssues.contains(where: { $0.isAutomaticallyRepairable }))
+                .disabled(repository.compatibilityIssues.isEmpty)
+            }
+
+            if isExpanded {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(repository.compatibilityIssues) { issue in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(issue.summary)
+                                    .font(.caption.monospaced())
+                                Text(issue.reason)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .frame(maxHeight: detailsMaximumHeight)
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
-        .background(.thinMaterial)
+        .background(Color.orange.opacity(0.20))
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.orange.opacity(0.62))
+                .frame(height: 1)
+        }
     }
 
     private var issueCountTitle: String {
@@ -57,5 +75,9 @@ struct GhostscriptCompatibilityBanner: View {
             String(localized: "%lld inconsistent settings"),
             Int64(repository.compatibilityIssues.count)
         )
+    }
+
+    private var detailsMaximumHeight: CGFloat {
+        verticalSizeClass == .compact ? 140 : 240
     }
 }

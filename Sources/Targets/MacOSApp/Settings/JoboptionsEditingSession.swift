@@ -31,10 +31,6 @@ final class JoboptionsEditingSession {
             || manualRandomSeed != originalManualRandomSeed
     }
 
-    var effectiveDisplayDocument: LosslessJoboptionsDocument {
-        (try? JoboptionsConsistencyEngine.repair(document, applying: issues)) ?? document
-    }
-
     init(
         repository: JoboptionsRepository,
         fileManager: FileManager = .default
@@ -78,6 +74,14 @@ final class JoboptionsEditingSession {
         guard updated.data != document.data else { return }
         try updated.data.write(to: workingURL, options: [.atomic])
         document = updated
+        refreshIssues()
+        onChange?()
+    }
+
+    func restore(_ restoredDocument: LosslessJoboptionsDocument) throws {
+        guard restoredDocument.data != document.data else { return }
+        try restoredDocument.data.write(to: workingURL, options: [.atomic])
+        document = restoredDocument
         refreshIssues()
         onChange?()
     }

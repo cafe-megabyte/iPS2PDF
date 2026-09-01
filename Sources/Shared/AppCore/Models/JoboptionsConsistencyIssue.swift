@@ -15,9 +15,17 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
         case standardOutputConditionIdentifier
         case standardTrappedState
         case standardTransparency
-        case missingOutputProfile
         case transparency
         case flatePDF11
+        case invalidPageRange
+        case invalidDeviceResolution
+        case invalidPageSize
+        case invalidDownsampling
+        case invalidCompression
+        case invalidImageQuality
+        case invalidImagePolicy
+        case invalidMonoSmoothing
+        case invalidPDFXBoxes
 
         var localizedDescription: String {
             switch self {
@@ -47,22 +55,37 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
                 String(localized: "PDF/X requires the trapped state to be True or False.")
             case .standardTransparency:
                 String(localized: "The selected PDF standard does not permit transparency.")
-            case .missingOutputProfile:
-                String(localized: "A suitable installed output profile must be selected before conversion.")
             case .transparency:
                 String(localized: "Transparency requires PDF 1.4 or newer.")
             case .flatePDF11:
                 String(localized: "Flate image compression is not accepted by Ghostscript for PDF 1.1.")
+            case .invalidPageRange:
+                String(localized: "The page range is incomplete or invalid.")
+            case .invalidDeviceResolution:
+                String(localized: "The device resolution must contain two positive values.")
+            case .invalidPageSize:
+                String(localized: "The page size must contain two positive values.")
+            case .invalidDownsampling:
+                String(localized: "Enabled downsampling requires a valid method, resolution, and threshold.")
+            case .invalidCompression:
+                String(localized: "Enabled image compression requires a supported filter.")
+            case .invalidImageQuality:
+                String(localized: "The selected image compression requires a valid quality value.")
+            case .invalidImagePolicy:
+                String(localized: "The image resolution policy contains an invalid value.")
+            case .invalidMonoSmoothing:
+                String(localized: "Monochrome smoothing requires a depth of 2, 4, or 8 bits.")
+            case .invalidPDFXBoxes:
+                String(localized: "The PDF/X page box settings are incomplete or invalid.")
             }
         }
     }
 
     let path: JoboptionsKeyPath
     let currentValue: JoboptionsValue?
-    let proposedValue: JoboptionsValue?
+    let proposedValue: JoboptionsValue
     let reasonCode: Reason
     let ruleIdentifier: String
-    let isAutomaticallyRepairable: Bool
 
     var id: String { "\(ruleIdentifier):\(path.description)" }
     var key: String { path.key ?? path.description }
@@ -70,7 +93,7 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
 
     var summary: String {
         let current = currentValue.map(Self.localizedValue) ?? String(localized: "Missing")
-        let proposed = proposedValue.map(Self.localizedValue) ?? String(localized: "Manual selection required")
+        let proposed = Self.localizedValue(proposedValue)
         return "\(path.description): \(current) → \(proposed)"
     }
 
@@ -81,6 +104,22 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
         case "false": DistillerOptionCatalog.localizedChoice("False")
         default: DistillerOptionCatalog.localizedChoice(text)
         }
+    }
+}
+
+struct JoboptionsConsistencyIssueIndex: Sendable {
+    private let affectedPaths: Set<JoboptionsKeyPath>
+
+    init(_ issues: [JoboptionsConsistencyIssue]) {
+        affectedPaths = Set(issues.map(\.path))
+    }
+
+    func affects(_ path: JoboptionsKeyPath) -> Bool {
+        affectedPaths.contains(path)
+    }
+
+    func affects(any paths: [JoboptionsKeyPath]) -> Bool {
+        paths.contains(where: affectedPaths.contains)
     }
 }
 

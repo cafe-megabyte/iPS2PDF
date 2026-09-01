@@ -82,21 +82,12 @@
       }
     },
     "A suitable installed output profile must be selected before conversion." : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vor der Konvertierung muss ein geeignetes installiertes Ausgabeprofil ausgewählt werden."
-          }
-        }
-      }
-    },
-    "An output intent profile cannot be embedded when no output profile is selected." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ein Output-Intent-Profil kann nicht eingebettet werden, wenn kein Ausgabeprofil ausgewählt ist."
           }
         }
       }
@@ -253,6 +244,16 @@
         }
       }
     },
+    "An output intent profile cannot be embedded when no output profile is selected." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein Output-Intent-Profil kann nicht eingebettet werden, wenn kein Ausgabeprofil ausgewählt ist."
+          }
+        }
+      }
+    },
     "Anti-alias color images" : {
       "localizations" : {
         "de" : {
@@ -301,6 +302,7 @@
       }
     },
     "Apply description" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -962,6 +964,7 @@
       }
     },
     "Custom (preserved)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -1334,6 +1337,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Standardmäßig aktiviert: 15 Minuten, 1 GB PostScript-Eingabe und 2 GB PDF-Ausgabe. Prozessisolierung, SAFER, Diagnose, Abbruch und PDF-Validierung bleiben immer aktiv."
+          }
+        }
+      }
+    },
+    "Enabled downsampling requires a valid method, resolution, and threshold." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivierte Neuberechnung erfordert eine gültige Methode, Auflösung und einen gültigen Schwellenwert."
+          }
+        }
+      }
+    },
+    "Enabled image compression requires a supported filter." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktivierte Bildkomprimierung erfordert einen unterstützten Filter."
           }
         }
       }
@@ -2289,6 +2312,7 @@
       }
     },
     "Manual selection required" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2469,6 +2493,16 @@
         }
       }
     },
+    "Monochrome smoothing requires a depth of 2, 4, or 8 bits." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Glättung monochromer Bilder erfordert eine Farbtiefe von 2, 4 oder 8 Bit."
+          }
+        }
+      }
+    },
     "Name" : {
       "localizations" : {
         "de" : {
@@ -2485,6 +2519,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Keine"
+          }
+        }
+      }
+    },
+    "Not set" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht festgelegt"
           }
         }
       }
@@ -3127,16 +3171,6 @@
         }
       }
     },
-    "PDF/X trapped state" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF/X-Überfüllungsstatus"
-          }
-        }
-      }
-    },
     "PDF/X requires the selected output intent profile to be embedded." : {
       "localizations" : {
         "de" : {
@@ -3157,12 +3191,12 @@
         }
       }
     },
-    "The PDF/X output condition identifier must match the selected output intent profile." : {
+    "PDF/X trapped state" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die PDF/X-Ausgabebedingungskennung muss zum ausgewählten Output-Intent-Profil passen."
+            "value" : "PDF/X-Überfüllungsstatus"
           }
         }
       }
@@ -3975,12 +4009,32 @@
         }
       }
     },
+    "The device resolution must contain two positive values." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Geräteauflösung muss zwei positive Werte enthalten."
+          }
+        }
+      }
+    },
     "The file does not contain a static Distiller parameter dictionary." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Datei enthält kein statisches Distiller-Parameterwörterbuch."
+          }
+        }
+      }
+    },
+    "The image resolution policy contains an invalid value." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Richtlinie für die Bildauflösung enthält einen ungültigen Wert."
           }
         }
       }
@@ -4036,6 +4090,7 @@
       }
     },
     "The Joboptions require a manual correction before conversion: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -4055,12 +4110,62 @@
         }
       }
     },
+    "The page range is incomplete or invalid." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Seitenbereich ist unvollständig oder ungültig."
+          }
+        }
+      }
+    },
+    "The page size must contain two positive values." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Seitenformat muss zwei positive Werte enthalten."
+          }
+        }
+      }
+    },
+    "The PDF/X output condition identifier must match the selected output intent profile." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Ausgabebedingungskennung muss zum ausgewählten Output-Intent-Profil passen."
+          }
+        }
+      }
+    },
+    "The PDF/X page box settings are incomplete or invalid." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Seitenrahmen-Einstellungen sind unvollständig oder ungültig."
+          }
+        }
+      }
+    },
     "The PDF/X validation switches must match the selected standard." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die PDF/X-Prüfschalter müssen dem ausgewählten Standard entsprechen."
+          }
+        }
+      }
+    },
+    "The selected image compression requires a valid quality value." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ausgewählte Bildkomprimierung erfordert einen gültigen Qualitätswert."
           }
         }
       }

@@ -34,7 +34,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     private var activeDocumentContentHeight: CGFloat = 0
     private var declaredMinimumHeights: [ObjectIdentifier: CGFloat] = [:]
     private var declaredHeightConstraints: [ObjectIdentifier: NSLayoutConstraint] = [:]
-    private var pendingDescription: String?
+    private var highlightRegistrations: [(view: NSView, paths: [JoboptionsKeyPath])] = []
 
     init(session: JoboptionsEditingSession, repository: JoboptionsRepository) {
         self.session = session
@@ -136,7 +136,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     @objc private func changeCategory(_ sender: NSSegmentedControl) {
         guard DistillerCategory.allCases.indices.contains(sender.selectedSegment) else { return }
-        guard commitPendingDescription() else {
+        guard validateVisibleTextFields() else {
             sender.selectedSegment = DistillerCategory.allCases.firstIndex(of: selectedCategory) ?? 0
             return
         }
@@ -146,7 +146,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     @objc private func cancel(_ sender: Any?) { finish(commits: false) }
     @objc private func confirm(_ sender: Any?) {
-        guard commitPendingDescription() else { return }
+        view.window?.endEditing(for: nil)
+        guard validateVisibleTextFields() else { return }
         finish(commits: true)
     }
 
@@ -162,10 +163,12 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     private func sessionDidChange() {
         updateBanner(animated: true)
+        updateConsistencyHighlights()
     }
 
     private func repair() {
-        guard commitPendingDescription() else { return }
+        view.window?.endEditing(for: nil)
+        guard validateVisibleTextFields() else { return }
         do {
             try session.repair()
             buildSelectedCategory()
@@ -173,15 +176,12 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private func apply(_ changeSet: JoboptionsChangeSet) {
-        guard commitPendingDescription() else { return }
         do {
             try session.apply(changeSet)
-            buildSelectedCategory()
         } catch { present(error) }
     }
 
     private func setStandard(_ standard: PDFStandard) {
-        guard commitPendingDescription() else { return }
         do {
             let showsNotice = try session.setStandard(standard)
             buildSelectedCategory()
@@ -191,31 +191,13 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         } catch { present(error) }
     }
 
-    @discardableResult
-    private func commitPendingDescription() -> Bool {
-        guard let pendingDescription else { return true }
-        do {
-            try session.apply(
-                SemanticJoboptions.changeDescription(
-                    to: pendingDescription,
-                    in: session.document
-                )
-            )
-            self.pendingDescription = nil
-            return true
-        } catch {
-            present(error)
-            return false
-        }
-    }
-
     private func buildSelectedCategory() {
         activeScrollView = nil
         activeDocumentView = nil
         activeFormStack = nil
         activeFormHeightConstraint = nil
         activeDocumentContentHeight = 0
-        pendingDescription = nil
+        highlightRegistrations.removeAll(keepingCapacity: true)
         declaredMinimumHeights.removeAll(keepingCapacity: true)
         declaredHeightConstraints.removeAll(keepingCapacity: true)
         contentContainer.subviews.forEach { $0.removeFromSuperview() }
@@ -287,6 +269,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         resizeActiveDocument()
         scrollView.contentView.scroll(to: .zero)
         scrollView.reflectScrolledClipView(scrollView.contentView)
+        updateConsistencyHighlights()
     }
 
     private func resizeActiveDocument() {
@@ -389,6 +372,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         }
         if let row {
             applyTechnicalTooltip(definition.localizedHelp, to: row)
+            registerConsistencyHighlight(row, paths: definition.keyPaths)
         }
         if let row, isLocked(definition) {
             controls(in: row).forEach { $0.isEnabled = false }
@@ -398,16 +382,13 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private func makeScalarEditor(_ definition: DistillerOptionDefinition) -> NSView {
-        let document = definition.category == .standards
-            ? session.effectiveDisplayDocument
-            : session.document
-        let value = document.value(forKey: definition.key)
+        let value = session.document.value(forKey: definition.key)
         let control: NSView
         switch definition.kind {
         case .boolean:
             let button = ActionButton.checkbox(
                 title: definition.localizedTitle,
-                state: value?.boolValue == true
+                state: value?.boolValue
             ) { [weak self] state in
                 self?.apply(JoboptionsChangeSet([
                     JoboptionsChange("/\(definition.key)", .boolean(state))
@@ -415,19 +396,15 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             }
             control = selectedCategory == .standards ? checkboxRow(button) : button
         case let .name(choices):
-            if definition.key == "UCRandBGInfo" {
-                control = makePreserveNameCheckbox(definition, selected: value?.textualValue)
-            } else {
-                control = makeChoicePopup(
-                    title: definition.localizedTitle,
-                    choices: choices,
-                    selected: value?.textualValue,
-                    localizesChoices: true
-                ) { [weak self] selected in
-                    self?.apply(JoboptionsChangeSet([
-                        JoboptionsChange("/\(definition.key)", .name(selected))
-                    ]))
-                }
+            control = makeChoicePopup(
+                title: definition.localizedTitle,
+                choices: choices,
+                selected: value?.textualValue,
+                localizesChoices: true
+            ) { [weak self] selected in
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/\(definition.key)", .name(selected))
+                ]))
             }
         case let .literal(choices):
             control = makeChoicePopup(
@@ -445,22 +422,26 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             }
         case let .integer(range):
             let field = CommitTextField(value?.textualValue ?? "") { [weak self] text in
-                guard let number = Int(text), range.contains(number) else { return }
+                guard let number = Int(text), range.contains(number) else { return false }
                 self?.apply(JoboptionsChangeSet([
                     JoboptionsChange(
                         "/\(definition.key)",
                         .number(Double(number), original: String(number))
                     )
                 ]))
+                return true
             }
+            field.placeholderString = value == nil ? String(localized: "Not set") : nil
             control = labeledRow(definition.localizedTitle, field)
         case let .number(range):
             let field = CommitTextField(value?.textualValue ?? "") { [weak self] text in
-                guard let number = Double(text), range.contains(number) else { return }
+                guard let number = Double(text), range.contains(number) else { return false }
                 self?.apply(JoboptionsChangeSet([
                     JoboptionsChange("/\(definition.key)", .number(number, original: text))
                 ]))
+                return true
             }
+            field.placeholderString = value == nil ? String(localized: "Not set") : nil
             control = labeledRow(definition.localizedTitle, field)
         case .string:
             if isProfileSetting(definition.key) {
@@ -470,7 +451,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                     self?.apply(JoboptionsChangeSet([
                         JoboptionsChange("/\(definition.key)", .string(text))
                     ]))
+                    return true
                 }
+                field.placeholderString = value == nil ? String(localized: "Not set") : nil
                 control = labeledRow(definition.localizedTitle, field)
             }
         }
@@ -482,7 +465,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         let editor = GrowingTextEditor(value)
         declareMinimumHeight(Layout.descriptionEditorHeight, for: editor)
         editor.onTextChange = { [weak self] text in
-            self?.pendingDescription = text
+            guard let self else { return }
+            apply(SemanticJoboptions.changeDescription(to: text, in: session.document))
         }
         let row = labeledRow(definition.localizedTitle, editor, alignment: .top)
         editor.onHeightChange = { [weak self, weak editor, weak row] height in
@@ -493,16 +477,20 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private func makeResolutionEditor(_ definition: DistillerOptionDefinition) -> NSView {
-        let value = SemanticJoboptions.deviceResolution(in: session.document)
-        let x = CommitTextField(numberText(value?.x))
-        let y = CommitTextField(numberText(value?.y))
-        let applyButton = ActionButton(title: String(localized: "Apply")) { [weak self, weak x, weak y] in
+        let values = rawArrayTexts(key: "HWResolution", count: 2)
+        let x = CommitTextField(values[0])
+        let y = CommitTextField(values[1])
+        let commit = { [weak self, weak x, weak y] () -> Bool in
             guard let xValue = Int(x?.stringValue ?? ""),
-                  let yValue = Int(y?.stringValue ?? "")
-            else { return }
+                  let yValue = Int(y?.stringValue ?? ""),
+                  (1...9_600).contains(xValue), (1...9_600).contains(yValue)
+            else { return false }
             self?.apply(SemanticJoboptions.changeDeviceResolution(x: xValue, y: yValue))
+            return true
         }
-        let controls = NSStackView(views: [x, text(String(localized: "×")), y, text(String(localized: "dpi")), applyButton])
+        x.setCommitHandler { _ in commit() }
+        y.setCommitHandler { _ in commit() }
+        let controls = NSStackView(views: [x, text(String(localized: "×")), y, text(String(localized: "dpi"))])
         controls.orientation = .horizontal
         controls.spacing = 6
         return labeledRow(definition.localizedTitle, controls)
@@ -512,8 +500,10 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         let popup = ActionPopUpButton()
         popup.addItem(withTitle: String(localized: "All pages"), representedObject: "all")
         popup.addItem(withTitle: String(localized: "Page range"), representedObject: "range")
-        let start = CommitTextField("")
-        let end = CommitTextField("")
+        let rawStart = session.document.value(forKey: "StartPage")
+        let rawEnd = session.document.value(forKey: "EndPage")
+        let start = CommitTextField(rawStart?.textualValue ?? rawStart?.postScript ?? "")
+        let end = CommitTextField(rawEnd?.textualValue ?? rawEnd?.postScript ?? "")
         switch SemanticJoboptions.pageSelection(in: session.document) {
         case .all:
             popup.selectRepresentedObject("all")
@@ -522,29 +512,54 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             start.stringValue = String(first)
             end.stringValue = String(last)
         case .custom:
-            popup.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            popup.addItem(
+                withTitle: String.localizedStringWithFormat(
+                    String(localized: "Custom: %@"),
+                    "\(start.stringValue) … \(end.stringValue)"
+                ),
+                representedObject: "custom"
+            )
             popup.selectRepresentedObject("custom")
         }
-        let applyButton = ActionButton(title: String(localized: "Apply")) { [weak self, weak popup, weak start, weak end] in
+        start.setCommitHandler { [weak self] text in
+            guard let value = Int(text), value >= 1 else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/StartPage", .number(Double(value), original: String(value)))
+            ]))
+            return true
+        }
+        end.setCommitHandler { [weak self] text in
+            guard let value = Int(text), value == -1 || value >= 1 else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/EndPage", .number(Double(value), original: String(value)))
+            ]))
+            return true
+        }
+        popup.onSelection = { [weak self, weak popup, weak start, weak end] in
             guard let selection = popup?.selectedRepresentedObject as? String else { return }
             if selection == "all" {
                 self?.apply(SemanticJoboptions.changePageSelection(.all))
-            } else if selection == "range",
-                      let first = Int(start?.stringValue ?? ""),
-                      let last = Int(end?.stringValue ?? "") {
+                start?.stringValue = "1"
+                end?.stringValue = "-1"
+            } else if selection == "range" {
+                let first = max(Int(start?.stringValue ?? "") ?? 1, 1)
+                let parsedLast = Int(end?.stringValue ?? "") ?? first
+                let last = max(parsedLast, first)
+                start?.stringValue = String(first)
+                end?.stringValue = String(last)
                 self?.apply(SemanticJoboptions.changePageSelection(.range(start: first, end: last)))
             }
         }
-        let controls = NSStackView(views: [popup, start, text(String(localized: "to")), end, applyButton])
+        let controls = NSStackView(views: [popup, start, text(String(localized: "to")), end])
         controls.orientation = .horizontal
         controls.spacing = 6
         return labeledRow(definition.localizedTitle, controls)
     }
 
     private func makePageSizeEditor(_ definition: DistillerOptionDefinition) -> NSView {
-        let value = SemanticJoboptions.pageSize(in: session.document)
-        let width = CommitTextField(numberText(value?.widthInPoints))
-        let height = CommitTextField(numberText(value?.heightInPoints))
+        let values = rawArrayTexts(key: "PageSize", count: 2)
+        let width = CommitTextField(values[0])
+        let height = CommitTextField(values[1])
         let unit = ActionPopUpButton()
         for choice in SemanticJoboptions.MeasurementUnit.allCases {
             let title: String = switch choice {
@@ -554,12 +569,13 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             }
             unit.addItem(withTitle: title, representedObject: choice.rawValue)
         }
-        let applyButton = ActionButton(title: String(localized: "Apply")) { [weak self, weak width, weak height, weak unit] in
+        let commit = { [weak self, weak width, weak height, weak unit] () -> Bool in
             guard let widthValue = Double(width?.stringValue ?? ""),
                   let heightValue = Double(height?.stringValue ?? ""),
+                  widthValue > 0, heightValue > 0,
                   let raw = unit?.selectedRepresentedObject as? String,
                   let selectedUnit = SemanticJoboptions.MeasurementUnit(rawValue: raw)
-            else { return }
+            else { return false }
             self?.apply(
                 SemanticJoboptions.changePageSize(
                     width: widthValue,
@@ -567,8 +583,12 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                     unit: selectedUnit
                 )
             )
+            return true
         }
-        let controls = NSStackView(views: [unit, width, text(String(localized: "×")), height, applyButton])
+        width.setCommitHandler { _ in commit() }
+        height.setCommitHandler { _ in commit() }
+        unit.onSelection = { _ = commit() }
+        let controls = NSStackView(views: [unit, width, text(String(localized: "×")), height])
         controls.orientation = .horizontal
         controls.spacing = 6
         return labeledRow(definition.localizedTitle, controls)
@@ -586,8 +606,12 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                 representedObject: mode.rawValue
             )
         }
-        let resolution = CommitTextField("")
-        let threshold = CommitTextField("")
+        let prefix = kind.rawValue
+        let rawMode = session.document.value(forKey: "\(prefix)ImageDownsampleType")?.textualValue
+        let rawResolution = session.document.value(forKey: "\(prefix)ImageResolution")
+        let rawThreshold = session.document.value(forKey: "\(prefix)ImageDownsampleThreshold")
+        let resolution = CommitTextField(rawResolution?.textualValue ?? rawResolution?.postScript ?? "")
+        let threshold = CommitTextField(rawThreshold?.textualValue ?? rawThreshold?.postScript ?? "")
         switch SemanticJoboptions.downsampling(in: session.document, kind: kind) {
         case .off:
             popup.selectRepresentedObject("off")
@@ -596,38 +620,44 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             resolution.stringValue = String(selectedResolution)
             threshold.stringValue = numberText(selectedThreshold)
         case .custom:
-            popup.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            popup.addItem(
+                withTitle: String.localizedStringWithFormat(
+                    String(localized: "Custom: %@"), rawMode ?? String(localized: "Not set")
+                ),
+                representedObject: "custom"
+            )
             popup.selectRepresentedObject("custom")
         }
-        let applyButton = ActionButton(title: String(localized: "Apply")) { [weak self, weak popup, weak resolution, weak threshold] in
+        resolution.setCommitHandler { [weak self] text in
+            guard let value = Int(text), (1...9_600).contains(value) else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/\(prefix)ImageResolution", .number(Double(value), original: String(value)))
+            ]))
+            return true
+        }
+        threshold.setCommitHandler { [weak self] text in
+            guard let value = Double(text), (1...10).contains(value) else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/\(prefix)ImageDownsampleThreshold", .number(value, original: text))
+            ]))
+            return true
+        }
+        popup.onSelection = { [weak self, weak popup] in
             guard let selected = popup?.selectedRepresentedObject as? String else { return }
             if selected == "off" {
-                self?.apply(
-                    SemanticJoboptions.changeDownsampling(
-                        kind: kind,
-                        enabled: false,
-                        mode: .bicubic,
-                        resolution: 300,
-                        threshold: 1.5
-                    )
-                )
-            } else if let mode = SemanticJoboptions.DownsamplingMode(rawValue: selected),
-                      let resolutionValue = Int(resolution?.stringValue ?? ""),
-                      let thresholdValue = Double(threshold?.stringValue ?? "") {
-                self?.apply(
-                    SemanticJoboptions.changeDownsampling(
-                        kind: kind,
-                        enabled: true,
-                        mode: mode,
-                        resolution: resolutionValue,
-                        threshold: thresholdValue
-                    )
-                )
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/Downsample\(prefix)Images", .boolean(false))
+                ]))
+            } else if let mode = SemanticJoboptions.DownsamplingMode(rawValue: selected) {
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/Downsample\(prefix)Images", .boolean(true)),
+                    JoboptionsChange("/\(prefix)ImageDownsampleType", .name(mode.rawValue))
+                ]))
             }
         }
         let controls = NSStackView(views: [
             popup, resolution, text(String(localized: "ppi")),
-            text(String(localized: "above")), threshold, applyButton
+            text(String(localized: "above")), threshold
         ])
         controls.orientation = .horizontal
         controls.spacing = 6
@@ -662,7 +692,19 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         if choices.contains(where: { $0.1 == selectedCompression }) {
             popup.selectRepresentedObject(selectedCompression)
         } else {
-            popup.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            let prefix = kind.rawValue
+            let parts = [
+                session.document.value(forKey: "Encode\(prefix)Images")?.postScript,
+                session.document.value(forKey: "AutoFilter\(prefix)Images")?.postScript,
+                session.document.value(forKey: "\(prefix)ImageFilter")?.postScript
+            ].compactMap { $0 }.joined(separator: ", ")
+            popup.addItem(
+                withTitle: String.localizedStringWithFormat(
+                    String(localized: "Custom: %@"),
+                    parts.isEmpty ? String(localized: "Not set") : parts
+                ),
+                representedObject: "custom"
+            )
             popup.selectRepresentedObject("custom")
         }
 
@@ -675,31 +717,66 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         if qualityChoices.contains(currentQuality) {
             quality.selectRepresentedObject(currentQuality)
         } else {
-            quality.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            let rawQuality = activeQualityValue(in: session.document, kind: kind, compression: configuration.compression)
+            let title = rawQuality.map {
+                String.localizedStringWithFormat(String(localized: "Custom: %@"), numberText($0))
+            } ?? String(localized: "Not set")
+            quality.addItem(withTitle: title, representedObject: "custom")
             quality.selectRepresentedObject("custom")
         }
-        quality.isHidden = kind == .monochrome
+        let prefix = kind.rawValue
+        let rawJPXQuality = session.document.value(
+            forPath: "/JPEG2000\(prefix)ImageDict /Quality"
+        )
+        let jpxQuality = CommitTextField(
+            rawJPXQuality?.textualValue ?? rawJPXQuality?.postScript ?? ""
+        ) { [weak self] text in
+            guard let value = Double(text), (0...100).contains(value) else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange(
+                    "/JPEG2000\(prefix)ImageDict /Quality",
+                    .number(value, original: text)
+                )
+            ]))
+            return true
+        }
+        jpxQuality.placeholderString = rawJPXQuality == nil ? String(localized: "Not set") : nil
+        let showsJPXQuality = configuration.compression == .jpeg2000
+        quality.isHidden = kind == .monochrome || showsJPXQuality
+        jpxQuality.isHidden = kind == .monochrome || !showsJPXQuality
 
-        let applyButton = ActionButton(title: String(localized: "Apply")) { [weak self, weak popup, weak quality] in
-            guard let self else { return }
-            guard let rawCompression = popup?.selectedRepresentedObject as? String,
-                  let compression = self.compressionValue(rawCompression)
+        popup.onSelection = { [weak self, weak popup, weak quality] in
+            guard let self,
+                  let rawCompression = popup?.selectedRepresentedObject as? String,
+                  let compression = compressionValue(rawCompression)
             else { return }
-            let selectedQuality: SemanticJoboptions.ImageQuality?
-            if let rawQuality = quality?.selectedRepresentedObject as? String {
-                selectedQuality = self.qualityValue(rawQuality)
-            } else {
-                selectedQuality = nil
-            }
-            self.apply(
+            let selectedQuality = (quality?.selectedRepresentedObject as? String)
+                .flatMap(qualityValue)
+            apply(
                 SemanticJoboptions.changeCompression(
                     kind: kind,
                     compression: compression,
                     quality: selectedQuality
                 )
             )
+            buildSelectedCategory()
         }
-        let controls = NSStackView(views: [popup, quality, applyButton])
+        quality.onSelection = { [weak self, weak quality] in
+            guard let self,
+                  let rawQuality = quality?.selectedRepresentedObject as? String,
+                  let selectedQuality = qualityValue(rawQuality)
+            else { return }
+            let compression = SemanticJoboptions.imageCompression(
+                in: session.document, kind: kind
+            ).compression
+            guard compression == .automaticJPEG || compression == .jpeg else { return }
+            apply(SemanticJoboptions.changeCompression(
+                kind: kind,
+                compression: compression,
+                quality: selectedQuality
+            ))
+        }
+        let controls = NSStackView(views: [popup, quality, jpxQuality])
         controls.orientation = .horizontal
         controls.spacing = 6
         return labeledRow(definition.localizedTitle, controls)
@@ -720,7 +797,16 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         case let .depth(depth):
             popup.selectRepresentedObject(String(depth))
         case .custom:
-            popup.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            let enabled = session.document.value(forKey: "AntiAliasMonoImages")?.postScript
+                ?? String(localized: "Not set")
+            let depth = session.document.value(forKey: "MonoImageDepth")?.postScript
+                ?? String(localized: "Not set")
+            popup.addItem(
+                withTitle: String.localizedStringWithFormat(
+                    String(localized: "Custom: %@"), "\(enabled), \(depth)"
+                ),
+                representedObject: "custom"
+            )
             popup.selectRepresentedObject("custom")
         }
         popup.onSelection = { [weak self, weak popup] in
@@ -737,7 +823,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     private func makeDistillerOverridesEditor(_ definition: DistillerOptionDefinition) -> NSView {
         ActionButton.checkbox(
             title: definition.localizedTitle,
-            state: SemanticJoboptions.allowsDistillerOverrides(in: session.document)
+            state: session.document.value(forKey: "LockDistillerParams")?.boolValue.map { !$0 }
         ) { [weak self] allows in
             self?.apply(SemanticJoboptions.changeAllowsDistillerOverrides(allows))
         }
@@ -745,12 +831,22 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     private func makeStandardEditor(_ definition: DistillerOptionDefinition) -> NSView {
         let popup = ActionPopUpButton()
+        let rawStandard = session.document.value(forKey: "iPS2PDFStandard")?.textualValue
+        if rawStandard == nil {
+            popup.addItem(withTitle: String(localized: "Not set"), representedObject: "__not_set__")
+        } else if let rawStandard, PDFStandard(rawValue: rawStandard) == nil {
+            popup.addItem(
+                withTitle: String.localizedStringWithFormat(String(localized: "Custom: %@"), rawStandard),
+                representedObject: "__custom__"
+            )
+        }
         for standard in PDFStandard.allCases {
             popup.addItem(withTitle: standard.title, representedObject: standard.rawValue)
         }
-        popup.selectRepresentedObject(
-            session.document.value(forKey: "iPS2PDFStandard")?.textualValue ?? PDFStandard.none.rawValue
-        )
+        popup.selectRepresentedObject(rawStandard ?? "__not_set__")
+        if let rawStandard, PDFStandard(rawValue: rawStandard) == nil {
+            popup.selectRepresentedObject("__custom__")
+        }
         popup.onSelection = { [weak self, weak popup] in
             guard let raw = popup?.selectedRepresentedObject as? String,
                   let standard = PDFStandard(rawValue: raw)
@@ -776,11 +872,19 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             trimPopup.selectRepresentedObject("media")
             trimOffsets = offsets
         case .trimBox, .custom:
-            trimPopup.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            let raw = session.document.value(forKey: "PDFXNoTrimBoxError")?.postScript
+                ?? String(localized: "Not set")
+            trimPopup.addItem(
+                withTitle: String.localizedStringWithFormat(String(localized: "Custom: %@"), raw),
+                representedObject: "custom"
+            )
             trimPopup.selectRepresentedObject("custom")
-            trimOffsets = [0, 0, 0, 0]
+            trimOffsets = rawArrayNumbers(key: "PDFXTrimBoxToMediaBoxOffset", count: 4)
         }
-        let trimFields = offsetFields(values: trimOffsets)
+        let trimFields = offsetFields(
+            texts: rawArrayTexts(key: "PDFXTrimBoxToMediaBoxOffset", count: 4),
+            fallbackValues: trimOffsets
+        )
 
         let bleedPopup = ActionPopUpButton()
         bleedPopup.addItem(withTitle: String(localized: "Use media box"), representedObject: "media")
@@ -796,33 +900,60 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             bleedPopup.selectRepresentedObject("trim")
             bleedOffsets = offsets
         case .error, .custom:
-            bleedPopup.addItem(withTitle: String(localized: "Custom (preserved)"), representedObject: "custom")
+            let raw = session.document.value(forKey: "PDFXSetBleedBoxToMediaBox")?.postScript
+                ?? String(localized: "Not set")
+            bleedPopup.addItem(
+                withTitle: String.localizedStringWithFormat(String(localized: "Custom: %@"), raw),
+                representedObject: "custom"
+            )
             bleedPopup.selectRepresentedObject("custom")
-            bleedOffsets = [0, 0, 0, 0]
+            bleedOffsets = rawArrayNumbers(key: "PDFXBleedBoxToTrimBoxOffset", count: 4)
         }
-        let bleedFields = offsetFields(values: bleedOffsets)
+        let bleedFields = offsetFields(
+            texts: rawArrayTexts(key: "PDFXBleedBoxToTrimBoxOffset", count: 4),
+            fallbackValues: bleedOffsets
+        )
 
-        let applyButton = ActionButton(title: String(localized: "Apply")) { [weak self, weak trimPopup, weak bleedPopup] in
-            let trim: SemanticJoboptions.PDFXBoxRule
-            if trimPopup?.selectedRepresentedObject as? String == "error" {
-                trim = .error
-            } else if trimPopup?.selectedRepresentedObject as? String == "media",
-                      let values = self?.offsetValues(trimFields) {
-                trim = .mediaBox(offsets: values)
-            } else {
-                trim = .custom
+        trimPopup.onSelection = { [weak self, weak trimPopup] in
+            guard let value = trimPopup?.selectedRepresentedObject as? String else { return }
+            if value == "error" {
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/PDFXNoTrimBoxError", .boolean(true))
+                ]))
+            } else if value == "media" {
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/PDFXNoTrimBoxError", .boolean(false))
+                ]))
             }
-            let bleed: SemanticJoboptions.PDFXBoxRule
-            if bleedPopup?.selectedRepresentedObject as? String == "media" {
-                bleed = .mediaBox(offsets: [0, 0, 0, 0])
-            } else if bleedPopup?.selectedRepresentedObject as? String == "trim",
-                      let values = self?.offsetValues(bleedFields) {
-                bleed = .trimBox(offsets: values)
-            } else {
-                bleed = .custom
-            }
-            self?.apply(SemanticJoboptions.changePDFXBoxRules(trim: trim, bleed: bleed))
         }
+        bleedPopup.onSelection = { [weak self, weak bleedPopup] in
+            guard let value = bleedPopup?.selectedRepresentedObject as? String else { return }
+            if value == "media" {
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/PDFXSetBleedBoxToMediaBox", .boolean(true))
+                ]))
+            } else if value == "trim" {
+                self?.apply(JoboptionsChangeSet([
+                    JoboptionsChange("/PDFXSetBleedBoxToMediaBox", .boolean(false))
+                ]))
+            }
+        }
+        let commitTrimOffsets = { [weak self] () -> Bool in
+            guard let values = self?.offsetValues(trimFields) else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/PDFXTrimBoxToMediaBoxOffset", self?.offsetArray(values) ?? .array([]))
+            ]))
+            return true
+        }
+        let commitBleedOffsets = { [weak self] () -> Bool in
+            guard let values = self?.offsetValues(bleedFields) else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/PDFXBleedBoxToTrimBoxOffset", self?.offsetArray(values) ?? .array([]))
+            ]))
+            return true
+        }
+        trimFields.forEach { $0.setCommitHandler { _ in commitTrimOffsets() } }
+        bleedFields.forEach { $0.setCommitHandler { _ in commitBleedOffsets() } }
 
         let trimRow = pdfXBoxRuleRow(
             title: String(localized: "Trim box"),
@@ -834,13 +965,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             popup: bleedPopup,
             fields: bleedFields
         )
-        let buttonRow = NSStackView(views: [NSView(), applyButton])
-        buttonRow.orientation = .horizontal
-        buttonRow.spacing = 6
-        buttonRow.distribution = .fill
-        buttonRow.views[0].setContentHuggingPriority(.defaultLow, for: .horizontal)
-
-        let rows = NSStackView(views: [trimRow, bleedRow, buttonRow])
+        let rows = NSStackView(views: [trimRow, bleedRow])
         rows.orientation = .vertical
         rows.alignment = .leading
         rows.distribution = .fill
@@ -848,7 +973,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         rows.setContentHuggingPriority(.defaultLow, for: .horizontal)
         rows.setContentCompressionResistancePriority(.required, for: .vertical)
         rows.widthAnchor.constraint(greaterThanOrEqualToConstant: 620).isActive = true
-        declareMinimumHeight(24 * 3 + rows.spacing * 2, for: rows)
+        declareMinimumHeight(24 * 2 + rows.spacing, for: rows)
         return rows
     }
 
@@ -890,8 +1015,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         var appRows: [NSView] = [embedOutputIntentProfile, limits, automatic]
         if !session.automaticRandomSeed {
             let seed = CommitTextField(String(session.manualRandomSeed)) { [weak self] text in
-                guard let value = Int(text) else { return }
+                guard let value = Int(text) else { return false }
                 self?.session.setManualRandomSeed(value)
+                return true
             }
             appRows.append(labeledRow(String(localized: "Seed"), seed))
         }
@@ -960,6 +1086,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             default:
                 let field = CommitTextField(value.postScript) { [weak self] raw in
                     self?.apply(JoboptionsChangeSet([JoboptionsChange("/\(key)", .raw(raw))]))
+                    return true
                 }
                 field.font = .monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
                 row = labeledRow(technicalName, field)
@@ -971,10 +1098,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     private func makeProfileEditor(_ definition: DistillerOptionDefinition) -> NSView {
         let popup = ActionPopUpButton()
-        let document = definition.category == .standards
-            ? session.effectiveDisplayDocument
-            : session.document
-        let current = document.value(forKey: definition.key)?.textualValue ?? ""
+        let storedValue = session.document.value(forKey: definition.key)
+        let current = storedValue?.textualValue ?? ""
         let profiles = repository.profiles.filter { profile in
             switch definition.key {
             case "CalGrayProfile": profile.colorSpace == "GRAY"
@@ -985,7 +1110,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             default: true
             }
         }
-        if !current.isEmpty, !profiles.contains(where: { $0.matches(current) }) {
+        if storedValue == nil {
+            popup.addItem(withTitle: String(localized: "Not set"), representedObject: "__not_set__")
+        } else if !current.isEmpty, !profiles.contains(where: { $0.name == current }) {
             popup.addItem(withTitle: String.localizedStringWithFormat(
                 String(localized: "Custom: %@"), current
             ), representedObject: current)
@@ -994,10 +1121,10 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         for profile in profiles {
             popup.addItem(withTitle: profile.name, representedObject: profile.name)
         }
-        let selected = profiles.first { $0.matches(current) }?.name ?? current
-        popup.selectRepresentedObject(selected)
+        popup.selectRepresentedObject(storedValue == nil ? "__not_set__" : current)
         popup.onSelection = { [weak self, weak popup] in
             guard let name = popup?.selectedRepresentedObject as? String else { return }
+            guard name != "__not_set__" else { return }
             self?.apply(JoboptionsChangeSet([
                 JoboptionsChange("/\(definition.key)", .string(name))
             ]))
@@ -1013,7 +1140,12 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         onSelection: @escaping (String) -> Void
     ) -> NSView {
         let popup = ActionPopUpButton()
-        if let selected, !choices.contains(selected) {
+        if selected == nil {
+            popup.addItem(
+                withTitle: String(localized: "Not set"),
+                representedObject: "__not_set__"
+            )
+        } else if let selected, !choices.contains(selected) {
             popup.addItem(
                 withTitle: String.localizedStringWithFormat(String(localized: "Custom: %@"), selected),
                 representedObject: selected
@@ -1025,26 +1157,13 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                 representedObject: choice
             )
         }
-        if let selected { popup.selectRepresentedObject(selected) }
+        popup.selectRepresentedObject(selected ?? "__not_set__")
         popup.onSelection = { [weak popup] in
             guard let value = popup?.selectedRepresentedObject as? String else { return }
+            guard value != "__not_set__" else { return }
             onSelection(value)
         }
         return labeledRow(title, popup)
-    }
-
-    private func makePreserveNameCheckbox(
-        _ definition: DistillerOptionDefinition,
-        selected: String?
-    ) -> NSView {
-        ActionButton.checkbox(
-            title: definition.localizedTitle,
-            state: selected == "Preserve"
-        ) { [weak self] isPreserved in
-            self?.apply(JoboptionsChangeSet([
-                JoboptionsChange("/\(definition.key)", .name(isPreserved ? "Preserve" : "Remove"))
-            ]))
-        }
     }
 
     private func makeSection(title: String, rows: [NSView]) -> NSView {
@@ -1148,7 +1267,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         policyWindowController = windowController
         controller.onFinish = { [weak self, weak parent, weak window] changes in
             guard let self else { return }
-            if let changes { apply(changes) }
+            if let changes, !changes.changes.isEmpty { apply(changes) }
             if let parent, let window { parent.endSheet(window) }
             policyWindowController = nil
         }
@@ -1177,6 +1296,35 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             changes()
             banner.isHidden = !shouldShow
         }
+    }
+
+    private func registerConsistencyHighlight(_ view: NSView, paths: [JoboptionsKeyPath]) {
+        view.wantsLayer = true
+        view.layer?.cornerRadius = 6
+        highlightRegistrations.append((view, paths))
+    }
+
+    private func updateConsistencyHighlights() {
+        let index = JoboptionsConsistencyIssueIndex(session.issues)
+        let isDark = view.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let color = isDark
+            ? NSColor(calibratedRed: 0.46, green: 0.29, blue: 0.07, alpha: 0.72)
+            : NSColor(calibratedRed: 1.0, green: 0.86, blue: 0.48, alpha: 0.58)
+        for registration in highlightRegistrations {
+            registration.view.layer?.backgroundColor = index.affects(any: registration.paths)
+                ? color.cgColor
+                : NSColor.clear.cgColor
+        }
+    }
+
+    private func validateVisibleTextFields() -> Bool {
+        let fields = controls(in: view).compactMap { $0 as? CommitTextField }
+        let invalid = fields.filter { !$0.validateCurrentValue() }
+        if let first = invalid.first {
+            first.window?.makeFirstResponder(first)
+            NSSound.beep()
+        }
+        return invalid.isEmpty
     }
 
     private func setBannerHeight(_ height: CGFloat) {
@@ -1358,13 +1506,57 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         }
     }
 
-    private func offsetFields(values: [Double]) -> [CommitTextField] {
-        return (0..<4).map { CommitTextField(numberText(values.indices.contains($0) ? values[$0] : 0)) }
+    private func rawArrayTexts(key: String, count: Int) -> [String] {
+        guard let value = session.document.value(forKey: key) else {
+            return Array(repeating: "", count: count)
+        }
+        guard case let .array(values) = value else {
+            return [value.postScript] + Array(repeating: "", count: max(count - 1, 0))
+        }
+        return (0..<count).map { index in
+            guard values.indices.contains(index) else { return "" }
+            return values[index].textualValue ?? values[index].postScript
+        }
+    }
+
+    private func rawArrayNumbers(key: String, count: Int) -> [Double] {
+        guard case let .array(values) = session.document.value(forKey: key) else { return [] }
+        let numbers = values.compactMap(\.numberValue)
+        return numbers.count == count ? numbers : []
+    }
+
+    private func offsetFields(texts: [String], fallbackValues: [Double]) -> [CommitTextField] {
+        (0..<4).map { index in
+            let fallback = fallbackValues.indices.contains(index) ? numberText(fallbackValues[index]) : ""
+            return CommitTextField(texts.indices.contains(index) && !texts[index].isEmpty ? texts[index] : fallback)
+        }
     }
 
     private func offsetValues(_ fields: [CommitTextField]) -> [Double]? {
         let values = fields.compactMap { Double($0.stringValue) }
         return values.count == 4 ? values : nil
+    }
+
+    private func offsetArray(_ values: [Double]) -> JoboptionsValue {
+        .array(values.map { .number($0, original: numberText($0)) })
+    }
+
+    private func activeQualityValue(
+        in document: LosslessJoboptionsDocument,
+        kind: SemanticJoboptions.ImageKind,
+        compression: SemanticJoboptions.ImageCompression
+    ) -> Double? {
+        let prefix = kind.rawValue
+        return switch compression {
+        case .automaticJPEG:
+            document.value(forPath: "/\(prefix)ACSImageDict /QFactor")?.numberValue
+        case .jpeg:
+            document.value(forPath: "/\(prefix)ImageDict /QFactor")?.numberValue
+        case .jpeg2000:
+            document.value(forPath: "/JPEG2000\(prefix)ImageDict /Quality")?.numberValue
+        default:
+            nil
+        }
     }
 
     private func numberText(_ value: Double?) -> String {
@@ -1415,12 +1607,13 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
         static func checkbox(
             title: String,
-            state: Bool,
+            state: Bool?,
             action: @escaping (Bool) -> Void
         ) -> ActionButton {
             let button = ActionButton(title: title) {}
             button.setButtonType(.switch)
-            button.state = state ? .on : .off
+            button.allowsMixedState = true
+            button.state = state.map { $0 ? .on : .off } ?? .mixed
             button.actionHandler = { [weak button] in action(button?.state == .on) }
             return button
         }
@@ -1457,9 +1650,11 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private final class CommitTextField: NSTextField, NSTextFieldDelegate {
-        private var commitHandler: ((String) -> Void)?
+        private var commitHandler: ((String) -> Bool)?
+        private(set) var isCurrentValueValid = true
+        private var hasUserEdited = false
 
-        init(_ value: String, commit: ((String) -> Void)? = nil) {
+        init(_ value: String, commit: ((String) -> Bool)? = nil) {
             commitHandler = commit
             super.init(frame: .zero)
             stringValue = value
@@ -1472,12 +1667,29 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         @available(*, unavailable)
         required init?(coder: NSCoder) { nil }
 
+        func setCommitHandler(_ handler: @escaping (String) -> Bool) {
+            commitHandler = handler
+        }
+
+        func controlTextDidChange(_ obj: Notification) {
+            hasUserEdited = true
+            _ = validateCurrentValue()
+        }
+
         func controlTextDidEndEditing(_ obj: Notification) {
-            commitHandler?(stringValue)
+            _ = validateCurrentValue()
         }
 
         @objc private func commitAction(_ sender: Any?) {
-            commitHandler?(stringValue)
+            _ = validateCurrentValue()
+        }
+
+        @discardableResult
+        func validateCurrentValue() -> Bool {
+            guard hasUserEdited else { return true }
+            isCurrentValueValid = commitHandler?(stringValue) ?? true
+            backgroundColor = isCurrentValueValid ? .textBackgroundColor : .systemRed.withAlphaComponent(0.16)
+            return isCurrentValueValid
         }
     }
 

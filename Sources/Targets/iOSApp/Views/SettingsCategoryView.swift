@@ -85,8 +85,17 @@ struct SettingsCategoryView: View {
     private var standardSection: some View {
         Section("PDF standard") {
             Picker("Conformance", selection: standardBinding) {
+                if let raw = repository.activeDocument?
+                    .value(forKey: "iPS2PDFStandard")?.textualValue,
+                   PDFStandard(rawValue: raw) == nil {
+                    Text(String.localizedStringWithFormat(
+                        String(localized: "Custom: %@"), raw
+                    )).tag(Optional<PDFStandard>.none)
+                } else if repository.activeDocument?.value(forKey: "iPS2PDFStandard") == nil {
+                    Text(String(localized: "Not set")).tag(Optional<PDFStandard>.none)
+                }
                 ForEach(PDFStandard.allCases) { standard in
-                    Text(standard.title).tag(standard)
+                    Text(standard.title).tag(Optional(standard))
                 }
             }
             .pickerStyle(.menu)
@@ -190,10 +199,16 @@ struct SettingsCategoryView: View {
             .sorted()
     }
 
-    private var standardBinding: Binding<PDFStandard> {
+    private var standardBinding: Binding<PDFStandard?> {
         Binding(
-            get: { repository.activeStandard },
+            get: {
+                guard let raw = repository.activeDocument?
+                    .value(forKey: "iPS2PDFStandard")?.textualValue
+                else { return nil }
+                return PDFStandard(rawValue: raw)
+            },
             set: { standard in
+                guard let standard else { return }
                 do {
                     let showsNotice = try repository.setStandard(standard)
                     if showsNotice {

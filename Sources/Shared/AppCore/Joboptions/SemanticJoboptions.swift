@@ -300,11 +300,10 @@ struct SemanticJoboptions: Sendable {
         }
 
         if kind != .monochrome, let qFactor = quality?.qFactor {
-            let value = decimal(qFactor)
-            changes += [
-                JoboptionsChange("/\(prefix)ACSImageDict /QFactor", value),
-                JoboptionsChange("/\(prefix)ImageDict /QFactor", value)
-            ]
+            let path = compression == .automaticJPEG
+                ? "/\(prefix)ACSImageDict /QFactor"
+                : "/\(prefix)ImageDict /QFactor"
+            changes.append(JoboptionsChange(path, decimal(qFactor)))
         }
         return JoboptionsChangeSet(changes)
     }
@@ -331,7 +330,17 @@ struct SemanticJoboptions: Sendable {
             default: compression = .custom(encode: encode, automatic: automatic, filter: filter)
             }
         }
-        let qFactor = document.value(forPath: "/\(prefix)ImageDict /QFactor")?.numberValue
+        let qFactor: Double?
+        switch compression {
+        case .automaticJPEG:
+            qFactor = document.value(forPath: "/\(prefix)ACSImageDict /QFactor")?.numberValue
+        case .jpeg:
+            qFactor = document.value(forPath: "/\(prefix)ImageDict /QFactor")?.numberValue
+        case .jpeg2000:
+            qFactor = document.value(forPath: "/JPEG2000\(prefix)ImageDict /Quality")?.numberValue
+        default:
+            qFactor = nil
+        }
         return ImageCompressionConfiguration(
             compression: compression,
             quality: imageQuality(qFactor)
@@ -409,9 +418,16 @@ struct SemanticJoboptions: Sendable {
 
     static func changeStandard(
         _ standard: PDFStandard,
-        in _: LosslessJoboptionsDocument
+        in document: LosslessJoboptionsDocument
     ) -> JoboptionsChangeSet {
-        changeStandard(standard)
+        var changes = [JoboptionsChange("/iPS2PDFStandard", .name(standard.rawValue))]
+        if standard.isPDFX, needsDefaultPDFXOutputIntentProfile(in: document) {
+            changes.append(JoboptionsChange(
+                "/PDFXOutputIntentProfile",
+                .string(defaultPDFXOutputIntentProfile)
+            ))
+        }
+        return JoboptionsChangeSet(changes)
     }
 
     static func embedsOutputIntentProfile(in document: LosslessJoboptionsDocument) -> Bool {

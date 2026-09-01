@@ -101,7 +101,6 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
 
         XCTAssertEqual(document.data, original)
         XCTAssertEqual(issues.first?.path.description, "/CompatibilityLevel")
-        XCTAssertTrue(issues.allSatisfy(\.isAutomaticallyRepairable))
         XCTAssertTrue(issues.contains { $0.path.description == "/AllowTransparency" })
 
         let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
@@ -128,14 +127,13 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         let profileIssue = try XCTUnwrap(
             issues.first { $0.path.description == "/PDFXOutputIntentProfile" }
         )
-        XCTAssertTrue(profileIssue.isAutomaticallyRepairable)
-        XCTAssertEqual(profileIssue.proposedValue?.textualValue, "Generic CMYK Profile")
+        XCTAssertEqual(profileIssue.proposedValue.textualValue, "Generic CMYK Profile")
 
         let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
         XCTAssertEqual(effective.value(forKey: "PDFXOutputIntentProfile")?.textualValue, "Generic CMYK Profile")
     }
 
-    func testPDFXWithoutGenericCMYKProfileRemainsUnresolved() throws {
+    func testPDFXWithoutDiscoverableGenericCMYKProfileStillUsesBundledDefault() throws {
         let document = try LosslessJoboptionsDocument(data: Data("""
         << /iPS2PDFStandard /pdfx1 /CompatibilityLevel 1.4 /PDFXOutputIntentProfile () >> setdistillerparams
         """.utf8))
@@ -147,8 +145,110 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         let profileIssue = try XCTUnwrap(
             issues.first { $0.path.description == "/PDFXOutputIntentProfile" }
         )
-        XCTAssertFalse(profileIssue.isAutomaticallyRepairable)
-        XCTAssertNil(profileIssue.proposedValue)
+        XCTAssertEqual(
+            profileIssue.proposedValue.textualValue,
+            SemanticJoboptions.defaultPDFXOutputIntentProfile
+        )
+        XCTAssertNoThrow(
+            try JoboptionsConsistencyEngine.effectiveDocument(from: document, context: context)
+        )
+    }
+
+    func testIncompleteCompoundSettingsReceiveDeterministicRepairs() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfx4
+          /CompatibilityLevel 1.7
+          /PDFXOutputIntentProfile (Generic CMYK Profile)
+          /StartPage 9
+          /EndPage 3
+          /HWResolution [2400]
+          /PageSize [0 842]
+          /DownsampleColorImages true
+          /ColorImageDownsampleType /VendorMode
+          /ColorImageResolution 300
+          /ColorImageDownsampleThreshold 1.5
+          /EncodeGrayImages true
+          /AutoFilterGrayImages false
+          /GrayImageFilter /DCTEncode
+          /GrayImageDict << >>
+          /MonoImageMinResolution /Invalid
+          /MonoImageMinResolutionPolicy /VendorPolicy
+          /AntiAliasMonoImages true
+          /MonoImageDepth 3
+          /PDFXNoTrimBoxError false
+          /PDFXTrimBoxToMediaBoxOffset [0 0]
+          /PDFXSetBleedBoxToMediaBox false
+          /PDFXBleedBoxToTrimBoxOffset [0 0]
+          /VendorSetting (preserved)
+        >> setdistillerparams
+        """.utf8))
+
+        let issues = JoboptionsConsistencyEngine.issues(in: document)
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document)
+
+        XCTAssertFalse(issues.isEmpty)
+        XCTAssertEqual(effective.value(forKey: "StartPage")?.numberValue, 1)
+        XCTAssertEqual(effective.value(forKey: "EndPage")?.numberValue, -1)
+        XCTAssertEqual(effective.value(forKey: "HWResolution")?.postScript, "[2400 2400]")
+        XCTAssertEqual(effective.value(forKey: "PageSize")?.postScript, "[595.276 841.89]")
+        XCTAssertEqual(effective.value(forKey: "DownsampleColorImages")?.boolValue, false)
+        XCTAssertEqual(effective.value(forPath: "/GrayImageDict /QFactor")?.numberValue, 0.76)
+        XCTAssertEqual(effective.value(forKey: "MonoImageMinResolution")?.numberValue, 1_200)
+        XCTAssertEqual(effective.value(forKey: "MonoImageMinResolutionPolicy")?.textualValue, "OK")
+        XCTAssertEqual(effective.value(forKey: "AntiAliasMonoImages")?.boolValue, false)
+        XCTAssertEqual(effective.value(forKey: "PDFXNoTrimBoxError")?.boolValue, false)
+        XCTAssertEqual(effective.value(forKey: "PDFXTrimBoxToMediaBoxOffset")?.postScript, "[0 0 0 0]")
+        XCTAssertEqual(effective.value(forKey: "PDFXSetBleedBoxToMediaBox")?.boolValue, true)
+        XCTAssertEqual(effective.value(forKey: "VendorSetting")?.textualValue, "preserved")
+    }
+
+    func testInactiveCompanionValuesArePreserved() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /DownsampleColorImages false
+          /ColorImageDownsampleType /VendorMode
+          /ColorImageResolution /Invalid
+          /ColorImageDownsampleThreshold /Invalid
+          /EncodeColorImages false
+          /ColorImageFilter /VendorFilter
+          /ColorACSImageDict << /QFactor /Invalid >>
+          /ColorImageDict << /QFactor /Invalid >>
+          /AntiAliasMonoImages false
+          /MonoImageDepth 3
+        >> setdistillerparams
+        """.utf8))
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document)
+
+        XCTAssertEqual(effective.data, document.data)
+    }
+
+    func testAutomaticRepairCreatesMissingActiveQualityDictionary() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /EncodeColorImages true
+          /AutoFilterColorImages true
+          /ColorImageFilter /DCTEncode
+        >> setdistillerparams
+        """.utf8))
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document)
+
+        XCTAssertEqual(effective.value(forPath: "/ColorACSImageDict /QFactor")?.numberValue, 0.40)
+    }
+
+    func testIssueIndexTracksAffectedPaths() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        << /StartPage 5 /EndPage 2 >> setdistillerparams
+        """.utf8))
+        let index = JoboptionsConsistencyIssueIndex(
+            JoboptionsConsistencyEngine.issues(in: document)
+        )
+
+        XCTAssertTrue(index.affects(JoboptionsKeyPath("/StartPage")))
+        XCTAssertTrue(index.affects(any: [JoboptionsKeyPath("/Unrelated"), JoboptionsKeyPath("/EndPage")]))
+        XCTAssertFalse(index.affects(JoboptionsKeyPath("/Unrelated")))
     }
 
     func testPDFX1DisablesTransparencyWhenProfileIsSelected() throws {
@@ -227,15 +327,15 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
 
         XCTAssertTrue(issues.contains {
             $0.path.description == "/iPS2PDFEmbedOutputIntentProfile"
-                && $0.proposedValue?.boolValue == true
+                && $0.proposedValue.boolValue == true
         })
         XCTAssertTrue(issues.contains {
             $0.path.description == "/PDFXOutputConditionIdentifier"
-                && $0.proposedValue?.textualValue == "FOGRA51"
+                && $0.proposedValue.textualValue == "FOGRA51"
         })
         XCTAssertTrue(issues.contains {
             $0.path.description == "/PDFXTrapped"
-                && $0.proposedValue?.textualValue == "False"
+                && $0.proposedValue.textualValue == "False"
         })
         XCTAssertEqual(
             effective.value(forKey: "iPS2PDFEmbedOutputIntentProfile")?.boolValue,

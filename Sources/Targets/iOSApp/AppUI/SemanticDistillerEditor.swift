@@ -38,20 +38,34 @@ struct SemanticDistillerEditor: View {
         @ObservedObject var repository: JoboptionsRepository
 
         var body: some View {
-            Toggle(
+            Picker(
                 String(localized: "Allow PostScript files to override PDF settings"),
-                isOn: Binding(
-                    get: {
-                        guard let document = repository.activeDocument else { return false }
-                        return SemanticJoboptions.allowsDistillerOverrides(in: document)
-                    },
-                    set: { allows in
-                        apply(
-                            SemanticJoboptions.changeAllowsDistillerOverrides(allows),
-                            repository: repository
-                        )
-                    }
-                )
+                selection: selection
+            ) {
+                if repository.activeDocument?.value(forKey: "LockDistillerParams")?.boolValue == nil {
+                    Text(String(localized: "Not set")).tag("__not_set__")
+                }
+                Text(DistillerOptionCatalog.localizedChoice("False")).tag("false")
+                Text(DistillerOptionCatalog.localizedChoice("True")).tag("true")
+            }
+            .pickerStyle(.menu)
+        }
+
+        private var selection: Binding<String> {
+            Binding(
+                get: {
+                    guard let locked = repository.activeDocument?
+                        .value(forKey: "LockDistillerParams")?.boolValue
+                    else { return "__not_set__" }
+                    return locked ? "false" : "true"
+                },
+                set: { value in
+                    guard value != "__not_set__" else { return }
+                    apply(
+                        SemanticJoboptions.changeAllowsDistillerOverrides(value == "true"),
+                        repository: repository
+                    )
+                }
             )
         }
     }
@@ -59,36 +73,27 @@ struct SemanticDistillerEditor: View {
     private struct DescriptionEditor: View {
         @ObservedObject var repository: JoboptionsRepository
         @State private var draft = ""
-        @State private var baseline = ""
 
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(String(localized: "Description"))
-                TextField(String(localized: "Description"), text: $draft, axis: .vertical)
+                TextField(String(localized: "Not set"), text: $draft, axis: .vertical)
                     .lineLimit(2...5)
-                if draft != baseline {
-                    Button(String(localized: "Apply description"), action: commit)
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: draft) { _, value in
+                guard let document = repository.activeDocument else { return }
+                apply(
+                    SemanticJoboptions.changeDescription(to: value, in: document),
+                    repository: repository
+                )
+            }
         }
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
             draft = SemanticJoboptions.description(in: document) ?? ""
-            baseline = draft
-        }
-
-        private func commit() {
-            guard let document = repository.activeDocument else { return }
-            guard apply(
-                SemanticJoboptions.changeDescription(to: draft, in: document),
-                repository: repository
-            ) else { return }
-            reload()
         }
     }
 
@@ -96,62 +101,50 @@ struct SemanticDistillerEditor: View {
         @ObservedObject var repository: JoboptionsRepository
         @State private var x = ""
         @State private var y = ""
-        @State private var baselineX = ""
-        @State private var baselineY = ""
 
         var body: some View {
             HStack {
                 TextField(String(localized: "X"), text: $x)
                     .keyboardType(.numberPad)
+                    .invalidDraftStyle(!x.isEmpty && !isValid(x))
                 Text(String(localized: "×"))
                 TextField(String(localized: "Y"), text: $y)
                     .keyboardType(.numberPad)
+                    .invalidDraftStyle(!y.isEmpty && !isValid(y))
                 Text(String(localized: "dpi"))
-                if x != baselineX || y != baselineY {
-                    Button(String(localized: "Apply")) {
-                        guard let xValue = Int(x), let yValue = Int(y),
-                              apply(
-                                  SemanticJoboptions.changeDeviceResolution(x: xValue, y: yValue),
-                                  repository: repository
-                              )
-                        else { return }
-                        reload()
-                    }
-                }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: x) { _, _ in commit() }
+            .onChange(of: y) { _, _ in commit() }
         }
 
         private func reload() {
-            guard let document = repository.activeDocument,
-                  let resolution = SemanticJoboptions.deviceResolution(in: document)
-            else {
-                x = ""
-                y = ""
-                baselineX = ""
-                baselineY = ""
-                return
-            }
-            x = Self.numberText(resolution.x)
-            y = Self.numberText(resolution.y)
-            baselineX = x
-            baselineY = y
+            let values = arrayTexts(repository.activeDocument?.value(forKey: "HWResolution"), count: 2)
+            x = values[0]
+            y = values[1]
         }
 
-        private static func numberText(_ value: Double) -> String {
-            value.rounded() == value ? String(Int(value)) : String(value)
+        private func isValid(_ text: String) -> Bool {
+            Int(text).map { (1...9_600).contains($0) } == true
+        }
+
+        private func commit() {
+            guard let xValue = Int(x), let yValue = Int(y),
+                  (1...9_600).contains(xValue), (1...9_600).contains(yValue)
+            else { return }
+            apply(
+                SemanticJoboptions.changeDeviceResolution(x: xValue, y: yValue),
+                repository: repository
+            )
         }
     }
 
     private struct PageRangeEditor: View {
         @ObservedObject var repository: JoboptionsRepository
-        @State private var mode = "all"
-        @State private var start = "1"
-        @State private var end = "1"
-        @State private var baselineMode = "all"
-        @State private var baselineStart = "1"
-        @State private var baselineEnd = "1"
+        @State private var mode = "custom"
+        @State private var start = ""
+        @State private var end = ""
 
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
@@ -159,61 +152,60 @@ struct SemanticDistillerEditor: View {
                     Text(String(localized: "All pages")).tag("all")
                     Text(String(localized: "Page range")).tag("range")
                     if mode == "custom" {
-                        Text(String(localized: "Custom (preserved)")).tag("custom")
+                        Text(customTitle).tag("custom")
                     }
                 }
                 .pickerStyle(.segmented)
                 HStack {
                     TextField(String(localized: "From"), text: $start)
                         .keyboardType(.numberPad)
+                        .invalidDraftStyle(!start.isEmpty && Int(start).map { $0 >= 1 } != true)
                     TextField(String(localized: "To"), text: $end)
-                        .keyboardType(.numberPad)
-                }
-                .disabled(mode != "range")
-                if isDirty {
-                    Button(String(localized: "Apply"), action: commit)
-                        .buttonStyle(.bordered)
+                        .keyboardType(.numbersAndPunctuation)
+                        .invalidDraftStyle(!end.isEmpty && Int(end).map { $0 == -1 || $0 >= 1 } != true)
                 }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: mode) { _, value in commitMode(value) }
+            .onChange(of: start) { _, value in
+                guard let number = Int(value), number >= 1 else { return }
+                updateNumber(path: "/StartPage", number: number, repository: repository)
+            }
+            .onChange(of: end) { _, value in
+                guard let number = Int(value), number == -1 || number >= 1 else { return }
+                updateNumber(path: "/EndPage", number: number, repository: repository)
+            }
+        }
+
+        private var customTitle: String {
+            String.localizedStringWithFormat(String(localized: "Custom: %@"), "\(start) … \(end)")
         }
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
+            let rawStart = document.value(forKey: "StartPage")
+            let rawEnd = document.value(forKey: "EndPage")
+            start = rawStart?.textualValue ?? rawStart?.postScript ?? ""
+            end = rawEnd?.textualValue ?? rawEnd?.postScript ?? ""
             switch SemanticJoboptions.pageSelection(in: document) {
-            case .all:
-                mode = "all"
-            case let .range(first, last):
-                mode = "range"
-                start = String(first)
-                end = String(last)
-            case .custom:
-                mode = "custom"
+            case .all: mode = "all"
+            case .range: mode = "range"
+            case .custom: mode = "custom"
             }
-            baselineMode = mode
-            baselineStart = start
-            baselineEnd = end
         }
 
-        private func commit() {
-            let selection: SemanticJoboptions.PageSelection
-            if mode == "all" {
-                selection = .all
-            } else if mode == "range", let first = Int(start), let last = Int(end) {
-                selection = .range(start: first, end: last)
-            } else {
-                return
+        private func commitMode(_ selected: String) {
+            if selected == "all" {
+                apply(SemanticJoboptions.changePageSelection(.all), repository: repository)
+            } else if selected == "range" {
+                let first = max(Int(start) ?? 1, 1)
+                let last = max(Int(end) ?? first, first)
+                apply(
+                    SemanticJoboptions.changePageSelection(.range(start: first, end: last)),
+                    repository: repository
+                )
             }
-            guard apply(
-                SemanticJoboptions.changePageSelection(selection),
-                repository: repository
-            ) else { return }
-            reload()
-        }
-
-        private var isDirty: Bool {
-            mode != baselineMode || start != baselineStart || end != baselineEnd
         }
     }
 
@@ -222,8 +214,6 @@ struct SemanticDistillerEditor: View {
         @State private var unit: SemanticJoboptions.MeasurementUnit = .points
         @State private var width = ""
         @State private var height = ""
-        @State private var baselineWidthInPoints: Double?
-        @State private var baselineHeightInPoints: Double?
 
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
@@ -235,48 +225,17 @@ struct SemanticDistillerEditor: View {
                 HStack {
                     TextField(String(localized: "Width"), text: $width)
                         .keyboardType(.decimalPad)
+                        .invalidDraftStyle(!width.isEmpty && parsed(width).map { $0 > 0 } != true)
                     Text(String(localized: "×"))
                     TextField(String(localized: "Height"), text: $height)
                         .keyboardType(.decimalPad)
-                }
-                if isDirty {
-                    Button(String(localized: "Apply")) {
-                        guard let widthValue = parsed(width),
-                              let heightValue = parsed(height),
-                              apply(
-                                  SemanticJoboptions.changePageSize(
-                                      width: widthValue,
-                                      height: heightValue,
-                                      unit: unit
-                                  ),
-                                  repository: repository
-                              )
-                        else { return }
-                        reload()
-                    }
-                    .buttonStyle(.bordered)
+                        .invalidDraftStyle(!height.isEmpty && parsed(height).map { $0 > 0 } != true)
                 }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
-        }
-
-        private func reload() {
-            guard let document = repository.activeDocument,
-                  let size = SemanticJoboptions.pageSize(in: document)
-            else {
-                width = ""
-                height = ""
-                unit = .points
-                baselineWidthInPoints = nil
-                baselineHeightInPoints = nil
-                return
-            }
-            width = String(size.widthInPoints)
-            height = String(size.heightInPoints)
-            unit = .points
-            baselineWidthInPoints = size.widthInPoints
-            baselineHeightInPoints = size.heightInPoints
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: width) { _, _ in commit() }
+            .onChange(of: height) { _, _ in commit() }
         }
 
         private var unitBinding: Binding<SemanticJoboptions.MeasurementUnit> {
@@ -285,19 +244,33 @@ struct SemanticDistillerEditor: View {
                 set: { newUnit in
                     convert(from: unit, to: newUnit)
                     unit = newUnit
+                    commit()
                 }
             )
         }
 
-        private var isDirty: Bool {
-            guard let widthValue = parsed(width),
-                  let heightValue = parsed(height),
-                  let baselineWidthInPoints,
-                  let baselineHeightInPoints
-            else { return false }
-            let tolerance = 0.01
-            return abs(widthValue * unit.pointsPerUnit - baselineWidthInPoints) > tolerance
-                || abs(heightValue * unit.pointsPerUnit - baselineHeightInPoints) > tolerance
+        private func reload() {
+            guard let document = repository.activeDocument else { return }
+            if let size = SemanticJoboptions.pageSize(in: document) {
+                width = String(size.widthInPoints / unit.pointsPerUnit)
+                height = String(size.heightInPoints / unit.pointsPerUnit)
+            } else {
+                let values = arrayTexts(document.value(forKey: "PageSize"), count: 2)
+                width = values[0]
+                height = values[1]
+            }
+        }
+
+        private func commit() {
+            guard let widthValue = parsed(width), let heightValue = parsed(height),
+                  widthValue > 0, heightValue > 0
+            else { return }
+            apply(
+                SemanticJoboptions.changePageSize(
+                    width: widthValue, height: heightValue, unit: unit
+                ),
+                repository: repository
+            )
         }
 
         private func convert(
@@ -317,93 +290,81 @@ struct SemanticDistillerEditor: View {
     private struct DownsamplingEditor: View {
         let kind: SemanticJoboptions.ImageKind
         @ObservedObject var repository: JoboptionsRepository
-        @State private var mode = "off"
+        @State private var mode = "custom"
         @State private var resolution = ""
         @State private var threshold = ""
-        @State private var baselineMode = "off"
-        @State private var baselineResolution = ""
-        @State private var baselineThreshold = ""
+
+        private var prefix: String { kind.rawValue }
 
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
                 Picker(String(localized: "Downsampling"), selection: $mode) {
                     Text(String(localized: "Off")).tag("off")
-                    Text(String(localized: "Average")).tag("Average")
-                    Text(String(localized: "Bicubic")).tag("Bicubic")
-                    Text(String(localized: "Subsample")).tag("Subsample")
+                    ForEach(SemanticJoboptions.DownsamplingMode.allCases, id: \.rawValue) { value in
+                        Text(DistillerOptionCatalog.localizedChoice(value.rawValue)).tag(value.rawValue)
+                    }
                     if mode == "custom" {
-                        Text(String(localized: "Custom (preserved)")).tag("custom")
+                        Text(customTitle).tag("custom")
                     }
                 }
                 HStack {
                     TextField(String(localized: "Resolution"), text: $resolution)
                         .keyboardType(.numberPad)
+                        .invalidDraftStyle(!resolution.isEmpty && Int(resolution).map { (1...9_600).contains($0) } != true)
                     TextField(String(localized: "For images above"), text: $threshold)
                         .keyboardType(.decimalPad)
-                }
-                .disabled(mode == "off" || mode == "custom")
-                if isDirty {
-                    Button(String(localized: "Apply"), action: commit)
-                        .buttonStyle(.bordered)
+                        .invalidDraftStyle(!threshold.isEmpty && parsedThreshold.map { (1...10).contains($0) } != true)
                 }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: mode) { _, value in commitMode(value) }
+            .onChange(of: resolution) { _, value in
+                guard let number = Int(value), (1...9_600).contains(number) else { return }
+                updateNumber(path: "/\(prefix)ImageResolution", number: number, repository: repository)
+            }
+            .onChange(of: threshold) { _, value in
+                guard let number = Double(value.replacingOccurrences(of: ",", with: ".")),
+                      (1...10).contains(number)
+                else { return }
+                updateNumber(path: "/\(prefix)ImageDownsampleThreshold", number: number, original: value, repository: repository)
+            }
+        }
+
+        private var parsedThreshold: Double? {
+            Double(threshold.replacingOccurrences(of: ",", with: "."))
+        }
+
+        private var customTitle: String {
+            let raw = repository.activeDocument?.value(forKey: "\(prefix)ImageDownsampleType")
+            let text = raw?.textualValue ?? raw?.postScript ?? String(localized: "Not set")
+            return String.localizedStringWithFormat(String(localized: "Custom: %@"), text)
         }
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
+            let rawResolution = document.value(forKey: "\(prefix)ImageResolution")
+            let rawThreshold = document.value(forKey: "\(prefix)ImageDownsampleThreshold")
+            resolution = rawResolution?.textualValue ?? rawResolution?.postScript ?? ""
+            threshold = rawThreshold?.textualValue ?? rawThreshold?.postScript ?? ""
             switch SemanticJoboptions.downsampling(in: document, kind: kind) {
-            case .off:
-                mode = "off"
-            case let .configured(selectedMode, selectedResolution, selectedThreshold):
-                mode = selectedMode.rawValue
-                resolution = String(selectedResolution)
-                threshold = String(selectedThreshold)
-            case .custom:
-                mode = "custom"
+            case .off: mode = "off"
+            case let .configured(selected, _, _): mode = selected.rawValue
+            case .custom: mode = "custom"
             }
-            baselineMode = mode
-            baselineResolution = resolution
-            baselineThreshold = threshold
         }
 
-        private func commit() {
-            if mode == "off" {
-                guard apply(
-                    SemanticJoboptions.changeDownsampling(
-                        kind: kind,
-                        enabled: false,
-                        mode: .bicubic,
-                        resolution: 300,
-                        threshold: 1.5
-                    ),
-                    repository: repository
-                ) else { return }
-                reload()
-                return
+        private func commitMode(_ selected: String) {
+            if selected == "off" {
+                apply(JoboptionsChangeSet([
+                    JoboptionsChange("/Downsample\(prefix)Images", .boolean(false))
+                ]), repository: repository)
+            } else if let value = SemanticJoboptions.DownsamplingMode(rawValue: selected) {
+                apply(JoboptionsChangeSet([
+                    JoboptionsChange("/Downsample\(prefix)Images", .boolean(true)),
+                    JoboptionsChange("/\(prefix)ImageDownsampleType", .name(value.rawValue))
+                ]), repository: repository)
             }
-            guard let selectedMode = SemanticJoboptions.DownsamplingMode(rawValue: mode),
-                  let resolutionValue = Int(resolution),
-                  let thresholdValue = Double(threshold.replacingOccurrences(of: ",", with: "."))
-            else { return }
-            guard apply(
-                SemanticJoboptions.changeDownsampling(
-                    kind: kind,
-                    enabled: true,
-                    mode: selectedMode,
-                    resolution: resolutionValue,
-                    threshold: thresholdValue
-                ),
-                repository: repository
-            ) else { return }
-            reload()
-        }
-
-        private var isDirty: Bool {
-            mode != baselineMode
-                || resolution != baselineResolution
-                || threshold != baselineThreshold
         }
     }
 
@@ -412,8 +373,9 @@ struct SemanticDistillerEditor: View {
         @ObservedObject var repository: JoboptionsRepository
         @State private var compression = "custom"
         @State private var quality = "custom"
-        @State private var baselineCompression = "custom"
-        @State private var baselineQuality = "custom"
+        @State private var jpxQuality = ""
+
+        private var prefix: String { kind.rawValue }
 
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
@@ -430,10 +392,10 @@ struct SemanticDistillerEditor: View {
                     }
                     Text(String(localized: "Off")).tag("off")
                     if compression == "custom" {
-                        Text(String(localized: "Custom (preserved)")).tag("custom")
+                        Text(customCompressionTitle).tag("custom")
                     }
                 }
-                if kind != .monochrome {
+                if kind != .monochrome && compression != "jpeg2000" {
                     Picker(String(localized: "Image quality"), selection: $quality) {
                         Text(String(localized: "Minimum")).tag("minimum")
                         Text(String(localized: "Low")).tag("low")
@@ -441,17 +403,65 @@ struct SemanticDistillerEditor: View {
                         Text(String(localized: "High")).tag("high")
                         Text(String(localized: "Maximum")).tag("maximum")
                         if quality == "custom" {
-                            Text(String(localized: "Custom (preserved)")).tag("custom")
+                            Text(customQualityTitle).tag("custom")
                         }
                     }
-                }
-                if isDirty {
-                    Button(String(localized: "Apply"), action: commit)
-                        .buttonStyle(.bordered)
+                } else if compression == "jpeg2000" {
+                    LabeledContent(String(localized: "Image quality")) {
+                        TextField(String(localized: "Not set"), text: $jpxQuality)
+                            .keyboardType(.decimalPad)
+                            .multilineTextAlignment(.trailing)
+                            .invalidDraftStyle(!jpxQuality.isEmpty && parsedJPXQuality.map { (0...100).contains($0) } != true)
+                    }
                 }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: compression) { _, _ in commitCompression() }
+            .onChange(of: quality) { _, _ in commitCompression() }
+            .onChange(of: jpxQuality) { _, value in
+                guard let number = Double(value.replacingOccurrences(of: ",", with: ".")),
+                      (0...100).contains(number)
+                else { return }
+                updateNumber(
+                    path: "/JPEG2000\(prefix)ImageDict /Quality",
+                    number: number,
+                    original: value,
+                    repository: repository
+                )
+            }
+        }
+
+        private var parsedJPXQuality: Double? {
+            Double(jpxQuality.replacingOccurrences(of: ",", with: "."))
+        }
+
+        private var customCompressionTitle: String {
+            let parts = [
+                repository.activeDocument?.value(forKey: "Encode\(prefix)Images")?.postScript,
+                repository.activeDocument?.value(forKey: "AutoFilter\(prefix)Images")?.postScript,
+                repository.activeDocument?.value(forKey: "\(prefix)ImageFilter")?.postScript
+            ].compactMap { $0 }.joined(separator: ", ")
+            return String.localizedStringWithFormat(
+                String(localized: "Custom: %@"),
+                parts.isEmpty ? String(localized: "Not set") : parts
+            )
+        }
+
+        private var customQualityTitle: String {
+            String.localizedStringWithFormat(
+                String(localized: "Custom: %@"),
+                activeQualityText ?? String(localized: "Not set")
+            )
+        }
+
+        private var activeQualityText: String? {
+            guard let document = repository.activeDocument else { return nil }
+            let path = compression == "automaticJPEG"
+                ? "/\(prefix)ACSImageDict /QFactor"
+                : "/\(prefix)ImageDict /QFactor"
+            let value = document.value(forPath: path)
+            return value?.textualValue ?? value?.postScript
         }
 
         private func reload() {
@@ -459,35 +469,20 @@ struct SemanticDistillerEditor: View {
             let configuration = SemanticJoboptions.imageCompression(in: document, kind: kind)
             compression = Self.compressionName(configuration.compression)
             quality = Self.qualityName(configuration.quality)
-            baselineCompression = compression
-            baselineQuality = quality
+            let rawJPX = document.value(forPath: "/JPEG2000\(prefix)ImageDict /Quality")
+            jpxQuality = rawJPX?.textualValue ?? rawJPX?.postScript ?? ""
         }
 
-        private func commit() {
+        private func commitCompression() {
             guard let selectedCompression = compressionValue else { return }
-            let selectedQuality: SemanticJoboptions.ImageQuality?
-            switch quality {
-            case "minimum": selectedQuality = .minimum
-            case "low": selectedQuality = .low
-            case "medium": selectedQuality = .medium
-            case "high": selectedQuality = .high
-            case "maximum": selectedQuality = .maximum
-            default: selectedQuality = nil
-            }
-            guard apply(
+            apply(
                 SemanticJoboptions.changeCompression(
                     kind: kind,
                     compression: selectedCompression,
-                    quality: selectedQuality
+                    quality: qualityValue
                 ),
                 repository: repository
-            ) else { return }
-            reload()
-        }
-
-        private var isDirty: Bool {
-            compression != baselineCompression
-                || (kind != .monochrome && quality != baselineQuality)
+            )
         }
 
         private var compressionValue: SemanticJoboptions.ImageCompression? {
@@ -499,6 +494,17 @@ struct SemanticDistillerEditor: View {
             case "ccitt": .ccittGroup4
             case "runLength": .runLength
             case "off": .off
+            default: nil
+            }
+        }
+
+        private var qualityValue: SemanticJoboptions.ImageQuality? {
+            switch quality {
+            case "minimum": .minimum
+            case "low": .low
+            case "medium": .medium
+            case "high": .high
+            case "maximum": .maximum
             default: nil
             }
         }
@@ -532,111 +538,93 @@ struct SemanticDistillerEditor: View {
         let kind: SemanticJoboptions.ImageKind
         @ObservedObject var repository: JoboptionsRepository
         @State private var minimum = ""
-        @State private var policy = "OK"
-        @State private var baselineMinimum = ""
-        @State private var baselinePolicy = "OK"
+        @State private var policy = "__not_set__"
+
+        private var prefix: String { kind.rawValue }
 
         var body: some View {
             HStack {
-                TextField(String(localized: "Minimum resolution"), text: $minimum)
+                TextField(String(localized: "Not set"), text: $minimum)
                     .keyboardType(.numberPad)
+                    .invalidDraftStyle(!minimum.isEmpty && Int(minimum).map { (1...9_600).contains($0) } != true)
                 Picker(String(localized: "Policy"), selection: $policy) {
+                    if policy == "__not_set__" {
+                        Text(String(localized: "Not set")).tag("__not_set__")
+                    } else if SemanticJoboptions.ImagePolicy(rawValue: policy) == nil {
+                        Text(String.localizedStringWithFormat(
+                            String(localized: "Custom: %@"), policy
+                        )).tag(policy)
+                    }
                     Text(String(localized: "Ignore")).tag("OK")
                     Text(String(localized: "Warning")).tag("Warning")
                     Text(String(localized: "Error")).tag("Error")
-                    if !["OK", "Warning", "Error"].contains(policy) {
-                        Text(String(localized: "Custom (preserved)")).tag(policy)
-                    }
-                }
-                if isDirty {
-                    Button(String(localized: "Apply"), action: commit)
                 }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: minimum) { _, value in
+                guard let number = Int(value), (1...9_600).contains(number) else { return }
+                updateNumber(path: "/\(prefix)ImageMinResolution", number: number, repository: repository)
+            }
+            .onChange(of: policy) { _, value in
+                guard SemanticJoboptions.ImagePolicy(rawValue: value) != nil else { return }
+                apply(JoboptionsChangeSet([
+                    JoboptionsChange("/\(prefix)ImageMinResolutionPolicy", .name(value))
+                ]), repository: repository)
+            }
         }
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
-            let configuration = SemanticJoboptions.imagePolicy(in: document, kind: kind)
-            minimum = configuration.minimumResolution.map(String.init) ?? ""
-            policy = configuration.policy?.rawValue ?? "custom"
-            baselineMinimum = minimum
-            baselinePolicy = policy
-        }
-
-        private func commit() {
-            guard let minimumValue = Int(minimum),
-                  let selectedPolicy = SemanticJoboptions.ImagePolicy(rawValue: policy)
-            else { return }
-            guard apply(
-                SemanticJoboptions.changeImagePolicy(
-                    kind: kind,
-                    minimumResolution: minimumValue,
-                    policy: selectedPolicy
-                ),
-                repository: repository
-            ) else { return }
-            reload()
-        }
-
-        private var isDirty: Bool {
-            minimum != baselineMinimum || policy != baselinePolicy
+            let rawMinimum = document.value(forKey: "\(prefix)ImageMinResolution")
+            let rawPolicy = document.value(forKey: "\(prefix)ImageMinResolutionPolicy")
+            minimum = rawMinimum?.textualValue ?? rawMinimum?.postScript ?? ""
+            policy = rawPolicy?.textualValue ?? rawPolicy?.postScript ?? "__not_set__"
         }
     }
 
     private struct MonoSmoothingEditor: View {
         @ObservedObject var repository: JoboptionsRepository
         @State private var selection = "custom"
-        @State private var baselineSelection = "custom"
 
         var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
-                Picker(String(localized: "Smooth monochrome images"), selection: $selection) {
-                    Text(String(localized: "Off")).tag("off")
-                    Text(String(localized: "2 bit")).tag("2")
-                    Text(String(localized: "4 bit")).tag("4")
-                    Text(String(localized: "8 bit")).tag("8")
-                    if selection == "custom" {
-                        Text(String(localized: "Custom (preserved)")).tag("custom")
-                    }
-                }
-                if selection != baselineSelection {
-                    Button(String(localized: "Apply"), action: commit)
-                        .buttonStyle(.bordered)
+            Picker(String(localized: "Smooth monochrome images"), selection: $selection) {
+                Text(String(localized: "Off")).tag("off")
+                Text(String(localized: "2 bit")).tag("2")
+                Text(String(localized: "4 bit")).tag("4")
+                Text(String(localized: "8 bit")).tag("8")
+                if selection == "custom" {
+                    Text(customTitle).tag("custom")
                 }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: selection) { _, value in
+                if value == "off" {
+                    apply(SemanticJoboptions.changeMonoSmoothing(.off), repository: repository)
+                } else if let depth = Int(value) {
+                    apply(SemanticJoboptions.changeMonoSmoothing(.depth(depth)), repository: repository)
+                }
+            }
         }
 
-        private func commit() {
-            let configuration: SemanticJoboptions.MonoSmoothingConfiguration
-            if selection == "off" {
-                configuration = .off
-            } else if let depth = Int(selection) {
-                configuration = .depth(depth)
-            } else {
-                return
-            }
-            guard apply(
-                SemanticJoboptions.changeMonoSmoothing(configuration),
-                repository: repository
-            ) else { return }
-            reload()
+        private var customTitle: String {
+            let enabled = repository.activeDocument?.value(forKey: "AntiAliasMonoImages")?.postScript
+                ?? String(localized: "Not set")
+            let depth = repository.activeDocument?.value(forKey: "MonoImageDepth")?.postScript
+                ?? String(localized: "Not set")
+            return String.localizedStringWithFormat(
+                String(localized: "Custom: %@"), "\(enabled), \(depth)"
+            )
         }
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
             switch SemanticJoboptions.monoSmoothing(in: document) {
-            case .off:
-                selection = "off"
-            case let .depth(depth):
-                selection = String(depth)
-            case .custom:
-                selection = "custom"
+            case .off: selection = "off"
+            case let .depth(depth): selection = String(depth)
+            case .custom: selection = "custom"
             }
-            baselineSelection = selection
         }
     }
 
@@ -644,36 +632,61 @@ struct SemanticDistillerEditor: View {
         @ObservedObject var repository: JoboptionsRepository
         @State private var trimMode = "custom"
         @State private var bleedMode = "custom"
-        @State private var trimOffsets = ["0", "0", "0", "0"]
-        @State private var bleedOffsets = ["0", "0", "0", "0"]
-        @State private var baselineTrimMode = "custom"
-        @State private var baselineBleedMode = "custom"
-        @State private var baselineTrimOffsets = ["0", "0", "0", "0"]
-        @State private var baselineBleedOffsets = ["0", "0", "0", "0"]
+        @State private var trimOffsets = ["", "", "", ""]
+        @State private var bleedOffsets = ["", "", "", ""]
 
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
                 Picker(String(localized: "If trim box is missing"), selection: $trimMode) {
                     Text(String(localized: "Report an error")).tag("error")
                     Text(String(localized: "Set from media box with offsets")).tag("media")
-                    if trimMode == "custom" { Text(String(localized: "Custom (preserved)")).tag("custom") }
+                    if trimMode == "custom" { Text(trimCustomTitle).tag("custom") }
                 }
                 offsetFields(values: $trimOffsets)
-                    .disabled(trimMode != "media")
                 Picker(String(localized: "If bleed box is missing"), selection: $bleedMode) {
                     Text(String(localized: "Set to media box")).tag("media")
                     Text(String(localized: "Set from trim box with offsets")).tag("trim")
-                    if bleedMode == "custom" { Text(String(localized: "Custom (preserved)")).tag("custom") }
+                    if bleedMode == "custom" { Text(bleedCustomTitle).tag("custom") }
                 }
                 offsetFields(values: $bleedOffsets)
-                    .disabled(bleedMode != "trim")
-                if isDirty {
-                    Button(String(localized: "Apply"), action: commit)
-                        .buttonStyle(.bordered)
-                }
             }
             .onAppear(perform: reload)
-            .onChange(of: repository.activeRecord?.id) { _, _ in reload() }
+            .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
+            .onChange(of: trimMode) { _, value in
+                if value == "error" {
+                    updateBoolean(path: "/PDFXNoTrimBoxError", value: true, repository: repository)
+                } else if value == "media" {
+                    updateBoolean(path: "/PDFXNoTrimBoxError", value: false, repository: repository)
+                }
+            }
+            .onChange(of: bleedMode) { _, value in
+                if value == "media" {
+                    updateBoolean(path: "/PDFXSetBleedBoxToMediaBox", value: true, repository: repository)
+                } else if value == "trim" {
+                    updateBoolean(path: "/PDFXSetBleedBoxToMediaBox", value: false, repository: repository)
+                }
+            }
+            .onChange(of: trimOffsets) { _, values in
+                updateOffsets(path: "/PDFXTrimBoxToMediaBoxOffset", texts: values)
+            }
+            .onChange(of: bleedOffsets) { _, values in
+                updateOffsets(path: "/PDFXBleedBoxToTrimBoxOffset", texts: values)
+            }
+        }
+
+        private var trimCustomTitle: String {
+            customBooleanTitle(key: "PDFXNoTrimBoxError")
+        }
+
+        private var bleedCustomTitle: String {
+            customBooleanTitle(key: "PDFXSetBleedBoxToMediaBox")
+        }
+
+        private func customBooleanTitle(key: String) -> String {
+            String.localizedStringWithFormat(
+                String(localized: "Custom: %@"),
+                repository.activeDocument?.value(forKey: key)?.postScript ?? String(localized: "Not set")
+            )
         }
 
         private func offsetFields(values: Binding<[String]>) -> some View {
@@ -681,71 +694,45 @@ struct SemanticDistillerEditor: View {
                 ForEach(0..<4, id: \.self) { index in
                     TextField(Self.offsetLabel(index), text: values[index])
                         .keyboardType(.decimalPad)
+                        .invalidDraftStyle(
+                            !values.wrappedValue[index].isEmpty
+                                && Self.number(values.wrappedValue[index]) == nil
+                        )
                 }
             }
         }
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
-            let rules = SemanticJoboptions.pdfXBoxRules(in: document)
-            switch rules.trim {
-            case .error:
-                trimMode = "error"
-            case let .mediaBox(offsets):
-                trimMode = "media"
-                trimOffsets = offsets.map { String($0) }
-            case .trimBox, .custom:
-                trimMode = "custom"
+            trimOffsets = arrayTexts(document.value(forKey: "PDFXTrimBoxToMediaBoxOffset"), count: 4)
+            bleedOffsets = arrayTexts(document.value(forKey: "PDFXBleedBoxToTrimBoxOffset"), count: 4)
+            switch SemanticJoboptions.pdfXBoxRules(in: document).trim {
+            case .error: trimMode = "error"
+            case .mediaBox: trimMode = "media"
+            case .trimBox, .custom: trimMode = "custom"
             }
-            switch rules.bleed {
-            case .mediaBox:
-                bleedMode = "media"
-            case let .trimBox(offsets):
-                bleedMode = "trim"
-                bleedOffsets = offsets.map { String($0) }
-            case .error, .custom:
-                bleedMode = "custom"
+            switch SemanticJoboptions.pdfXBoxRules(in: document).bleed {
+            case .mediaBox: bleedMode = "media"
+            case .trimBox: bleedMode = "trim"
+            case .error, .custom: bleedMode = "custom"
             }
-            baselineTrimMode = trimMode
-            baselineBleedMode = bleedMode
-            baselineTrimOffsets = trimOffsets
-            baselineBleedOffsets = bleedOffsets
         }
 
-        private func commit() {
-            let trim: SemanticJoboptions.PDFXBoxRule
-            if trimMode == "error" {
-                trim = .error
-            } else if trimMode == "media", let values = Self.offsetValues(trimOffsets) {
-                trim = .mediaBox(offsets: values)
-            } else {
-                trim = .custom
-            }
-            let bleed: SemanticJoboptions.PDFXBoxRule
-            if bleedMode == "media" {
-                bleed = .mediaBox(offsets: [0, 0, 0, 0])
-            } else if bleedMode == "trim", let values = Self.offsetValues(bleedOffsets) {
-                bleed = .trimBox(offsets: values)
-            } else {
-                bleed = .custom
-            }
-            guard apply(
-                SemanticJoboptions.changePDFXBoxRules(trim: trim, bleed: bleed),
-                repository: repository
-            ) else { return }
-            reload()
+        private func updateOffsets(path: String, texts: [String]) {
+            let values = texts.compactMap(Self.number)
+            guard values.count == 4 else { return }
+            apply(JoboptionsChangeSet([
+                JoboptionsChange(
+                    path,
+                    .array(zip(values, texts).map { value, text in
+                        .number(value, original: text.replacingOccurrences(of: ",", with: "."))
+                    })
+                )
+            ]), repository: repository)
         }
 
-        private var isDirty: Bool {
-            trimMode != baselineTrimMode
-                || bleedMode != baselineBleedMode
-                || trimOffsets != baselineTrimOffsets
-                || bleedOffsets != baselineBleedOffsets
-        }
-
-        private static func offsetValues(_ values: [String]) -> [Double]? {
-            let converted = values.compactMap { Double($0.replacingOccurrences(of: ",", with: ".")) }
-            return converted.count == 4 ? converted : nil
+        private static func number(_ text: String) -> Double? {
+            Double(text.replacingOccurrences(of: ",", with: "."))
         }
 
         private static func offsetLabel(_ index: Int) -> String {
@@ -756,6 +743,49 @@ struct SemanticDistillerEditor: View {
             default: String(localized: "Bottom")
             }
         }
+    }
+
+    private static func arrayTexts(_ value: JoboptionsValue?, count: Int) -> [String] {
+        guard let value else { return Array(repeating: "", count: count) }
+        guard case let .array(values) = value else {
+            return [value.postScript] + Array(repeating: "", count: max(0, count - 1))
+        }
+        return (0..<count).map { index in
+            guard values.indices.contains(index) else { return "" }
+            return values[index].textualValue ?? values[index].postScript
+        }
+    }
+
+    private static func updateNumber(
+        path: String,
+        number: Int,
+        repository: JoboptionsRepository
+    ) {
+        updateNumber(path: path, number: Double(number), original: String(number), repository: repository)
+    }
+
+    private static func updateNumber(
+        path: String,
+        number: Double,
+        original: String,
+        repository: JoboptionsRepository
+    ) {
+        apply(JoboptionsChangeSet([
+            JoboptionsChange(
+                path,
+                .number(number, original: original.replacingOccurrences(of: ",", with: "."))
+            )
+        ]), repository: repository)
+    }
+
+    private static func updateBoolean(
+        path: String,
+        value: Bool,
+        repository: JoboptionsRepository
+    ) {
+        apply(JoboptionsChangeSet([
+            JoboptionsChange(path, .boolean(value))
+        ]), repository: repository)
     }
 
     @discardableResult

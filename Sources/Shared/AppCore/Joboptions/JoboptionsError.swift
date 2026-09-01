@@ -8,7 +8,6 @@ enum JoboptionsError: LocalizedError, Sendable {
     case missingDistillerDictionary
     case unreadable
     case writeFailed
-    case unresolvedConsistency(String)
 
     var errorDescription: String? {
         switch self {
@@ -30,12 +29,6 @@ enum JoboptionsError: LocalizedError, Sendable {
             String(localized: "The Joboptions file cannot be read.")
         case .writeFailed:
             String(localized: "The Joboptions file could not be saved.")
-        case let .unresolvedConsistency(detail):
-            String(
-                format: String(localized: "The Joboptions require a manual correction before conversion: %@"),
-                locale: .current,
-                detail
-            )
         }
     }
 }

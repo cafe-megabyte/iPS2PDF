@@ -101,6 +101,20 @@ final class LosslessJoboptionsDocumentTests: XCTestCase {
         XCTAssertEqual(edited.value(forPath: "/Description /DEU")?.textualValue, "Grüße")
     }
 
+    func testNestedValueCreatesMissingDictionaryParents() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        << /Keep true >> setdistillerparams
+        """.utf8))
+
+        let edited = try document.replacingValue(
+            forPath: "/ColorImageDict /QFactor",
+            with: .number(0.76, original: "0.76")
+        )
+
+        XCTAssertEqual(edited.value(forPath: "/ColorImageDict /QFactor")?.numberValue, 0.76)
+        XCTAssertEqual(edited.value(forKey: "Keep")?.boolValue, true)
+    }
+
     func testHexadecimalUnicodeStringKeepsItsRepresentationWhenReplaced() throws {
         let original = Data("<< /Description <FEFF004F006C0064> >> setdistillerparams\n".utf8)
         let document = try LosslessJoboptionsDocument(data: original)

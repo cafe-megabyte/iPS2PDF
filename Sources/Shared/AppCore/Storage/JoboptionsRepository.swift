@@ -74,16 +74,6 @@ final class JoboptionsRepository: ObservableObject {
         consistencyContext
     }
 
-    var effectiveDisplayDocument: LosslessJoboptionsDocument? {
-        guard let activeDocument else { return nil }
-        let issues = JoboptionsConsistencyEngine.issues(
-            in: activeDocument,
-            context: consistencyContext
-        )
-        return (try? JoboptionsConsistencyEngine.repair(activeDocument, applying: issues))
-            ?? activeDocument
-    }
-
     func waitUntilReady() async {
         if isReady { return }
         await withCheckedContinuation { readinessWaiters.append($0) }

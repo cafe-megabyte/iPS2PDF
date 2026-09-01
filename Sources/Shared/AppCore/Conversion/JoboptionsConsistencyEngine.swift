@@ -9,6 +9,7 @@ enum JoboptionsConsistencyEngine {
         evaluator.evaluateStandardRules()
         evaluator.evaluateOutputIntentEmbeddingRules()
         evaluator.evaluateCompatibilityRules()
+        evaluator.evaluateCompoundSettingRules()
         return evaluator.issues
     }
 
@@ -16,22 +17,15 @@ enum JoboptionsConsistencyEngine {
         from document: LosslessJoboptionsDocument,
         context: JoboptionsConsistencyContext = .empty
     ) throws -> LosslessJoboptionsDocument {
-        let analysis = issues(in: document, context: context)
-        if let unresolved = analysis.first(where: { !$0.isAutomaticallyRepairable }) {
-            throw JoboptionsError.unresolvedConsistency(
-                "\(unresolved.path.description): \(unresolved.reason)"
-            )
-        }
-        return try repair(document, applying: analysis)
+        try repair(document, applying: issues(in: document, context: context))
     }
 
     static func repair(
         _ document: LosslessJoboptionsDocument,
         applying issues: [JoboptionsConsistencyIssue]
     ) throws -> LosslessJoboptionsDocument {
-        let changes = issues.compactMap { issue -> JoboptionsChange? in
-            guard issue.isAutomaticallyRepairable, let value = issue.proposedValue else { return nil }
-            return JoboptionsChange(issue.path.description, value)
+        let changes = issues.map { issue in
+            JoboptionsChange(issue.path.description, issue.proposedValue)
         }
         return try JoboptionsChangeSet(changes).applying(to: document)
     }
@@ -46,11 +40,13 @@ enum JoboptionsConsistencyEngine {
 
     private struct Evaluator {
         let context: JoboptionsConsistencyContext
+        let original: LosslessJoboptionsDocument
         var working: LosslessJoboptionsDocument
         var issues: [JoboptionsConsistencyIssue] = []
         var proposalsByPath: [JoboptionsKeyPath: JoboptionsValue] = [:]
 
         init(document: LosslessJoboptionsDocument, context: JoboptionsConsistencyContext) {
+            original = document
             working = document
             self.context = context
         }
@@ -220,6 +216,19 @@ enum JoboptionsConsistencyEngine {
             }
         }
 
+        mutating func evaluateCompoundSettingRules() {
+            evaluatePageRange()
+            evaluateDeviceResolution()
+            evaluatePageSize()
+            for kind in SemanticJoboptions.ImageKind.allCases {
+                evaluateDownsampling(kind: kind)
+                evaluateCompression(kind: kind)
+                evaluateImagePolicy(kind: kind)
+            }
+            evaluateMonoSmoothing()
+            evaluatePDFXBoxes()
+        }
+
         private mutating func evaluatePDFAProfile() {
             let path = JoboptionsKeyPath("/OutputICCProfile")
             let current = working.value(forPath: path)?.textualValue
@@ -229,22 +238,15 @@ enum JoboptionsConsistencyEngine {
                }) {
                 return
             }
-            if let profile = context.availableProfiles.first(where: {
+            let replacement = context.availableProfiles.first(where: {
                 $0.colorSpace == "RGB" && $0.name.localizedCaseInsensitiveContains("sRGB")
-            }) {
-                propose(
-                    path: path.description,
-                    value: .string(profile.name),
-                    reason: .standardOutputProfile,
-                    rule: "standard.pdfa.output-profile"
-                )
-            } else {
-                reportUnresolved(
-                    path: path,
-                    reason: .missingOutputProfile,
-                    rule: "standard.pdfa.output-profile.missing"
-                )
-            }
+            })?.name ?? "sRGB Profile"
+            propose(
+                path: path.description,
+                value: .string(replacement),
+                reason: .standardOutputProfile,
+                rule: "standard.pdfa.output-profile"
+            )
         }
 
         private mutating func evaluatePDFXProfile() {
@@ -258,29 +260,213 @@ enum JoboptionsConsistencyEngine {
                }) {
                 return
             }
-            let isMissing = current?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true
-            if isMissing || current?.caseInsensitiveCompare("None") == .orderedSame,
-               let profile = context.availableProfiles.first(where: {
+            let replacement = context.availableProfiles.first(where: {
                    $0.colorSpace == "CMYK"
                        && ($0.profileClass.isEmpty || $0.profileClass == "prtr")
                        && (
                            $0.name == SemanticJoboptions.defaultPDFXOutputIntentProfile
                            || $0.fileStem == SemanticJoboptions.defaultPDFXOutputIntentProfile
                        )
-               }) {
+               })?.name ?? SemanticJoboptions.defaultPDFXOutputIntentProfile
+            propose(
+                path: path.description,
+                value: .string(replacement),
+                reason: .standardOutputProfile,
+                rule: "standard.pdfx.output-profile"
+            )
+        }
+
+        private mutating func evaluatePageRange() {
+            guard working.value(forKey: "StartPage") != nil
+                    || working.value(forKey: "EndPage") != nil
+            else { return }
+            let start = working.value(forKey: "StartPage")?.numberValue
+            let end = working.value(forKey: "EndPage")?.numberValue
+            let isValid = start.map(Self.isIntegerAtLeastOne) == true
+                && (end == -1 || (end.map(Self.isIntegerAtLeastOne) == true && end! >= start!))
+            guard !isValid else { return }
+            propose(
+                path: "/StartPage",
+                value: Self.integer(1),
+                reason: .invalidPageRange,
+                rule: "group.page-range.start"
+            )
+            propose(
+                path: "/EndPage",
+                value: Self.integer(-1),
+                reason: .invalidPageRange,
+                rule: "group.page-range.end"
+            )
+        }
+
+        private mutating func evaluateDeviceResolution() {
+            guard working.value(forKey: "HWResolution") != nil else { return }
+            guard !Self.isPositiveArray(working.value(forKey: "HWResolution"), count: 2) else { return }
+            propose(
+                path: "/HWResolution",
+                value: .array([Self.integer(2_400), Self.integer(2_400)]),
+                reason: .invalidDeviceResolution,
+                rule: "group.device-resolution"
+            )
+        }
+
+        private mutating func evaluatePageSize() {
+            guard working.value(forKey: "PageSize") != nil else { return }
+            guard !Self.isPositiveArray(working.value(forKey: "PageSize"), count: 2) else { return }
+            propose(
+                path: "/PageSize",
+                value: .array([Self.decimal(595.276), Self.decimal(841.89)]),
+                reason: .invalidPageSize,
+                rule: "group.page-size"
+            )
+        }
+
+        private mutating func evaluateDownsampling(kind: SemanticJoboptions.ImageKind) {
+            let prefix = kind.rawValue
+            guard working.value(forKey: "Downsample\(prefix)Images")?.boolValue == true else { return }
+            let mode = working.value(forKey: "\(prefix)ImageDownsampleType")?.textualValue
+            let resolution = working.value(forKey: "\(prefix)ImageResolution")?.numberValue
+            let threshold = working.value(forKey: "\(prefix)ImageDownsampleThreshold")?.numberValue
+            let isValid = ["Average", "Bicubic", "Subsample"].contains(mode ?? "")
+                && resolution.map { Self.isInteger($0, in: 1...9_600) } == true
+                && threshold.map { $0.isFinite && (1...10).contains($0) } == true
+            guard !isValid else { return }
+            propose(
+                path: "/Downsample\(prefix)Images",
+                value: .boolean(false),
+                reason: .invalidDownsampling,
+                rule: "group.downsampling.\(prefix.lowercased())"
+            )
+        }
+
+        private mutating func evaluateCompression(kind: SemanticJoboptions.ImageKind) {
+            let prefix = kind.rawValue
+            guard working.value(forKey: "Encode\(prefix)Images")?.boolValue == true else { return }
+            let filter = working.value(forKey: "\(prefix)ImageFilter")?.textualValue
+            let allowed = kind == .monochrome
+                ? ["CCITTFaxEncode", "FlateEncode", "RunLengthEncode"]
+                : ["DCTEncode", "FlateEncode", "JPXEncode"]
+            guard allowed.contains(filter ?? "") else {
                 propose(
-                    path: path.description,
-                    value: .string(profile.name),
-                    reason: .standardOutputProfile,
-                    rule: "standard.pdfx.output-profile"
+                    path: "/\(prefix)ImageFilter",
+                    value: .name(kind == .monochrome ? "CCITTFaxEncode" : "FlateEncode"),
+                    reason: .invalidCompression,
+                    rule: "group.compression.\(prefix.lowercased()).filter"
                 )
                 return
             }
-            reportUnresolved(
-                path: path,
-                reason: .missingOutputProfile,
-                rule: "standard.pdfx.output-profile.missing"
+            guard kind != .monochrome else { return }
+
+            let qualityPath: String?
+            let fallback: Double
+            if filter == "DCTEncode" {
+                if working.value(forKey: "AutoFilter\(prefix)Images")?.boolValue == true {
+                    qualityPath = "/\(prefix)ACSImageDict /QFactor"
+                    fallback = 0.40
+                } else {
+                    qualityPath = "/\(prefix)ImageDict /QFactor"
+                    fallback = 0.76
+                }
+            } else if filter == "JPXEncode" {
+                qualityPath = "/JPEG2000\(prefix)ImageDict /Quality"
+                fallback = 15
+            } else {
+                qualityPath = nil
+                fallback = 0
+            }
+            guard let qualityPath else { return }
+            let quality = working.value(forPath: qualityPath)?.numberValue
+            let isValid = if filter == "JPXEncode" {
+                quality.map { $0.isFinite && (0...100).contains($0) } == true
+            } else {
+                quality.map { $0.isFinite && $0 > 0 } == true
+            }
+            guard !isValid else { return }
+            propose(
+                path: qualityPath,
+                value: Self.decimal(fallback),
+                reason: .invalidImageQuality,
+                rule: "group.compression.\(prefix.lowercased()).quality"
             )
+        }
+
+        private mutating func evaluateImagePolicy(kind: SemanticJoboptions.ImageKind) {
+            let prefix = kind.rawValue
+            let resolutionPath = "/\(prefix)ImageMinResolution"
+            let policyPath = "/\(prefix)ImageMinResolutionPolicy"
+            guard working.value(forPath: resolutionPath) != nil
+                    || working.value(forPath: policyPath) != nil
+            else { return }
+            let resolution = working.value(forPath: resolutionPath)?.numberValue
+            if resolution.map({ Self.isInteger($0, in: 1...9_600) }) != true {
+                propose(
+                    path: resolutionPath,
+                    value: Self.integer(kind == .monochrome ? 1_200 : 150),
+                    reason: .invalidImagePolicy,
+                    rule: "group.image-policy.\(prefix.lowercased()).resolution"
+                )
+            }
+            let policy = working.value(forPath: policyPath)?.textualValue
+            if !["OK", "Warning", "Error"].contains(policy ?? "") {
+                propose(
+                    path: policyPath,
+                    value: .name("OK"),
+                    reason: .invalidImagePolicy,
+                    rule: "group.image-policy.\(prefix.lowercased()).policy"
+                )
+            }
+        }
+
+        private mutating func evaluateMonoSmoothing() {
+            guard working.value(forKey: "AntiAliasMonoImages")?.boolValue == true else { return }
+            let depth = working.value(forKey: "MonoImageDepth")?.numberValue
+            guard depth.map({ $0.rounded() == $0 && [2, 4, 8].contains(Int($0)) }) != true else { return }
+            propose(
+                path: "/AntiAliasMonoImages",
+                value: .boolean(false),
+                reason: .invalidMonoSmoothing,
+                rule: "group.mono-smoothing"
+            )
+        }
+
+        private mutating func evaluatePDFXBoxes() {
+            guard let raw = working.value(forKey: "iPS2PDFStandard")?.textualValue,
+                  PDFStandard(rawValue: raw)?.isPDFX == true
+            else { return }
+
+            let trimUsesError = working.value(forKey: "PDFXNoTrimBoxError")?.boolValue
+            let trimIsValid = trimUsesError == true
+                || (trimUsesError == false && Self.isFiniteArray(
+                    working.value(forKey: "PDFXTrimBoxToMediaBoxOffset"), count: 4
+                ))
+            if !trimIsValid {
+                propose(
+                    path: "/PDFXNoTrimBoxError",
+                    value: .boolean(false),
+                    reason: .invalidPDFXBoxes,
+                    rule: "group.pdfx-boxes.trim-policy"
+                )
+                propose(
+                    path: "/PDFXTrimBoxToMediaBoxOffset",
+                    value: .array(Array(repeating: Self.integer(0), count: 4)),
+                    reason: .invalidPDFXBoxes,
+                    rule: "group.pdfx-boxes.trim-offsets"
+                )
+            }
+
+            let bleedUsesMedia = working.value(forKey: "PDFXSetBleedBoxToMediaBox")?.boolValue
+            let bleedIsValid = bleedUsesMedia == true
+                || (bleedUsesMedia == false && Self.isFiniteArray(
+                    working.value(forKey: "PDFXBleedBoxToTrimBoxOffset"), count: 4
+                ))
+            if !bleedIsValid {
+                propose(
+                    path: "/PDFXSetBleedBoxToMediaBox",
+                    value: .boolean(true),
+                    reason: .invalidPDFXBoxes,
+                    rule: "group.pdfx-boxes.bleed-policy"
+                )
+            }
         }
 
         private mutating func evaluatePDFXOutputIntentMetadata() {
@@ -337,44 +523,21 @@ enum JoboptionsConsistencyEngine {
             guard !Self.valuesAreEquivalent(current, value) else { return }
 
             if let existing = proposalsByPath[path], !Self.valuesAreEquivalent(existing, value) {
-                reportUnresolved(
-                    path: path,
-                    reason: reason,
-                    rule: "conflict.\(rule)"
-                )
                 return
             }
             proposalsByPath[path] = value
             issues.append(
                 JoboptionsConsistencyIssue(
                     path: path,
-                    currentValue: current,
+                    currentValue: original.value(forPath: path),
                     proposedValue: value,
                     reasonCode: reason,
-                    ruleIdentifier: rule,
-                    isAutomaticallyRepairable: true
+                    ruleIdentifier: rule
                 )
             )
             if let adjusted = try? working.replacingValue(forPath: path, with: value) {
                 working = adjusted
             }
-        }
-
-        private mutating func reportUnresolved(
-            path: JoboptionsKeyPath,
-            reason: JoboptionsConsistencyIssue.Reason,
-            rule: String
-        ) {
-            issues.append(
-                JoboptionsConsistencyIssue(
-                    path: path,
-                    currentValue: working.value(forPath: path),
-                    proposedValue: nil,
-                    reasonCode: reason,
-                    ruleIdentifier: rule,
-                    isAutomaticallyRepairable: false
-                )
-            )
         }
 
         private static func valuesAreEquivalent(
@@ -386,6 +549,35 @@ enum JoboptionsConsistencyEngine {
                 return left == right
             }
             return lhs == rhs
+        }
+
+        private static func integer(_ value: Int) -> JoboptionsValue {
+            .number(Double(value), original: String(value))
+        }
+
+        private static func decimal(_ value: Double) -> JoboptionsValue {
+            var text = String(format: "%.6f", value)
+            while text.last == "0" { text.removeLast() }
+            if text.last == "." { text.removeLast() }
+            return .number(value, original: text)
+        }
+
+        private static func isIntegerAtLeastOne(_ value: Double) -> Bool {
+            value.isFinite && value.rounded() == value && value >= 1
+        }
+
+        private static func isInteger(_ value: Double, in range: ClosedRange<Int>) -> Bool {
+            value.isFinite && value.rounded() == value && range.contains(Int(value))
+        }
+
+        private static func isPositiveArray(_ value: JoboptionsValue?, count: Int) -> Bool {
+            guard case let .array(values) = value, values.count == count else { return false }
+            return values.allSatisfy { ($0.numberValue ?? 0).isFinite && ($0.numberValue ?? 0) > 0 }
+        }
+
+        private static func isFiniteArray(_ value: JoboptionsValue?, count: Int) -> Bool {
+            guard case let .array(values) = value, values.count == count else { return false }
+            return values.allSatisfy { $0.numberValue?.isFinite == true }
         }
     }
 }

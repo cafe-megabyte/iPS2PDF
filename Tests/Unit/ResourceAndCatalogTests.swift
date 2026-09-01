@@ -104,7 +104,10 @@ final class ResourceAndCatalogTests: XCTestCase {
             compression: .automaticJPEG,
             quality: .medium
         )
-        XCTAssertEqual(compression?.keyPaths, compressionChanges.paths)
+        XCTAssertTrue(Set(compressionChanges.paths).isSubset(of: Set(compression?.keyPaths ?? [])))
+        XCTAssertTrue(compression?.keyPaths.contains(
+            JoboptionsKeyPath("/JPEG2000ColorImageDict /Quality")
+        ) == true)
 
         let policy = DistillerOptionCatalog.byKey["MonoImageMinResolution"]
         let policyChanges = SemanticJoboptions.changeImagePolicy(

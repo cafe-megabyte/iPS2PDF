@@ -130,16 +130,53 @@ final class SemanticJoboptionsTests: XCTestCase {
             changes.paths.map(\.description),
             [
                 "/EncodeColorImages", "/AutoFilterColorImages", "/ColorImageFilter",
-                "/ColorACSImageDict /QFactor", "/ColorImageDict /QFactor"
+                "/ColorACSImageDict /QFactor"
             ]
         )
         let edited = try changes.applying(to: document)
         XCTAssertEqual(edited.value(forPath: "/ColorACSImageDict /QFactor")?.numberValue, 0.76)
+        XCTAssertEqual(edited.value(forPath: "/ColorImageDict /QFactor")?.numberValue, 0.15)
         XCTAssertEqual(edited.value(forPath: "/ColorACSImageDict /Keep")?.numberValue, 1)
         XCTAssertEqual(edited.value(forPath: "/ColorImageDict /Keep")?.numberValue, 2)
         XCTAssertEqual(
             SemanticJoboptions.imageCompression(in: edited, kind: .color),
             .init(compression: .automaticJPEG, quality: .medium)
+        )
+    }
+
+    func testCompressionReadsAndWritesOnlyTheActiveQualityDictionary() throws {
+        let document = try makeDocument("""
+        /EncodeColorImages true
+        /AutoFilterColorImages false
+        /ColorImageFilter /DCTEncode
+        /ColorACSImageDict << /QFactor 0.40 >>
+        /ColorImageDict << /QFactor 0.76 >>
+        /JPEG2000ColorImageDict << /Quality 15 >>
+        """)
+
+        XCTAssertEqual(
+            SemanticJoboptions.imageCompression(in: document, kind: .color),
+            .init(compression: .jpeg, quality: .medium)
+        )
+        let automatic = try SemanticJoboptions.changeCompression(
+            kind: .color,
+            compression: .automaticJPEG,
+            quality: .high
+        ).applying(to: document)
+        XCTAssertEqual(automatic.value(forPath: "/ColorACSImageDict /QFactor")?.numberValue, 0.40)
+        XCTAssertEqual(automatic.value(forPath: "/ColorImageDict /QFactor")?.numberValue, 0.76)
+        XCTAssertEqual(
+            SemanticJoboptions.imageCompression(in: automatic, kind: .color),
+            .init(compression: .automaticJPEG, quality: .high)
+        )
+
+        let jpeg2000 = try SemanticJoboptions.changeCompression(
+            kind: .color,
+            compression: .jpeg2000
+        ).applying(to: document)
+        XCTAssertEqual(
+            SemanticJoboptions.imageCompression(in: jpeg2000, kind: .color),
+            .init(compression: .jpeg2000, quality: .custom(15))
         )
     }
 
@@ -214,6 +251,26 @@ final class SemanticJoboptionsTests: XCTestCase {
         XCTAssertEqual(edited.value(forKey: "iPS2PDFStandard")?.textualValue, "pdfa1b")
         XCTAssertEqual(edited.value(forKey: "CompatibilityLevel")?.textualValue, "1.1")
         XCTAssertEqual(edited.value(forKey: "Encrypt")?.boolValue, true)
+    }
+
+    func testSelectingPDFXAddsOnlyTheMissingDefaultOutputIntent() throws {
+        let missing = try makeDocument("/iPS2PDFStandard /none /PDFXOutputIntentProfile /None")
+        let missingChanges = SemanticJoboptions.changeStandard(.pdfx4, in: missing)
+        XCTAssertEqual(
+            missingChanges.paths.map(\.description),
+            ["/iPS2PDFStandard", "/PDFXOutputIntentProfile"]
+        )
+        let defaulted = try missingChanges.applying(to: missing)
+        XCTAssertEqual(
+            defaulted.value(forKey: "PDFXOutputIntentProfile")?.textualValue,
+            SemanticJoboptions.defaultPDFXOutputIntentProfile
+        )
+
+        let selected = try makeDocument("/iPS2PDFStandard /none /PDFXOutputIntentProfile (My Press)")
+        let selectedChanges = SemanticJoboptions.changeStandard(.pdfx4, in: selected)
+        XCTAssertEqual(selectedChanges.paths.map(\.description), ["/iPS2PDFStandard"])
+        let preserved = try selectedChanges.applying(to: selected)
+        XCTAssertEqual(preserved.value(forKey: "PDFXOutputIntentProfile")?.textualValue, "My Press")
     }
 
     func testOutputIntentEmbeddingDefaultsOffAndCanBeChanged() throws {

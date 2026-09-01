@@ -78,7 +78,14 @@ struct LosslessJoboptionsDocument: Sendable {
             bytes.replaceSubrange(occurrence.byteRange, with: try source.encode(postScript))
         } else {
             guard let closingUnit = parsed.dictionaryClosingUnits[path.parent] else {
-                throw JoboptionsError.malformed("missing dictionary at \(path.parent.description)")
+                guard !path.parent.isRoot else {
+                    throw JoboptionsError.malformed("missing dictionary at \(path.parent.description)")
+                }
+                return try insertingValueWithMissingDictionaryParents(
+                    forPath: path,
+                    value: value,
+                    stringInsertionStyle: stringInsertionStyle
+                )
             }
             let postScript = serialized(
                 value,
@@ -92,6 +99,37 @@ struct LosslessJoboptionsDocument: Sendable {
             )
         }
         return try Self(data: bytes)
+    }
+
+    private func insertingValueWithMissingDictionaryParents(
+        forPath path: JoboptionsKeyPath,
+        value: JoboptionsValue,
+        stringInsertionStyle: StringInsertionStyle
+    ) throws -> Self {
+        let parentComponents = path.parent.components
+        var existingParentCount = parentComponents.count
+        while existingParentCount > 0 {
+            let candidate = JoboptionsKeyPath(Array(parentComponents.prefix(existingParentCount)))
+            if parsed.dictionaryClosingUnits[candidate] != nil { break }
+            existingParentCount -= 1
+        }
+        let existingParent = JoboptionsKeyPath(Array(parentComponents.prefix(existingParentCount)))
+        guard parsed.dictionaryClosingUnits[existingParent] != nil else {
+            throw JoboptionsError.malformed("missing dictionary at \(path.parent.description)")
+        }
+
+        var nestedValue = value
+        if path.components.count > existingParentCount + 1 {
+            for component in path.components[(existingParentCount + 1)...].reversed() {
+                nestedValue = .dictionary([component: nestedValue])
+            }
+        }
+        let insertionPath = existingParent.appending(path.components[existingParentCount])
+        return try replacingValue(
+            forPath: insertionPath,
+            with: nestedValue,
+            stringInsertionStyle: stringInsertionStyle
+        )
     }
 
     func replacingValue(

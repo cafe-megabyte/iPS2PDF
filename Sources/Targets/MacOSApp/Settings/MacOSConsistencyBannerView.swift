@@ -98,7 +98,7 @@ final class MacOSConsistencyBannerView: NSView {
                 ? String(localized: "Collapse consistency details")
                 : String(localized: "Expand consistency details")
         )
-        repairButton.isEnabled = issues.contains(where: { $0.isAutomaticallyRepairable })
+        repairButton.isEnabled = !issues.isEmpty
         rebuildDetails()
         needsLayout = true
     }
@@ -122,14 +122,7 @@ final class MacOSConsistencyBannerView: NSView {
 
     private func rebuildDetails() {
         detailTextField.stringValue = issues.map { issue in
-            var lines = [
-                issue.summary,
-                issue.reason
-            ]
-            if !issue.isAutomaticallyRepairable {
-                lines.append(String(localized: "Manual selection required"))
-            }
-            return lines.joined(separator: "\n")
+            [issue.summary, issue.reason].joined(separator: "\n")
         }.joined(separator: "\n\n")
     }
 
