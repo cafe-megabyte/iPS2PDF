@@ -4,6 +4,9 @@
 /* Class = "NSMenuItem"; title = "Preferences…"; ObjectID = "BOF-NM-1cW"; */
 "BOF-NM-1cW.title" = "Einstellungen …";
 
+/* Class = "NSMenuItem"; title = "Reset iPS2PDF…"; ObjectID = "Rst-iP-S2P"; */
+"Rst-iP-S2P.title" = "iPS2PDF zurücksetzen …";
+
 /* Class = "NSMenuItem"; title = "Services"; ObjectID = "NMo-om-nkz"; */
 "NMo-om-nkz.title" = "Dienste";
 

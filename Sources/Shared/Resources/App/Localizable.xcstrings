@@ -81,17 +81,6 @@
         }
       }
     },
-    "A suitable installed output profile must be selected before conversion." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vor der Konvertierung muss ein geeignetes installiertes Ausgabeprofil ausgewählt werden."
-          }
-        }
-      }
-    },
     "Abort nonconforming PDF/A or PDF/X jobs" : {
       "localizations" : {
         "de" : {
@@ -274,17 +263,6 @@
         }
       }
     },
-    "Anti-alias monochrome images" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kantenglättung für Schwarzweißbilder"
-          }
-        }
-      }
-    },
     "Apply" : {
       "localizations" : {
         "de" : {
@@ -297,17 +275,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Apply"
-          }
-        }
-      }
-    },
-    "Apply description" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Beschreibung übernehmen"
           }
         }
       }
@@ -544,17 +511,6 @@
         }
       }
     },
-    "Choose the minimum resolution and the action for images below it." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Wählen Sie die Mindestauflösung und die Aktion für Bilder, die darunter liegen."
-          }
-        }
-      }
-    },
     "close" : {
       "localizations" : {
         "de" : {
@@ -597,17 +553,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Farbe"
-          }
-        }
-      }
-    },
-    "Color compression" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Farbbildkomprimierung"
           }
         }
       }
@@ -688,17 +633,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Farbeinstellungsdatei"
-          }
-        }
-      }
-    },
-    "Compatibility adjustments" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Kompatibilitätsanpassungen"
           }
         }
       }
@@ -963,17 +897,6 @@
         }
       }
     },
-    "Custom (preserved)" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Benutzerdefiniert (beibehalten)"
-          }
-        }
-      }
-    },
     "Custom: %@" : {
       "localizations" : {
         "de" : {
@@ -1178,39 +1101,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "16-Bit-Bilder neu berechnen"
-          }
-        }
-      }
-    },
-    "Downsample color images" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Farbbilder neu berechnen"
-          }
-        }
-      }
-    },
-    "Downsample grayscale images" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Graustufenbilder neu berechnen"
-          }
-        }
-      }
-    },
-    "Downsample monochrome images" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schwarzweißbilder neu berechnen"
           }
         }
       }
@@ -1713,17 +1603,6 @@
         }
       }
     },
-    "First page" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erste Seite"
-          }
-        }
-      }
-    },
     "Flate" : {
       "localizations" : {
         "de" : {
@@ -1756,6 +1635,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ZIP"
+          }
+        }
+      }
+    },
+    "Finder will open and select the three iPS2PDF container folders. Move them to the Trash to reset the app and both extensions. iPS2PDF will quit before you delete them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Finder wird geöffnet und markiert die drei Container-Ordner von iPS2PDF. Verschieben Sie sie in den Papierkorb, um die App und beide Erweiterungen zurückzusetzen. iPS2PDF wird beendet, bevor Sie die Ordner löschen."
           }
         }
       }
@@ -1862,17 +1751,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Grau"
-          }
-        }
-      }
-    },
-    "Grayscale compression" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Graustufenkomprimierung"
           }
         }
       }
@@ -2201,17 +2079,6 @@
         }
       }
     },
-    "Lock Distiller parameters" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Distiller-Parameter sperren"
-          }
-        }
-      }
-    },
     "Low" : {
       "localizations" : {
         "de" : {
@@ -2296,28 +2163,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Manage Joboptions…"
-          }
-        }
-      }
-    },
-    "Mandatory PDF version, encryption, font embedding, output intent and color-space dependencies are locked by the selected standard." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die erforderliche PDF-Version sowie Verschlüsselung, Schrifteinbettung, Ausgabeprofil und Farbraumabhängigkeiten werden durch den gewählten Standard gesperrt."
-          }
-        }
-      }
-    },
-    "Manual selection required" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Manuelle Auswahl erforderlich"
           }
         }
       }
@@ -2428,17 +2273,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Verhalten bei fehlendem Endformatrahmen"
-          }
-        }
-      }
-    },
-    "Monochrome compression" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Schwarzweißkomprimierung"
           }
         }
       }
@@ -3539,23 +3373,6 @@
         }
       }
     },
-    "Preset" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Vorgabe"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preset"
-          }
-        }
-      }
-    },
     "Process color model" : {
       "localizations" : {
         "de" : {
@@ -3664,6 +3481,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Erforderliche Änderungen an PDF-Version, Verschlüsselung, Schrifteinbettung, Ausgabebedingung und Farbräumen werden als reparierbare Konsistenzeinstellungen aufgeführt."
+          }
+        }
+      }
+    },
+    "Reset iPS2PDF?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPS2PDF zurücksetzen?"
           }
         }
       }
@@ -3872,6 +3699,16 @@
         }
       }
     },
+    "Show in Finder and Quit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Finder anzeigen und beenden"
+          }
+        }
+      }
+    },
     "Show preserved PostScript" : {
       "localizations" : {
         "de" : {
@@ -3992,23 +3829,6 @@
         }
       }
     },
-    "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die aktuelle PDF-Version erfordert temporäre Anpassungen für die Konvertierung. Die aktiven Joboptions bleiben unverändert, solange du sie nicht anwendest."
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The current PDF version requires temporary conversion adjustments. The active Joboptions remain unchanged unless you apply them."
-          }
-        }
-      }
-    },
     "The device resolution must contain two positive values." : {
       "localizations" : {
         "de" : {
@@ -4085,17 +3905,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Joboptions-Datei ist größer als 16 MB."
-          }
-        }
-      }
-    },
-    "The Joboptions require a manual correction before conversion: %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Für die Joboptions ist vor der Konvertierung eine manuelle Korrektur erforderlich: %@"
           }
         }
       }
@@ -4280,17 +4089,6 @@
         }
       }
     },
-    "Transfer functions" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Transferfunktionen"
-          }
-        }
-      }
-    },
     "Transparency requires PDF 1.4 or newer." : {
       "localizations" : {
         "de" : {
@@ -4343,17 +4141,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht klassifizierte PostScript-Fragmente sind schreibgeschützt und bleiben bytegenau erhalten."
-          }
-        }
-      }
-    },
-    "Undercolor removal and black generation" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unterfarbenreduzierung und Schwarzaufbau"
           }
         }
       }

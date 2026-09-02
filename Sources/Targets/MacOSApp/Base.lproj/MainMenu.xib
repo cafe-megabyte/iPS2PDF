@@ -31,6 +31,12 @@
                                     <action selector="showSettings:" target="Voe-Tx-rLC" id="ips-settings-action"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="Reset iPS2PDF…" id="Rst-iP-S2P">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="prepareContainerReset:" target="Voe-Tx-rLC" id="ips-reset-action"/>
+                                </connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="wFC-TO-SCJ"/>
                             <menuItem title="Services" id="NMo-om-nkz">
                                 <modifierMask key="keyEquivalentModifierMask"/>

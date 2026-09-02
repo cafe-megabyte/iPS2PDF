@@ -84,7 +84,10 @@ struct JoboptionsManagementView: View {
         }
     }
 
-    private func recordsSection(title: String, records: [JoboptionsRecord]) -> some View {
+    private func recordsSection(
+        title: LocalizedStringKey,
+        records: [JoboptionsRecord]
+    ) -> some View {
         Section {
             if records.isEmpty {
                 Text("None")
@@ -132,7 +135,7 @@ struct JoboptionsManagementView: View {
                 }
             }
         } header: {
-            Text(LocalizedStringKey(title))
+            Text(title)
         }
     }
 

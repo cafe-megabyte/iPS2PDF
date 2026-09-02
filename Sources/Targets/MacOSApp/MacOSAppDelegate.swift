@@ -1,8 +1,15 @@
 import AppKit
+import Darwin
 
 @MainActor
 @main
-final class MacOSAppDelegate: NSObject, NSApplicationDelegate {
+final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
+    private static let resetContainerBundleIdentifiers = [
+        "de.cafe-megabyte.iPS2PDF.MacOS",
+        "de.cafe-megabyte.iPS2PDF.MacOS.Thumbnail",
+        "de.cafe-megabyte.iPS2PDF.MacOS.QuickLook"
+    ]
+
     private var waitsForConversionBeforeTermination = false
     private var settingsWindowController: NSWindowController?
 
@@ -47,6 +54,36 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    @IBAction func prepareContainerReset(_ sender: Any?) {
+        guard MacOSApplicationModel.shared.activeConversionCount == 0 else {
+            NSSound.beep()
+            return
+        }
+
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Reset iPS2PDF?")
+        alert.informativeText = String(
+            localized: "Finder will open and select the three iPS2PDF container folders. Move them to the Trash to reset the app and both extensions. iPS2PDF will quit before you delete them."
+        )
+        alert.addButton(withTitle: String(localized: "Show in Finder and Quit"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+
+        guard alert.runModal() == .alertFirstButtonReturn,
+              let homeDirectory = getpwuid(getuid()).map({ String(cString: $0.pointee.pw_dir) })
+        else { return }
+
+        let containersDirectory = URL(fileURLWithPath: homeDirectory, isDirectory: true)
+            .appendingPathComponent("Library", isDirectory: true)
+            .appendingPathComponent("Containers", isDirectory: true)
+        let containerURLs = Self.resetContainerBundleIdentifiers.map {
+            containersDirectory.appendingPathComponent($0, isDirectory: true)
+        }
+
+        NSWorkspace.shared.activateFileViewerSelecting(containerURLs)
+        NSApp.terminate(nil)
+    }
+
     func application(_ sender: NSApplication, openFiles filenames: [String]) {
         let urls = filenames.map { URL(fileURLWithPath: $0) }
         MacOSApplicationModel.shared.openDocuments(at: urls)
@@ -72,5 +109,10 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         return .terminateLater
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        guard menuItem.action == #selector(prepareContainerReset(_:)) else { return true }
+        return MacOSApplicationModel.shared.activeConversionCount == 0
     }
 }

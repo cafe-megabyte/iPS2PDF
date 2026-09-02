@@ -68,6 +68,9 @@
 /* Class = "NSMenuItem"; title = "Preferences…"; ObjectID = "BOF-NM-1cW"; */
 "BOF-NM-1cW.title" = "Preferences…";
 
+/* Class = "NSMenuItem"; title = "Reset iPS2PDF…"; ObjectID = "Rst-iP-S2P"; */
+"Rst-iP-S2P.title" = "Reset iPS2PDF…";
+
 /* Class = "NSMenuItem"; title = "\tLeft to Right"; ObjectID = "BgM-ve-c93"; */
 "BgM-ve-c93.title" = "\tLeft to Right";
 
