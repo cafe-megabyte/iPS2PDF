@@ -26,6 +26,11 @@ schema_files.each do |path|
 end
 
 errors = []
+catalog.each do |key, entry|
+  next unless entry["extractionState"] == "stale"
+  errors << "Stale localization: #{key}"
+end
+
 required_keys.uniq.sort.each do |key|
   german = catalog.dig(key, "localizations", "de", "stringUnit", "value")
   errors << "Missing German localization: #{key}" if german.nil? || german.empty?
