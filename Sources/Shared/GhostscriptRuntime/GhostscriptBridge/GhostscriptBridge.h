@@ -22,6 +22,7 @@ int gs_run_joboptions_with_fds(
     int validation_only,
     int allow_transparency,
     int eps_crop,
+    int embed_substitute_fonts,
     int first_page,
     int last_page,
     const char *compatibility_level,

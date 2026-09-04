@@ -3,7 +3,6 @@ import SwiftUI
 struct SettingsCategoryView: View {
     let category: DistillerCategory
     @ObservedObject var viewModel: ConversionViewModel
-    @State private var showsPDFXOutputIntentNotice = false
 
     private var repository: JoboptionsRepository { viewModel.joboptionsRepository }
 
@@ -21,8 +20,7 @@ struct SettingsCategoryView: View {
                 ForEach(visibleDefinitions) { definition in
                     DistillerOptionEditor(
                         definition: definition,
-                        repository: repository,
-                        isLocked: isLocked(definition)
+                        repository: repository
                     )
                 }
             } header: {
@@ -48,14 +46,6 @@ struct SettingsCategoryView: View {
         } message: {
             Text(repository.lastError ?? "")
         }
-        .alert(
-            "PDF/X output intent",
-            isPresented: $showsPDFXOutputIntentNotice
-        ) {
-            Button("OK") {}
-        } message: {
-            Text("Generic CMYK Profile has been selected as the PDF/X output intent. Check whether this profile matches the intended print condition.")
-        }
     }
 
     private var visibleDefinitions: [DistillerOptionDefinition] {
@@ -73,7 +63,7 @@ struct SettingsCategoryView: View {
             definitions.removeAll { $0.key == "iPS2PDFStandard" }
         }
         if category == .fonts {
-            let checkboxes = Set(["EmbedAllFonts", "EmbedSubstituteFonts", "SubsetFonts", "EmbedOpenType"])
+            let checkboxes = Set(["EmbedAllFonts", "EmbedSubstituteFonts", "SubsetFonts"])
             definitions.removeAll { !checkboxes.contains($0.key) }
         }
         return definitions.filter {
@@ -85,14 +75,10 @@ struct SettingsCategoryView: View {
     private var standardSection: some View {
         Section("PDF standard") {
             Picker("Conformance", selection: standardBinding) {
-                if let raw = repository.activeDocument?
-                    .value(forKey: "iPS2PDFStandard")?.textualValue,
-                   PDFStandard(rawValue: raw) == nil {
+                if PDFStandard(rawValue: standardText) == nil {
                     Text(String.localizedStringWithFormat(
-                        String(localized: "Custom: %@"), raw
+                        String(localized: "Custom: %@"), standardText
                     )).tag(Optional<PDFStandard>.none)
-                } else if repository.activeDocument?.value(forKey: "iPS2PDFStandard") == nil {
-                    Text(String(localized: "Not set")).tag(Optional<PDFStandard>.none)
                 }
                 ForEach(PDFStandard.allCases) { standard in
                     Text(standard.title).tag(Optional(standard))
@@ -100,14 +86,6 @@ struct SettingsCategoryView: View {
             }
             .pickerStyle(.menu)
 
-            if repository.activeStandard != .none {
-                Label(
-                    String(localized: "Required PDF version, encryption, font embedding, output intent and color-space changes are listed as repairable consistency settings."),
-                    systemImage: "lock.fill"
-                )
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            }
         }
     }
 
@@ -194,6 +172,7 @@ struct SettingsCategoryView: View {
 
     private var additionalKeys: [String] {
         let catalogued = Set(DistillerOptionCatalog.options.map(\.key))
+            .union(DistillerOptionCatalog.uiHiddenPreservedKeys)
         return (repository.activeDocument?.keys ?? [])
             .subtracting(catalogued)
             .sorted()
@@ -201,23 +180,23 @@ struct SettingsCategoryView: View {
 
     private var standardBinding: Binding<PDFStandard?> {
         Binding(
-            get: {
-                guard let raw = repository.activeDocument?
-                    .value(forKey: "iPS2PDFStandard")?.textualValue
-                else { return nil }
-                return PDFStandard(rawValue: raw)
-            },
+            get: { PDFStandard(rawValue: standardText) },
             set: { standard in
                 guard let standard else { return }
                 do {
-                    let showsNotice = try repository.setStandard(standard)
-                    if showsNotice {
-                        showsPDFXOutputIntentNotice = true
-                    }
+                    try repository.setStandard(standard)
                 }
                 catch { repository.lastError = error.localizedDescription }
             }
         )
+    }
+
+    private var standardText: String {
+        let value = JoboptionsConsistencyEngine.displayValue(
+            forKey: "iPS2PDFStandard", in: repository.activeDocument,
+            context: repository.consistencyAnalysisContext
+        )
+        return value?.textualValue ?? value?.postScript ?? "none"
     }
 
     private var manualRandomSeedBinding: Binding<Int> {
@@ -232,10 +211,6 @@ struct SettingsCategoryView: View {
             get: { repository.lastError != nil },
             set: { if !$0 { repository.lastError = nil } }
         )
-    }
-
-    private func isLocked(_ definition: DistillerOptionDefinition) -> Bool {
-        repository.activeStandard != .none && definition.isDisabledBySelectedStandard
     }
 
     private var randomSeedFormatter: NumberFormatter {

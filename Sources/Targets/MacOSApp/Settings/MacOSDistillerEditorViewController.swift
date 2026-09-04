@@ -183,11 +183,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     private func setStandard(_ standard: PDFStandard) {
         do {
-            let showsNotice = try session.setStandard(standard)
+            try session.setStandard(standard)
             buildSelectedCategory()
-            if showsNotice {
-                presentPDFXOutputIntentNotice()
-            }
         } catch { present(error) }
     }
 
@@ -309,7 +306,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             return true
         }
         if category == .fonts {
-            let checkboxKeys = Set(["EmbedAllFonts", "EmbedSubstituteFonts", "SubsetFonts", "EmbedOpenType"])
+            let checkboxKeys = Set(["EmbedAllFonts", "EmbedSubstituteFonts", "SubsetFonts"])
             definitions.removeAll { !checkboxKeys.contains($0.key) }
         }
 
@@ -361,6 +358,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             row = makeCompressionEditor(definition, kind: kind)
         case .monoSmoothing:
             row = makeMonoSmoothingEditor(definition)
+        case .fontSubsetting:
+            row = makeFontSubsettingEditor(definition)
         case .distillerOverrides:
             row = makeDistillerOverridesEditor(definition)
         case .standard:
@@ -374,21 +373,21 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             applyTechnicalTooltip(definition.localizedHelp, to: row)
             registerConsistencyHighlight(row, paths: definition.keyPaths)
         }
-        if let row, isLocked(definition) {
-            controls(in: row).forEach { $0.isEnabled = false }
-            row.alphaValue = 0.62
-        }
         return row
     }
 
     private func makeScalarEditor(_ definition: DistillerOptionDefinition) -> NSView {
-        let value = session.document.value(forKey: definition.key)
+        let value = displayValue(forKey: definition.key)
+        let valueText = value?.textualValue ?? value?.postScript
         let control: NSView
         switch definition.kind {
         case .boolean:
             let button = ActionButton.checkbox(
                 title: definition.localizedTitle,
-                state: value?.boolValue
+                state: value?.boolValue ?? JoboptionsRuntimeDefaults.booleanValue(
+                    forKey: definition.key,
+                    in: session.document
+                )
             ) { [weak self] state in
                 self?.apply(JoboptionsChangeSet([
                     JoboptionsChange("/\(definition.key)", .boolean(state))
@@ -399,7 +398,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             control = makeChoicePopup(
                 title: definition.localizedTitle,
                 choices: choices,
-                selected: value?.textualValue,
+                selected: valueText,
                 localizesChoices: true
             ) { [weak self] selected in
                 self?.apply(JoboptionsChangeSet([
@@ -410,7 +409,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             control = makeChoicePopup(
                 title: definition.localizedTitle,
                 choices: choices,
-                selected: value?.textualValue,
+                selected: valueText,
                 localizesChoices: false
             ) { [weak self] selected in
                 self?.apply(JoboptionsChangeSet([
@@ -420,9 +419,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                     )
                 ]))
             }
-        case let .integer(range):
-            let field = CommitTextField(value?.textualValue ?? "") { [weak self] text in
-                guard let number = Int(text), range.contains(number) else { return false }
+        case .integer:
+            let field = CommitTextField(valueText ?? "") { [weak self] text in
+                guard let number = Int(text) else { return false }
                 self?.apply(JoboptionsChangeSet([
                     JoboptionsChange(
                         "/\(definition.key)",
@@ -431,29 +430,26 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                 ]))
                 return true
             }
-            field.placeholderString = value == nil ? String(localized: "Not set") : nil
             control = labeledRow(definition.localizedTitle, field)
-        case let .number(range):
-            let field = CommitTextField(value?.textualValue ?? "") { [weak self] text in
-                guard let number = Double(text), range.contains(number) else { return false }
+        case .number:
+            let field = CommitTextField(valueText ?? "") { [weak self] text in
+                guard let number = Double(text) else { return false }
                 self?.apply(JoboptionsChangeSet([
                     JoboptionsChange("/\(definition.key)", .number(number, original: text))
                 ]))
                 return true
             }
-            field.placeholderString = value == nil ? String(localized: "Not set") : nil
             control = labeledRow(definition.localizedTitle, field)
         case .string:
             if isProfileSetting(definition.key) {
                 control = makeProfileEditor(definition)
             } else {
-                let field = CommitTextField(value?.textualValue ?? "") { [weak self] text in
+                let field = CommitTextField(valueText ?? "") { [weak self] text in
                     self?.apply(JoboptionsChangeSet([
                         JoboptionsChange("/\(definition.key)", .string(text))
                     ]))
                     return true
                 }
-                field.placeholderString = value == nil ? String(localized: "Not set") : nil
                 control = labeledRow(definition.localizedTitle, field)
             }
         }
@@ -740,7 +736,6 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
             ]))
             return true
         }
-        jpxQuality.placeholderString = rawJPXQuality == nil ? String(localized: "Not set") : nil
         let showsJPXQuality = configuration.compression == .jpeg2000
         quality.isHidden = kind == .monochrome || showsJPXQuality
         jpxQuality.isHidden = kind == .monochrome || !showsJPXQuality
@@ -823,18 +818,63 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     private func makeDistillerOverridesEditor(_ definition: DistillerOptionDefinition) -> NSView {
         ActionButton.checkbox(
             title: definition.localizedTitle,
-            state: session.document.value(forKey: "LockDistillerParams")?.boolValue.map { !$0 }
+            state: !JoboptionsRuntimeDefaults.booleanValue(
+                forKey: "LockDistillerParams",
+                in: session.document
+            )
         ) { [weak self] allows in
             self?.apply(SemanticJoboptions.changeAllowsDistillerOverrides(allows))
         }
     }
 
+    private func makeFontSubsettingEditor(_ definition: DistillerOptionDefinition) -> NSView {
+        let subset = ActionButton.checkbox(
+            title: definition.localizedTitle,
+            state: JoboptionsRuntimeDefaults.booleanValue(
+                forKey: "SubsetFonts",
+                in: session.document
+            )
+        ) { [weak self] enabled in
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange("/SubsetFonts", .boolean(enabled))
+            ]))
+        }
+        let storedPercentage = session.document.value(forKey: "MaxSubsetPct")?.numberValue
+        let percentageText = storedPercentage.map(numberText)
+            ?? String(JoboptionsRuntimeDefaults.maxSubsetPercentage)
+        let percentage = CommitTextField(percentageText) { [weak self] value in
+            guard let number = Int(value), (1...100).contains(number) else { return false }
+            self?.apply(JoboptionsChangeSet([
+                JoboptionsChange(
+                    "/MaxSubsetPct",
+                    .number(Double(number), original: String(number))
+                )
+            ]))
+            return true
+        }
+        percentage.alignment = .right
+        percentage.widthAnchor.constraint(equalToConstant: 56).isActive = true
+
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        let row = NSStackView(views: [
+            subset,
+            spacer,
+            text(String(localized: "Subset fonts below")),
+            percentage,
+            text("%")
+        ])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 6
+        return row
+    }
+
     private func makeStandardEditor(_ definition: DistillerOptionDefinition) -> NSView {
         let popup = ActionPopUpButton()
-        let rawStandard = session.document.value(forKey: "iPS2PDFStandard")?.textualValue
-        if rawStandard == nil {
-            popup.addItem(withTitle: String(localized: "Not set"), representedObject: "__not_set__")
-        } else if let rawStandard, PDFStandard(rawValue: rawStandard) == nil {
+        let value = displayValue(forKey: "iPS2PDFStandard")
+        let rawStandard = value?.textualValue ?? value?.postScript ?? "none"
+        if PDFStandard(rawValue: rawStandard) == nil {
             popup.addItem(
                 withTitle: String.localizedStringWithFormat(String(localized: "Custom: %@"), rawStandard),
                 representedObject: "__custom__"
@@ -843,8 +883,8 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         for standard in PDFStandard.allCases {
             popup.addItem(withTitle: standard.title, representedObject: standard.rawValue)
         }
-        popup.selectRepresentedObject(rawStandard ?? "__not_set__")
-        if let rawStandard, PDFStandard(rawValue: rawStandard) == nil {
+        popup.selectRepresentedObject(rawStandard)
+        if PDFStandard(rawValue: rawStandard) == nil {
             popup.selectRepresentedObject("__custom__")
         }
         popup.onSelection = { [weak self, weak popup] in
@@ -857,7 +897,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
     }
 
     private func makePDFXBoxesEditor(_ definition: DistillerOptionDefinition) -> NSView {
-        let rules = SemanticJoboptions.pdfXBoxRules(in: session.document)
+        let rules = JoboptionsConsistencyEngine.pdfXBoxRulesForDisplay(
+            in: session.document, context: repository.consistencyAnalysisContext
+        )
         let trimPopup = ActionPopUpButton()
         trimPopup.addItem(withTitle: String(localized: "Report an error"), representedObject: "error")
         trimPopup.addItem(withTitle: String(localized: "Use media box with offsets"), representedObject: "media")
@@ -1036,6 +1078,7 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         }
 
         let catalogued = Set(DistillerOptionCatalog.options.map(\.key))
+            .union(DistillerOptionCatalog.uiHiddenPreservedKeys)
         let unknownKeys = session.document.keys.subtracting(catalogued).sorted()
         if !unknownKeys.isEmpty {
             let rows = unknownKeys.map(makeUnknownEditor(key:))
@@ -1098,21 +1141,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
     private func makeProfileEditor(_ definition: DistillerOptionDefinition) -> NSView {
         let popup = ActionPopUpButton()
-        let storedValue = session.document.value(forKey: definition.key)
-        let current = storedValue?.textualValue ?? ""
-        let profiles = repository.profiles.filter { profile in
-            switch definition.key {
-            case "CalGrayProfile": profile.colorSpace == "GRAY"
-            case "PDFXOutputIntentProfile":
-                profile.colorSpace == "CMYK" && profile.profileClass == "prtr"
-            case "CalCMYKProfile": profile.colorSpace == "CMYK"
-            case "CalRGBProfile", "sRGBProfile", "OutputICCProfile": profile.colorSpace == "RGB"
-            default: true
-            }
-        }
-        if storedValue == nil {
-            popup.addItem(withTitle: String(localized: "Not set"), representedObject: "__not_set__")
-        } else if !current.isEmpty, !profiles.contains(where: { $0.name == current }) {
+        let current = JoboptionsRuntimeDefaults.profileSelection(displayValue(forKey: definition.key))
+        let profiles = repository.profiles
+        if !current.isEmpty, !profiles.contains(where: { $0.name == current }) {
             popup.addItem(withTitle: String.localizedStringWithFormat(
                 String(localized: "Custom: %@"), current
             ), representedObject: current)
@@ -1121,15 +1152,21 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         for profile in profiles {
             popup.addItem(withTitle: profile.name, representedObject: profile.name)
         }
-        popup.selectRepresentedObject(storedValue == nil ? "__not_set__" : current)
+        popup.selectRepresentedObject(current)
         popup.onSelection = { [weak self, weak popup] in
             guard let name = popup?.selectedRepresentedObject as? String else { return }
-            guard name != "__not_set__" else { return }
             self?.apply(JoboptionsChangeSet([
                 JoboptionsChange("/\(definition.key)", .string(name))
             ]))
         }
         return labeledRow(definition.localizedTitle, popup)
+    }
+
+    private func displayValue(forKey key: String) -> JoboptionsValue? {
+        JoboptionsConsistencyEngine.displayValue(
+            forKey: key, in: session.document,
+            context: repository.consistencyAnalysisContext
+        )
     }
 
     private func makeChoicePopup(
@@ -1340,11 +1377,6 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
                 changes()
             }
         }
-    }
-
-    private func isLocked(_ definition: DistillerOptionDefinition) -> Bool {
-        let raw = session.document.value(forKey: "iPS2PDFStandard")?.textualValue ?? "none"
-        return raw != PDFStandard.none.rawValue && definition.isDisabledBySelectedStandard
     }
 
     private func controls(in view: NSView) -> [NSControl] {
@@ -1581,15 +1613,6 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         NSAlert(error: error).beginSheetModal(for: window)
     }
 
-    private func presentPDFXOutputIntentNotice() {
-        guard let window = view.window else { return }
-        let alert = NSAlert()
-        alert.messageText = String(localized: "PDF/X output intent")
-        alert.informativeText = String(localized: "Generic CMYK Profile has been selected as the PDF/X output intent. Check whether this profile matches the intended print condition.")
-        alert.addButton(withTitle: String(localized: "OK"))
-        alert.beginSheetModal(for: window)
-    }
-
     private final class ActionButton: NSButton {
         private var actionHandler: (() -> Void)?
 
@@ -1607,13 +1630,13 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
 
         static func checkbox(
             title: String,
-            state: Bool?,
+            state: Bool,
             action: @escaping (Bool) -> Void
         ) -> ActionButton {
             let button = ActionButton(title: title) {}
             button.setButtonType(.switch)
-            button.allowsMixedState = true
-            button.state = state.map { $0 ? .on : .off } ?? .mixed
+            button.allowsMixedState = false
+            button.state = state ? .on : .off
             button.actionHandler = { [weak button] in action(button?.state == .on) }
             return button
         }

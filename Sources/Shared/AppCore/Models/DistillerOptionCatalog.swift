@@ -5,7 +5,7 @@ enum DistillerOptionCatalog {
 
     static let options: [DistillerOptionDefinition] = [
         option("Description", "Description", .general, .string, section: .description, semanticEditor: .description),
-        option("CompatibilityLevel", "PDF compatibility", .general, .literal(["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"]), disabledByStandard: true),
+        option("CompatibilityLevel", "PDF compatibility", .general, .literal(["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "2.0"])),
         option("CompressObjects", "Object compression", .general, .name(["Off", "Tags", "All"])),
         option("AutoRotatePages", "Auto-rotate pages", .general, .name(["None", "All", "PageByPage"])),
         option("Binding", "Binding", .general, .name(["Left", "Right"])),
@@ -19,11 +19,11 @@ enum DistillerOptionCatalog {
         option("HWResolution", "Device resolution", .general, .string, keyPaths: ["/HWResolution"], semanticEditor: .deviceResolution),
         option("PageSize", "Default page size", .general, .string, section: .pageSize, keyPaths: ["/PageSize"], semanticEditor: .pageSize),
 
-        option("Encrypt", "Encrypt PDF", .general, .boolean, classification: .knownAdditional, disabledByStandard: true),
-        option("EncryptionR", "Encryption revision", .general, .integer(0...6), classification: .knownAdditional, disabledByStandard: true),
-        option("OwnerPassword", "Owner password", .general, .string, classification: .knownAdditional, disabledByStandard: true),
-        option("UserPassword", "User password", .general, .string, classification: .knownAdditional, disabledByStandard: true),
-        option("Permissions", "Document permissions", .general, .integer(-2_147_483_648...2_147_483_647), classification: .knownAdditional, disabledByStandard: true),
+        option("Encrypt", "Encrypt PDF", .general, .boolean, classification: .knownAdditional),
+        option("EncryptionR", "Encryption revision", .general, .integer(0...6), classification: .knownAdditional),
+        option("OwnerPassword", "Owner password", .general, .string, classification: .knownAdditional),
+        option("UserPassword", "User password", .general, .string, classification: .knownAdditional),
+        option("Permissions", "Document permissions", .general, .integer(-2_147_483_648...2_147_483_647), classification: .knownAdditional),
 
         option("DownsampleColorImages", "Downsampling", .images, .boolean, section: .colorImages, keyPaths: ["/DownsampleColorImages", "/ColorImageDownsampleType", "/ColorImageResolution", "/ColorImageDownsampleThreshold"], semanticEditor: .downsampling(.color)),
         option("ColorImageDownsampleType", "Color downsampling", .images, .name(["None", "Average", "Bicubic", "Subsample"]), section: .colorImages, semanticEditor: .companion),
@@ -63,15 +63,14 @@ enum DistillerOptionCatalog {
         option("PassThroughJPXImages", "Pass through JPEG 2000 images", .images, .boolean, classification: .knownAdditional),
         option("ConvertImagesToIndexed", "Convert suitable images to indexed color", .images, .boolean, classification: .knownAdditional),
 
-        option("EmbedAllFonts", "Embed all fonts", .fonts, .boolean, disabledByStandard: true),
+        option("EmbedAllFonts", "Embed all fonts", .fonts, .boolean),
         option("EmbedSubstituteFonts", "Embed substitute fonts", .fonts, .boolean),
-        option("SubsetFonts", "Subset embedded fonts", .fonts, .boolean),
-        option("MaxSubsetPct", "Subset fonts below", .fonts, .integer(1...100), classification: .knownAdditional),
-        option("EmbedOpenType", "Embed OpenType fonts", .fonts, .boolean),
-        option("CannotEmbedFontPolicy", "When embedding fails", .fonts, .name(["Ignore", "Warning", "Error"]), classification: .knownAdditional, disabledByStandard: true),
+        option("SubsetFonts", "Subset embedded fonts", .fonts, .boolean, keyPaths: ["/SubsetFonts", "/MaxSubsetPct"], semanticEditor: .fontSubsetting),
+        option("MaxSubsetPct", "Subset fonts below", .fonts, .integer(1...100), semanticEditor: .companion),
+        option("CannotEmbedFontPolicy", "When embedding fails", .fonts, .name(["OK", "Warning", "Error"]), classification: .knownAdditional),
 
         option("ColorSettingsFile", "Color settings file", .color, .string, section: .colorSettings, classification: .preserved),
-        option("ColorConversionStrategy", "Color conversion strategy", .color, .name(["LeaveColorUnchanged", "RGB", "sRGB", "CMYK", "Gray", "UseDeviceIndependentColor"]), disabledByStandard: true),
+        option("ColorConversionStrategy", "Color conversion strategy", .color, .name(["LeaveColorUnchanged", "RGB", "sRGB", "CMYK", "Gray", "UseDeviceIndependentColor"])),
         option("BlendConversionStrategy", "Blend conversion strategy", .color, .name(["None", "Simple", "Managed"]), classification: .knownAdditional),
         option("ConvertCMYKImagesToRGB", "Convert CMYK images to RGB", .color, .boolean, classification: .knownAdditional),
         option("ProcessColorModel", "Process color model", .color, .name(["DeviceGray", "DeviceRGB", "DeviceCMYK"]), classification: .knownAdditional),
@@ -107,7 +106,7 @@ enum DistillerOptionCatalog {
         option("ParseDSCComments", "Process DSC comments", .advanced, .boolean, section: .dsc),
         option("ParseDSCCommentsForDocInfo", "Use DSC comments for document info", .advanced, .boolean, section: .dsc),
         option("EmitDSCWarnings", "Report DSC warnings", .advanced, .boolean, section: .dsc),
-        option("DSCReportingLevel", "DSC reporting level", .advanced, .integer(0...2), classification: .knownAdditional),
+        option("DSCReportingLevel", "DSC reporting level", .advanced, .integer(0...2), classification: .knownAdditional, compatibility: "Preserved; ignored by Ghostscript"),
         option("OPM", "Overprint mode", .advanced, .integer(0...1)),
         option("LockDistillerParams", "Allow PostScript files to override PDF settings", .advanced, .boolean, keyPaths: ["/LockDistillerParams"], semanticEditor: .distillerOverrides),
         option("AllowPSXObjects", "Allow PostScript XObjects", .advanced, .boolean),
@@ -144,6 +143,9 @@ enum DistillerOptionCatalog {
 
     static let byKey = Dictionary(uniqueKeysWithValues: options.map { ($0.key, $0) })
 
+    /// Recognized values that must remain lossless but intentionally have no editor.
+    static let uiHiddenPreservedKeys: Set<String> = ["EmbedOpenType"]
+
     static func options(in category: DistillerCategory) -> [DistillerOptionDefinition] {
         options.filter { $0.category == category }
     }
@@ -171,6 +173,7 @@ enum DistillerOptionCatalog {
         case "LeaveColorUnchanged": String(localized: "LeaveColorUnchanged")
         case "Left": String(localized: "Left")
         case "None": String(localized: "None")
+        case "OK": String(localized: "Ignore")
         case "Off": String(localized: "Off")
         case "PageByPage": String(localized: "PageByPage")
         case "Perceptual": String(localized: "Perceptual")
@@ -201,7 +204,6 @@ enum DistillerOptionCatalog {
         keyPaths: [String] = [],
         semanticEditor: DistillerSemanticEditor = .scalar,
         classification: DistillerControlClassification = .distillerControl,
-        disabledByStandard: Bool = false,
         compatibility: LocalizedStringResource? = nil
     ) -> DistillerOptionDefinition {
         DistillerOptionDefinition(
@@ -213,7 +215,6 @@ enum DistillerOptionCatalog {
             keyPaths: (keyPaths.isEmpty ? ["/\(key)"] : keyPaths).map { JoboptionsKeyPath($0) },
             semanticEditor: semanticEditor,
             classification: classification,
-            isDisabledBySelectedStandard: disabledByStandard,
             compatibilityNote: compatibility
         )
     }

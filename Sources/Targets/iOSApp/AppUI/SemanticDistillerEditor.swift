@@ -25,6 +25,8 @@ struct SemanticDistillerEditor: View {
             ImagePolicyEditor(kind: kind, repository: repository)
         case .monoSmoothing:
             MonoSmoothingEditor(repository: repository)
+        case .fontSubsetting:
+            FontSubsettingEditor(repository: repository)
         case .distillerOverrides:
             DistillerOverridesEditor(repository: repository)
         case .pdfXBoxes:
@@ -42,9 +44,6 @@ struct SemanticDistillerEditor: View {
                 String(localized: "Allow PostScript files to override PDF settings"),
                 selection: selection
             ) {
-                if repository.activeDocument?.value(forKey: "LockDistillerParams")?.boolValue == nil {
-                    Text(String(localized: "Not set")).tag("__not_set__")
-                }
                 Text(DistillerOptionCatalog.localizedChoice("False")).tag("false")
                 Text(DistillerOptionCatalog.localizedChoice("True")).tag("true")
             }
@@ -54,17 +53,75 @@ struct SemanticDistillerEditor: View {
         private var selection: Binding<String> {
             Binding(
                 get: {
-                    guard let locked = repository.activeDocument?
-                        .value(forKey: "LockDistillerParams")?.boolValue
-                    else { return "__not_set__" }
+                    let locked = JoboptionsRuntimeDefaults.booleanValue(
+                        forKey: "LockDistillerParams",
+                        in: repository.activeDocument
+                    )
                     return locked ? "false" : "true"
                 },
                 set: { value in
-                    guard value != "__not_set__" else { return }
                     apply(
                         SemanticJoboptions.changeAllowsDistillerOverrides(value == "true"),
                         repository: repository
                     )
+                }
+            )
+        }
+    }
+
+    private struct FontSubsettingEditor: View {
+        @ObservedObject var repository: JoboptionsRepository
+
+        var body: some View {
+            VStack(alignment: .leading, spacing: 8) {
+                Picker(String(localized: "Subset embedded fonts"), selection: subsetSelection) {
+                    Text(DistillerOptionCatalog.localizedChoice("False")).tag("false")
+                    Text(DistillerOptionCatalog.localizedChoice("True")).tag("true")
+                }
+                .pickerStyle(.menu)
+
+                HStack {
+                    Text(String(localized: "Subset fonts below"))
+                    TextField("", value: percentage, format: .number)
+                        .keyboardType(.numberPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 72)
+                    Text("%")
+                }
+            }
+        }
+
+        private var subsetSelection: Binding<String> {
+            Binding(
+                get: {
+                    JoboptionsRuntimeDefaults.booleanValue(
+                        forKey: "SubsetFonts",
+                        in: repository.activeDocument
+                    ) ? "true" : "false"
+                },
+                set: { value in
+                    updateBoolean(
+                        path: "/SubsetFonts",
+                        value: value == "true",
+                        repository: repository
+                    )
+                }
+            )
+        }
+
+        private var percentage: Binding<Int> {
+            Binding(
+                get: {
+                    guard let value = repository.activeDocument?
+                        .value(forKey: "MaxSubsetPct")?.numberValue,
+                          value.rounded() == value,
+                          (1...100).contains(Int(value))
+                    else { return JoboptionsRuntimeDefaults.maxSubsetPercentage }
+                    return Int(value)
+                },
+                set: { value in
+                    guard (1...100).contains(value) else { return }
+                    updateNumber(path: "/MaxSubsetPct", number: value, repository: repository)
                 }
             )
         }
@@ -77,18 +134,22 @@ struct SemanticDistillerEditor: View {
         var body: some View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(String(localized: "Description"))
-                TextField(String(localized: "Not set"), text: $draft, axis: .vertical)
+                TextField("", text: editedDraft, axis: .vertical)
                     .lineLimit(2...5)
             }
             .onAppear(perform: reload)
             .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
-            .onChange(of: draft) { _, value in
+        }
+
+        private var editedDraft: Binding<String> {
+            Binding(get: { draft }, set: { value in
+                draft = value
                 guard let document = repository.activeDocument else { return }
                 apply(
                     SemanticJoboptions.changeDescription(to: value, in: document),
                     repository: repository
                 )
-            }
+            })
         }
 
         private func reload() {
@@ -408,7 +469,7 @@ struct SemanticDistillerEditor: View {
                     }
                 } else if compression == "jpeg2000" {
                     LabeledContent(String(localized: "Image quality")) {
-                        TextField(String(localized: "Not set"), text: $jpxQuality)
+                        TextField("", text: $jpxQuality)
                             .keyboardType(.decimalPad)
                             .multilineTextAlignment(.trailing)
                             .invalidDraftStyle(!jpxQuality.isEmpty && parsedJPXQuality.map { (0...100).contains($0) } != true)
@@ -544,7 +605,7 @@ struct SemanticDistillerEditor: View {
 
         var body: some View {
             HStack {
-                TextField(String(localized: "Not set"), text: $minimum)
+                TextField("", text: $minimum)
                     .keyboardType(.numberPad)
                     .invalidDraftStyle(!minimum.isEmpty && Int(minimum).map { (1...9_600).contains($0) } != true)
                 Picker(String(localized: "Policy"), selection: $policy) {
@@ -637,41 +698,57 @@ struct SemanticDistillerEditor: View {
 
         var body: some View {
             VStack(alignment: .leading, spacing: 10) {
-                Picker(String(localized: "If trim box is missing"), selection: $trimMode) {
+                Picker(String(localized: "If trim box is missing"), selection: trimSelection) {
                     Text(String(localized: "Report an error")).tag("error")
                     Text(String(localized: "Set from media box with offsets")).tag("media")
                     if trimMode == "custom" { Text(trimCustomTitle).tag("custom") }
                 }
-                offsetFields(values: $trimOffsets)
-                Picker(String(localized: "If bleed box is missing"), selection: $bleedMode) {
+                offsetFields(values: trimOffsetSelection)
+                Picker(String(localized: "If bleed box is missing"), selection: bleedSelection) {
                     Text(String(localized: "Set to media box")).tag("media")
                     Text(String(localized: "Set from trim box with offsets")).tag("trim")
                     if bleedMode == "custom" { Text(bleedCustomTitle).tag("custom") }
                 }
-                offsetFields(values: $bleedOffsets)
+                offsetFields(values: bleedOffsetSelection)
             }
             .onAppear(perform: reload)
             .onChange(of: repository.activeDocument?.data) { _, _ in reload() }
-            .onChange(of: trimMode) { _, value in
+        }
+
+        private var trimSelection: Binding<String> {
+            Binding(get: { trimMode }, set: { value in
+                trimMode = value
                 if value == "error" {
                     updateBoolean(path: "/PDFXNoTrimBoxError", value: true, repository: repository)
                 } else if value == "media" {
                     updateBoolean(path: "/PDFXNoTrimBoxError", value: false, repository: repository)
                 }
-            }
-            .onChange(of: bleedMode) { _, value in
+            })
+        }
+
+        private var bleedSelection: Binding<String> {
+            Binding(get: { bleedMode }, set: { value in
+                bleedMode = value
                 if value == "media" {
                     updateBoolean(path: "/PDFXSetBleedBoxToMediaBox", value: true, repository: repository)
                 } else if value == "trim" {
                     updateBoolean(path: "/PDFXSetBleedBoxToMediaBox", value: false, repository: repository)
                 }
-            }
-            .onChange(of: trimOffsets) { _, values in
+            })
+        }
+
+        private var trimOffsetSelection: Binding<[String]> {
+            Binding(get: { trimOffsets }, set: { values in
+                trimOffsets = values
                 updateOffsets(path: "/PDFXTrimBoxToMediaBoxOffset", texts: values)
-            }
-            .onChange(of: bleedOffsets) { _, values in
+            })
+        }
+
+        private var bleedOffsetSelection: Binding<[String]> {
+            Binding(get: { bleedOffsets }, set: { values in
+                bleedOffsets = values
                 updateOffsets(path: "/PDFXBleedBoxToTrimBoxOffset", texts: values)
-            }
+            })
         }
 
         private var trimCustomTitle: String {
@@ -704,14 +781,23 @@ struct SemanticDistillerEditor: View {
 
         private func reload() {
             guard let document = repository.activeDocument else { return }
-            trimOffsets = arrayTexts(document.value(forKey: "PDFXTrimBoxToMediaBoxOffset"), count: 4)
-            bleedOffsets = arrayTexts(document.value(forKey: "PDFXBleedBoxToTrimBoxOffset"), count: 4)
-            switch SemanticJoboptions.pdfXBoxRules(in: document).trim {
+            trimOffsets = arrayTexts(JoboptionsConsistencyEngine.displayValue(
+                forKey: "PDFXTrimBoxToMediaBoxOffset", in: document,
+                context: repository.consistencyAnalysisContext
+            ), count: 4)
+            bleedOffsets = arrayTexts(JoboptionsConsistencyEngine.displayValue(
+                forKey: "PDFXBleedBoxToTrimBoxOffset", in: document,
+                context: repository.consistencyAnalysisContext
+            ), count: 4)
+            let rules = JoboptionsConsistencyEngine.pdfXBoxRulesForDisplay(
+                in: document, context: repository.consistencyAnalysisContext
+            )
+            switch rules.trim {
             case .error: trimMode = "error"
             case .mediaBox: trimMode = "media"
             case .trimBox, .custom: trimMode = "custom"
             }
-            switch SemanticJoboptions.pdfXBoxRules(in: document).bleed {
+            switch rules.bleed {
             case .mediaBox: bleedMode = "media"
             case .trimBox: bleedMode = "trim"
             case .error, .custom: bleedMode = "custom"

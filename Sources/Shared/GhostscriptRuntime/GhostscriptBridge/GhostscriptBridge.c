@@ -305,6 +305,7 @@ int gs_run_joboptions_with_fds(
     int validation_only,
     int allow_transparency,
     int eps_crop,
+    int embed_substitute_fonts,
     int first_page,
     int last_page,
     const char *compatibility_level,
@@ -333,6 +334,7 @@ int gs_run_joboptions_with_fds(
     char compatibility_option[32];
     char standard_option[32];
     char blend_conversion_option[40];
+    char embed_substitute_fonts_option[48];
     char first_page_option[32];
     char last_page_option[32];
     char random_seed_prolog[32];
@@ -363,6 +365,7 @@ int gs_run_joboptions_with_fds(
     if (!validation_only && (postscript_random_seed < 0 || postscript_random_seed > 2147483647)) {
         return -1;
     }
+    if (embed_substitute_fonts != 0 && embed_substitute_fonts != 1) return -1;
     if (first_page < 0 || last_page < 0 ||
         (first_page > 0 && last_page > 0 && first_page > last_page)) {
         return -1;
@@ -508,6 +511,13 @@ int gs_run_joboptions_with_fds(
         arguments[argument_count++] = "-dALLOWPSTRANSPARENCY";
     }
     if (eps_crop) arguments[argument_count++] = "-dEPSCrop";
+    snprintf(
+        embed_substitute_fonts_option,
+        sizeof(embed_substitute_fonts_option),
+        "-dEmbedSubstituteFonts=%s",
+        embed_substitute_fonts ? "true" : "false"
+    );
+    arguments[argument_count++] = embed_substitute_fonts_option;
     if (first_page > 0) {
         snprintf(first_page_option, sizeof(first_page_option), "-dFirstPage=%d", first_page);
         arguments[argument_count++] = first_page_option;
@@ -525,7 +535,6 @@ int gs_run_joboptions_with_fds(
     }
     if (has_standard) {
         arguments[argument_count++] = standard_option;
-        arguments[argument_count++] = is_pdfa ? "-dPDFACompatibilityPolicy=1" : "-dPDFXNoTrimBoxError=false";
         arguments[argument_count++] = is_pdfa ? "-sColorConversionStrategy=RGB" : "-sColorConversionStrategy=CMYK";
         if (has_standard_definition) {
             arguments[argument_count++] = "--permit-file-read=SelectedOutputProfile.icc";

@@ -10,6 +10,7 @@ enum DistillerSemanticEditor: Sendable {
     case compression(SemanticJoboptions.ImageKind)
     case imagePolicy(SemanticJoboptions.ImageKind)
     case monoSmoothing
+    case fontSubsetting
     case distillerOverrides
     case standard
     case pdfXBoxes

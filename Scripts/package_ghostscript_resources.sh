@@ -2,27 +2,29 @@
 set -euo pipefail
 
 if [ "$#" -ne 4 ]; then
-    echo "Usage: package_ghostscript_resources.sh <project-temp-dir> <source-archive> <base14-directory> <artifact-directory>" >&2
+    echo "Usage: package_ghostscript_resources.sh <project-temp-dir> <source-archive-or-directory> <base14-directory> <artifact-directory>" >&2
     exit 64
 fi
 
 project_temp_dir="$1"
-source_archive="$2"
+source_input="$2"
 base14_directory="$3"
 artifact_directory="$4"
 script_directory="$(cd "$(dirname "$0")" && pwd)"
 fingerprint_helpers="$script_directory/Shared/ghostscript_fingerprint.sh"
+archive_helpers="$script_directory/Shared/ghostscript_archive.sh"
 
 # shellcheck source=Shared/ghostscript_fingerprint.sh
 source "$fingerprint_helpers"
+# shellcheck source=Shared/ghostscript_archive.sh
+source "$archive_helpers"
 
 if [ -z "$project_temp_dir" ] || [ -z "$artifact_directory" ]; then
     echo "Build and artifact directories must not be empty." >&2
     exit 65
 fi
 
-if [ ! -f "$source_archive" ]; then
-    echo "Ghostscript source archive is missing: $source_archive" >&2
+if ! source_archive="$(ghostscript_resolve_source_archive "$source_input")"; then
     exit 66
 fi
 
@@ -39,6 +41,7 @@ input_fingerprint="$({
     ghostscript_hash_file "$source_archive"
     ghostscript_hash_file "$0"
     ghostscript_hash_file "$fingerprint_helpers"
+    ghostscript_hash_file "$archive_helpers"
     ghostscript_hash_optional_directory "$base14_directory"
 } | ghostscript_fingerprint)"
 

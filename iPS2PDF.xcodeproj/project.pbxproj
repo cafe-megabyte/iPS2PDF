@@ -1674,7 +1674,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript/ghostscript-10.07.1.tar.gz";
+				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 			};
 			name = Debug;
@@ -1683,7 +1683,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript/ghostscript-10.07.1.tar.gz";
+				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript";
 				SUPPORTED_PLATFORMS = "iphonesimulator iphoneos";
 			};
 			name = Release;
@@ -1693,7 +1693,7 @@
 			buildSettings = {
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript/ghostscript-10.07.1.tar.gz";
+				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript";
 				GHOSTSCRIPT_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/macosx-universal-MacOS$(MACOSX_DEPLOYMENT_TARGET)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				SDKROOT = macosx;
@@ -1706,7 +1706,7 @@
 			buildSettings = {
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
-				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript/ghostscript-10.07.1.tar.gz";
+				GHOSTSCRIPT_ARCHIVE_PATH = "$(SRCROOT)/Vendor/Ghostscript";
 				GHOSTSCRIPT_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/macosx-universal-MacOS$(MACOSX_DEPLOYMENT_TARGET)";
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				SDKROOT = macosx;

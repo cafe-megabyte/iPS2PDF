@@ -3,7 +3,6 @@ import SwiftUI
 struct DistillerOptionEditor: View {
     let definition: DistillerOptionDefinition
     @ObservedObject var repository: JoboptionsRepository
-    let isLocked: Bool
     @State private var draft = ""
 
     var body: some View {
@@ -16,11 +15,8 @@ struct DistillerOptionEditor: View {
             }
         }
         .consistencyHighlight(isAffected)
-        .disabled(isLocked)
-        .opacity(isLocked ? 0.65 : 1)
         .onAppear(perform: reloadDraft)
         .onChange(of: documentToken) { _, _ in reloadDraft() }
-        .onChange(of: draft) { _, value in commitDraft(value) }
     }
 
     @ViewBuilder
@@ -38,9 +34,6 @@ struct DistillerOptionEditor: View {
         switch definition.kind {
         case .boolean:
             Picker(definition.localizedTitle, selection: booleanSelection) {
-                if currentValue?.boolValue == nil {
-                    Text(String(localized: "Not set")).tag("__not_set__")
-                }
                 Text(DistillerOptionCatalog.localizedChoice("False")).tag("false")
                 Text(DistillerOptionCatalog.localizedChoice("True")).tag("true")
             }
@@ -55,30 +48,27 @@ struct DistillerOptionEditor: View {
                 choiceRows(choices: choices, localizes: false)
             }
             .pickerStyle(.menu)
-        case let .integer(range):
+        case .integer:
             LabeledContent(definition.localizedTitle) {
-                TextField(String(localized: "Not set"), text: $draft)
+                TextField("", text: draftBinding)
 #if os(iOS)
                     .keyboardType(.numbersAndPunctuation)
 #endif
                     .multilineTextAlignment(.trailing)
-                    .invalidDraftStyle(!draft.isEmpty && !isValidInteger(draft, range: range))
+                    .invalidDraftStyle(!draft.isEmpty && Int(draft) == nil)
             }
-        case let .number(range):
+        case .number:
             LabeledContent(definition.localizedTitle) {
-                TextField(String(localized: "Not set"), text: $draft)
+                TextField("", text: draftBinding)
 #if os(iOS)
                     .keyboardType(.decimalPad)
 #endif
                     .multilineTextAlignment(.trailing)
-                    .invalidDraftStyle(!draft.isEmpty && !isValidNumber(draft, range: range))
+                    .invalidDraftStyle(!draft.isEmpty && Double(draft.replacingOccurrences(of: ",", with: ".")) == nil)
             }
         case .string:
             if isProfileSetting {
                 Picker(definition.localizedTitle, selection: profileSelection) {
-                    if currentValue == nil {
-                        Text(String(localized: "Not set")).tag("__not_set__")
-                    }
                     if !currentText.isEmpty,
                        !profileCandidates.contains(where: { $0.name == currentText }) {
                         Text(String.localizedStringWithFormat(
@@ -94,7 +84,7 @@ struct DistillerOptionEditor: View {
             } else {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(definition.localizedTitle)
-                    TextField(String(localized: "Not set"), text: $draft, axis: .vertical)
+                    TextField("", text: draftBinding, axis: .vertical)
                         .lineLimit(1...4)
                 }
             }
@@ -116,11 +106,18 @@ struct DistillerOptionEditor: View {
     }
 
     private var currentValue: JoboptionsValue? {
-        repository.activeDocument?.value(forKey: definition.key)
+        JoboptionsConsistencyEngine.displayValue(
+            forKey: definition.key,
+            in: repository.activeDocument,
+            context: repository.consistencyAnalysisContext
+        )
     }
 
     private var currentText: String {
-        currentValue?.textualValue ?? ""
+        if isProfileSetting {
+            return JoboptionsRuntimeDefaults.profileSelection(currentValue)
+        }
+        return currentValue?.textualValue ?? currentValue?.postScript ?? ""
     }
 
     private var documentToken: Data? {
@@ -134,9 +131,13 @@ struct DistillerOptionEditor: View {
 
     private var booleanSelection: Binding<String> {
         Binding(
-            get: { currentValue?.boolValue.map { $0 ? "true" : "false" } ?? "__not_set__" },
+            get: {
+                (currentValue?.boolValue ?? JoboptionsRuntimeDefaults.booleanValue(
+                    forKey: definition.key,
+                    in: repository.activeDocument
+                )) ? "true" : "false"
+            },
             set: { value in
-                guard value != "__not_set__" else { return }
                 update(.boolean(value == "true"))
             }
         )
@@ -164,37 +165,19 @@ struct DistillerOptionEditor: View {
 
     private var profileSelection: Binding<String> {
         Binding(
-            get: { currentValue == nil ? "__not_set__" : currentText },
+            get: { currentText },
             set: { value in
-                guard value != "__not_set__" else { return }
                 update(.string(value))
             }
         )
     }
 
     private var isProfileSetting: Bool {
-        [
-            "CalGrayProfile", "CalRGBProfile", "CalCMYKProfile", "sRGBProfile",
-            "OutputICCProfile", "GraphicICCProfile", "ImageICCProfile", "TextICCProfile",
-            "PDFXOutputIntentProfile"
-        ].contains(definition.key)
+        JoboptionsRuntimeDefaults.profileKeys.contains(definition.key)
     }
 
     private var profileCandidates: [ICCProfileRecord] {
-        repository.profiles.filter { profile in
-            switch definition.key {
-            case "CalGrayProfile":
-                profile.colorSpace == "GRAY"
-            case "PDFXOutputIntentProfile":
-                profile.colorSpace == "CMYK" && profile.profileClass == "prtr"
-            case "CalCMYKProfile":
-                profile.colorSpace == "CMYK"
-            case "CalRGBProfile", "sRGBProfile", "OutputICCProfile":
-                profile.colorSpace == "RGB"
-            default:
-                ["GRAY", "RGB", "CMYK", "Lab", "XYZ"].contains(profile.colorSpace)
-            }
-        }
+        repository.profiles
     }
 
     private func reloadDraft() {
@@ -202,28 +185,28 @@ struct DistillerOptionEditor: View {
         draft = value?.textualValue ?? (value.map(\.postScript) ?? "")
     }
 
+    /// Reloading presentation state must not be mistaken for a user edit.
+    private var draftBinding: Binding<String> {
+        Binding(get: { draft }, set: { value in
+            draft = value
+            commitDraft(value)
+        })
+    }
+
     private func commitDraft(_ value: String) {
         switch definition.kind {
-        case let .integer(range):
-            guard let number = Int(value), range.contains(number) else { return }
+        case .integer:
+            guard let number = Int(value) else { return }
             update(.number(Double(number), original: String(number)))
-        case let .number(range):
+        case .number:
             let normalized = value.replacingOccurrences(of: ",", with: ".")
-            guard let number = Double(normalized), range.contains(number) else { return }
+            guard let number = Double(normalized) else { return }
             update(.number(number, original: normalized))
         case .string where !isProfileSetting:
             update(.string(value))
         default:
             break
         }
-    }
-
-    private func isValidInteger(_ value: String, range: ClosedRange<Int>) -> Bool {
-        Int(value).map(range.contains) == true
-    }
-
-    private func isValidNumber(_ value: String, range: ClosedRange<Double>) -> Bool {
-        Double(value.replacingOccurrences(of: ",", with: ".")).map(range.contains) == true
     }
 
     private func update(_ value: JoboptionsValue) {

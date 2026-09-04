@@ -26,6 +26,11 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
         case invalidImagePolicy
         case invalidMonoSmoothing
         case invalidPDFXBoxes
+        case standardCompatibilityPolicy
+        case invalidAdditionalParameter
+        case encryptionNeedsPassword
+        case encryptionDisabled
+        case incompatibleDeviceProfile
 
         var localizedDescription: String {
             switch self {
@@ -77,6 +82,16 @@ struct JoboptionsConsistencyIssue: Identifiable, Equatable, Sendable {
                 String(localized: "Monochrome smoothing requires a depth of 2, 4, or 8 bits.")
             case .invalidPDFXBoxes:
                 String(localized: "The PDF/X page box settings are incomplete or invalid.")
+            case .standardCompatibilityPolicy:
+                String(localized: "PDF/A requires incompatible features to be omitted or conversion to be aborted.")
+            case .invalidAdditionalParameter:
+                String(localized: "This setting is not a supported Ghostscript value.")
+            case .encryptionNeedsPassword:
+                String(localized: "Encryption requires an owner or user password.")
+            case .encryptionDisabled:
+                String(localized: "Passwords must not be passed to Ghostscript while encryption is disabled.")
+            case .incompatibleDeviceProfile:
+                String(localized: "The device profile must be available and match the output color space. The default device profile will be used.")
             }
         }
     }

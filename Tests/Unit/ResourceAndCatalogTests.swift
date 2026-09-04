@@ -53,6 +53,41 @@ final class ResourceAndCatalogTests: XCTestCase {
             DistillerOptionCatalog.byKey["ColorSettingsFile"]?.classification,
             .preserved
         )
+        let booleanKeys = Set(DistillerOptionCatalog.options.compactMap { option in
+            if case .boolean = option.kind { return option.key }
+            return nil
+        })
+        XCTAssertEqual(booleanKeys, Set(JoboptionsRuntimeDefaults.booleanValues.keys))
+        XCTAssertNil(DistillerOptionCatalog.byKey["EmbedOpenType"])
+        XCTAssertTrue(DistillerOptionCatalog.uiHiddenPreservedKeys.contains("EmbedOpenType"))
+        XCTAssertEqual(
+            DistillerOptionCatalog.byKey["SubsetFonts"]?.keyPaths,
+            [JoboptionsKeyPath("/SubsetFonts"), JoboptionsKeyPath("/MaxSubsetPct")]
+        )
+        XCTAssertEqual(
+            DistillerOptionCatalog.byKey["MaxSubsetPct"]?.classification,
+            .distillerControl
+        )
+    }
+
+    func testMissingBooleanValuesUseRuntimeDefaultsWithoutEditingTheDocument() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("<< >> setdistillerparams\n".utf8))
+        let original = document.data
+
+        XCTAssertTrue(JoboptionsRuntimeDefaults.booleanValue(forKey: "EmbedAllFonts", in: document))
+        XCTAssertTrue(JoboptionsRuntimeDefaults.booleanValue(forKey: "EmbedSubstituteFonts", in: document))
+        XCTAssertTrue(JoboptionsRuntimeDefaults.booleanValue(forKey: "SubsetFonts", in: document))
+        XCTAssertFalse(JoboptionsRuntimeDefaults.booleanValue(forKey: "Optimize", in: document))
+        XCTAssertEqual(document.data, original)
+
+        let explicit = try document.replacingValue(
+            forKey: "EmbedSubstituteFonts",
+            with: .boolean(false)
+        )
+        XCTAssertFalse(JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "EmbedSubstituteFonts",
+            in: explicit
+        ))
     }
 
     func testRemoteBundledProfileCatalogueSurvivesUserProfileReload() {
@@ -124,7 +159,7 @@ final class ResourceAndCatalogTests: XCTestCase {
         )
     }
 
-    func testStandardCompatibilityLocksAreDefined() {
+    func testStandardCompatibilityRequirementsAreDefinedForTheConsistencyEngine() {
         XCTAssertNil(PDFStandard.none.requiredCompatibilityLevel)
         XCTAssertEqual(PDFStandard.pdfa1b.requiredCompatibilityLevel, "1.4")
         XCTAssertEqual(PDFStandard.pdfa2b.requiredCompatibilityLevel, "1.7")

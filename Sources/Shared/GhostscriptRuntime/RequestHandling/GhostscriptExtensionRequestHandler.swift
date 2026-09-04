@@ -68,7 +68,7 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         let requestedEmbedding: Bool =
             request[GhostscriptExtensionEnvelope.embedOutputIntentProfile] ?? false
         let embedsOutputIntentProfile = standard.hasPrefix("pdfx") || requestedEmbedding
-        let pdfXMetadata = try pdfXMetadata(from: request)
+        let pdfXMetadata = try pdfXMetadata(from: request, standard: standard)
         let postScriptRandomSeed: Int64 =
             request[GhostscriptExtensionEnvelope.postScriptRandomSeed] ?? 1
         let deadline: Int64 = request[GhostscriptExtensionEnvelope.deadline]
@@ -143,6 +143,11 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         let blendConversionStrategy = validationOnly
             ? nil
             : Self.blendConversionStrategy(from: joboptions)
+        let embedSubstituteFonts = Self.distillerBooleanValue(
+            from: joboptions,
+            key: "EmbedSubstituteFonts",
+            defaultValue: true
+        )
         guard let ghostscriptDirectory = GhostscriptRuntimeResources.ghostscriptDirectoryURL else {
             throw HelperError.message(
                 "The Ghostscript resource directory is unavailable in the Ghostscript extension."
@@ -164,7 +169,10 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             profileDirectory: bundledProfileDirectory,
             stagedUserProfiles: profileConfiguration.userProfiles,
             standard: standard,
-            embedsOutputIntentProfile: embedsOutputIntentProfile
+            embedsOutputIntentProfile: embedsOutputIntentProfile,
+            lockDistillerParams: Self.distillerBooleanValue(
+                from: joboptions, key: "LockDistillerParams", defaultValue: false
+            )
         )
         let definitionURL = try standardDefinitionURL(
             bundledDefinitionURL,
@@ -195,6 +203,7 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
                                             validationOnly ? 1 : 0,
                                             allowTransparency ? 1 : 0,
                                             epsCrop ? 1 : 0,
+                                            embedSubstituteFonts ? 1 : 0,
                                             0,
                                             0,
                                             compatibilityPointer,
@@ -371,11 +380,12 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         profileDirectory: URL?,
         stagedUserProfiles: [String: URL],
         standard: String,
-        embedsOutputIntentProfile: Bool
+        embedsOutputIntentProfile: Bool,
+        lockDistillerParams: Bool
     ) throws -> String? {
         let resolver = try profileDirectory.map(GhostscriptProfileResolver.init(directoryURL:))
         var resolvedProfiles: [String: (name: String, url: URL, origin: ICCProfileRecord.Origin)] = [:]
-        let profileEntries = try profileSelections.map { selection -> String in
+        let profileEntries = try profileSelections.map { selection -> (key: String, value: String) in
             let url: URL
             let origin: ICCProfileRecord.Origin
             if let staged = stagedUserProfiles[selection.key] {
@@ -388,11 +398,13 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
                 throw HelperError.message("The bundled ICC profile directory is unavailable.")
             }
             resolvedProfiles[selection.key] = (selection.name, url, origin)
-            return "/\(selection.key) (\(Self.postScriptLiteral(url.path)))"
+            return (selection.key, "(\(Self.postScriptLiteral(url.path)))")
         }
         var programs: [String] = []
         if !profileEntries.isEmpty {
-            programs.append("<< \(profileEntries.joined(separator: " ")) >> setdistillerparams")
+            programs.append(GhostscriptProfileParameters.program(
+                entries: profileEntries, lockDistillerParams: lockDistillerParams
+            ))
         }
         if embedsOutputIntentProfile,
            !standard.hasPrefix("pdfx"),
@@ -497,6 +509,24 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         key: String,
         allowedValues: Set<String>
     ) -> String? {
+        guard let text = joboptionsText(from: descriptor) else { return nil }
+        return distillerNameValue(in: text, key: key, allowedValues: allowedValues)
+    }
+
+    private static func distillerBooleanValue(
+        from descriptor: Int32,
+        key: String,
+        defaultValue: Bool
+    ) -> Bool {
+        guard let text = joboptionsText(from: descriptor),
+              let token = distillerTokenValue(in: text, key: key)
+        else { return defaultValue }
+        if token == "true" { return true }
+        if token == "false" { return false }
+        return defaultValue
+    }
+
+    private static func joboptionsText(from descriptor: Int32) -> String? {
         let originalOffset = Darwin.lseek(descriptor, 0, SEEK_CUR)
         defer {
             if originalOffset >= 0 {
@@ -525,7 +555,7 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             ?? String(data: data, encoding: .utf16LittleEndian)
             ?? String(data: data, encoding: .utf16BigEndian)
         else { return nil }
-        return distillerNameValue(in: text, key: key, allowedValues: allowedValues)
+        return text
     }
 
     private static func distillerNameValue(
@@ -533,7 +563,12 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         key: String,
         allowedValues: Set<String>
     ) -> String? {
-        guard let keyRange = text.range(of: "/\(key)") else { return nil }
+        guard let value = distillerTokenValue(in: text, key: key) else { return nil }
+        return allowedValues.contains(value) ? value : nil
+    }
+
+    private static func distillerTokenValue(in text: String, key: String) -> String? {
+        guard let keyRange = text.range(of: "/\(key)", options: .backwards) else { return nil }
         var index = keyRange.upperBound
         while index < text.endIndex, text[index].isWhitespace {
             index = text.index(after: index)
@@ -550,8 +585,7 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         }
 
         guard index < endIndex else { return nil }
-        let value = String(text[index..<endIndex])
-        return allowedValues.contains(value) ? value : nil
+        return String(text[index..<endIndex])
     }
 
     private static func postScriptLiteral(_ value: String) -> String {
@@ -564,7 +598,12 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             .replacingOccurrences(of: "\t", with: "\\t")
     }
 
-    private func pdfXMetadata(from request: XPCDictionary) throws -> PDFXMetadata {
+    private func pdfXMetadata(from request: XPCDictionary, standard: String) throws -> PDFXMetadata {
+        // Metadata is consumed only by the PDF/X definition. Do not reject
+        // preserved PDF/X values when producing a different kind of PDF.
+        guard standard.hasPrefix("pdfx") else {
+            return PDFXMetadata(outputCondition: "", outputConditionIdentifier: "", registryName: "", trapped: "False")
+        }
         func value(_ key: String) throws -> String {
             let result: String = request[key] ?? ""
             guard result.utf8.count <= 4_096 else {

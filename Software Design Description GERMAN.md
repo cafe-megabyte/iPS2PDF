@@ -748,7 +748,7 @@ Das Ghostscript-Archiv liegt im Projekt unter:
 Vendor/Ghostscript/*.tar.gz
 ```
 
-Die Build-Einstellung `GHOSTSCRIPT_ARCHIVE_PATH` des Aggregate-Targets verweist auf das konkrete Archiv. Ändert sich bei einem Update dessen Dateiname, wird diese Einstellung entsprechend angepasst.
+Die Build-Einstellung `GHOSTSCRIPT_ARCHIVE_PATH` der Ghostscript-Aggregate-Targets verweist auf `Vendor/Ghostscript`. Die Build-Scripte lösen daraus das genau eine dort liegende `*.tar.gz`-Archiv auf.
 
 Beim Build wird der Sourcecode in ein nur für diesen Build erzeugtes Arbeitsverzeichnis nach folgendem Muster entpackt:
 
@@ -856,7 +856,7 @@ Das Build-Script deklariert mindestens folgende Inputs:
 
 ```text
 Scripts/build_ghostscript_iOS.sh
-Vendor/Ghostscript/<Ghostscript source archive>.tar.gz
+Vendor/Ghostscript/
 ```
 
 Als Outputs werden die statische Library, benötigte Header, PDF/A-Ressourcen und ein erst nach vollständigem Erfolg erzeugter Build-Stamp deklariert.
@@ -875,7 +875,7 @@ Ein Ghostscript-Update erfolgt durch Ersetzen des Archivs unter:
 Vendor/Ghostscript/*.tar.gz
 ```
 
-Ändert sich der Dateiname, wird zusätzlich `GHOSTSCRIPT_ARCHIVE_PATH` im Aggregate-Target angepasst. Da das konkrete Archiv als Build-Input deklariert ist, baut Xcode die betroffene Ghostscript-Variante beim nächsten Build automatisch neu. Das manuelle Löschen von Derived Data ist dafür nicht erforderlich.
+Der Dateiname muss nicht in den Aggregate-Targets angepasst werden. Die Scripte erwarten genau ein `*.tar.gz` in `Vendor/Ghostscript`; fehlt es oder liegen mehrere Archive dort, schlägt der Build mit einer eindeutigen Diagnose fehl. Da der Vendor-Ordner als Build-Input deklariert ist und der inhaltliche Fingerprint das tatsächlich gefundene Archiv enthält, baut Xcode die betroffene Ghostscript-Variante beim nächsten Build automatisch neu. Das manuelle Löschen von Derived Data ist dafür nicht erforderlich.
 
 Ein Clean oder das Löschen von Derived Data entfernt die erzeugten Artefakte weiterhin vollständig und erzwingt beim nächsten Build einen Neuaufbau.
 

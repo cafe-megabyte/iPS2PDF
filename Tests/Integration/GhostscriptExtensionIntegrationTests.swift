@@ -4,6 +4,79 @@ import XCTest
 
 /// Verifies conversion behavior across the app-to-extension boundary.
 final class GhostscriptExtensionIntegrationTests: XCTestCase {
+    func testAdditionalDeviceParametersReachGhostscript() async throws {
+        let output = try await convert(
+            joboptions: """
+            << /PDFACompatibilityPolicy 2 /BlendConversionStrategy /Managed
+               /ProcessColorModel /DeviceGray /EncryptionR 3 /Permissions -44 /LockDistillerParams true
+            >> setdistillerparams
+            """,
+            standard: .none,
+            postScript: """
+            %!PS-Adobe-3.0
+            currentpagedevice /PDFACompatibilityPolicy get 2 ne { 1 0 div pop } if
+            currentpagedevice /BlendConversionStrategy get /Managed ne { 1 0 div pop } if
+            currentpagedevice /ProcessColorModel get /DeviceGray ne { 1 0 div pop } if
+            currentpagedevice /Permissions get -44 ne { 1 0 div pop } if
+            << /CompressPages false >> setdistillerparams
+            currentdistillerparams /CompressPages get not { 1 0 div pop } if
+            showpage
+            """
+        )
+        XCTAssertEqual(try XCTUnwrap(PDFDocument(data: output)).pageCount, 1)
+    }
+
+    func testPDFAPolicyIsNotHardcodedByBridge() async throws {
+        let output = try await convert(
+            joboptions: "<< /PDFACompatibilityPolicy 2 /ColorConversionStrategy /RGB >> setdistillerparams",
+            standard: .pdfa2b,
+            postScript: """
+            %!PS-Adobe-3.0
+            currentpagedevice /PDFACompatibilityPolicy get 2 ne { 1 0 div pop } if
+            showpage
+            """
+        )
+        XCTAssertEqual(try XCTUnwrap(PDFDocument(data: output)).pageCount, 1)
+    }
+
+    func testDeviceICCProfilesReachGhostscript() async throws {
+        let output = try await convert(
+            joboptions: """
+            << /OutputICCProfile (sRGB Profile) /GraphicICCProfile (sRGB Profile)
+               /ImageICCProfile (sRGB Profile) /TextICCProfile (sRGB Profile) /LockDistillerParams true
+            >> setdistillerparams
+            """,
+            standard: .none,
+            postScript: """
+            %!PS-Adobe-3.0
+            currentpagedevice /OutputICCProfile get (default_rgb.icc) eq { 1 0 div pop } if
+            [/VectorICCProfile /ImageICCProfile /TextICCProfile] {
+              currentpagedevice exch get length 0 eq { 1 0 div pop } if
+            } forall
+            << /CompressPages false >> setdistillerparams
+            currentdistillerparams /CompressPages get not { 1 0 div pop } if
+            showpage
+            """
+        )
+        XCTAssertEqual(try XCTUnwrap(PDFDocument(data: output)).pageCount, 1)
+    }
+
+    func testPasswordSettingsProduceAnEncryptedPDF() async throws {
+        let output = try await convert(
+            joboptions: "<< /Encrypt true /EncryptionR 3 /CompatibilityLevel 1.4 /OwnerPassword (test-owner) /UserPassword (test-user) /Permissions -4 >> setdistillerparams",
+            standard: .none
+        )
+        let pdf = try XCTUnwrap(PDFDocument(data: output))
+        XCTAssertTrue(pdf.isEncrypted)
+        XCTAssertTrue(pdf.unlock(withPassword: "test-user"))
+        XCTAssertEqual(pdf.pageCount, 1)
+    }
+
+    func testPreservedUnknownTrappedStateDoesNotBreakNormalPDF() async throws {
+        let output = try await convert(joboptions: "<< /PDFXTrapped /Unknown >> setdistillerparams", standard: .none)
+        XCTAssertEqual(try XCTUnwrap(PDFDocument(data: output)).pageCount, 1)
+    }
+
     func testSetTransparencyPdfmarkConvertsWhenAllowedByJoboptions() async throws {
         let output = try await convert(allowTransparency: true)
         let document = try XCTUnwrap(PDFDocument(data: output))
@@ -50,6 +123,26 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         XCTAssertEqual(croppedBox.height, 200, accuracy: 0.1)
         XCTAssertGreaterThan(uncroppedBox.width, croppedBox.width)
         XCTAssertGreaterThan(uncroppedBox.height, croppedBox.height)
+    }
+
+    func testEmbedSubstituteFontsIsPassedFromJoboptionsToGhostscript() async throws {
+        for expected in [false, true] {
+            let probe = """
+            %!PS-Adobe-3.0
+            /EmbedSubstituteFonts /GetDeviceParam .special_op
+            { exch pop \(expected) ne { 1 0 div pop } if }
+            { 1 0 div pop } ifelse
+            showpage
+            """
+            let output = try await convert(
+                input: Data(probe.utf8),
+                inputFileName: "EmbedSubstituteFonts.ps",
+                allowTransparency: false,
+                embedSubstituteFonts: expected
+            )
+
+            XCTAssertEqual(try XCTUnwrap(PDFDocument(data: output)).pageCount, 1)
+        }
     }
 
     func testOutputIntentEmbeddingToggleControlsNormalPDF() async throws {
@@ -132,7 +225,8 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         input: Data,
         inputFileName: String,
         allowTransparency: Bool,
-        autoPositionEPSFiles: Bool = false
+        autoPositionEPSFiles: Bool = false,
+        embedSubstituteFonts: Bool? = nil
     ) async throws -> Data {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("iPS2PDF-Transparency-\(UUID().uuidString)", isDirectory: true)
@@ -144,8 +238,11 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         let outputURL = directory.appendingPathComponent("Transparency.pdf")
         let allowValue = allowTransparency ? "true" : "false"
         let autoPositionValue = autoPositionEPSFiles ? "true" : "false"
+        let embedSubstituteFontsEntry = embedSubstituteFonts.map {
+            "/EmbedSubstituteFonts \($0)"
+        } ?? ""
         try Data(
-            "<< /AllowTransparency \(allowValue) /AutoPositionEPSFiles \(autoPositionValue) >> setdistillerparams\n".utf8
+            "<< /AllowTransparency \(allowValue) /AutoPositionEPSFiles \(autoPositionValue) \(embedSubstituteFontsEntry) >> setdistillerparams\n".utf8
         )
             .write(to: joboptionsURL)
         try input.write(to: inputURL)
@@ -162,7 +259,7 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         return try Data(contentsOf: outputURL)
     }
 
-    private func convert(joboptions: String, standard: PDFStandard) async throws -> Data {
+    private func convert(joboptions: String, standard: PDFStandard, postScript: String? = nil) async throws -> Data {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("iPS2PDF-OutputIntent-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
@@ -172,7 +269,7 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         let inputURL = directory.appendingPathComponent("OutputIntent.ps")
         let outputURL = directory.appendingPathComponent("OutputIntent.pdf")
         try Data(joboptions.utf8).write(to: joboptionsURL)
-        try Data(Self.simplePostScript.utf8).write(to: inputURL)
+        try Data((postScript ?? Self.simplePostScript).utf8).write(to: inputURL)
 
         try await GhostscriptExtensionClient().convert(
             inputURL: inputURL,

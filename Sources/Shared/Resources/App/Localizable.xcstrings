@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "/%@" : {
       "localizations" : {
         "de" : {
@@ -10,6 +13,9 @@
           }
         }
       }
+    },
+    "%" : {
+
     },
     "%@ · %@ → %@" : {
       "localizations" : {
@@ -1171,16 +1177,6 @@
         }
       }
     },
-    "Embed OpenType fonts" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "OpenType-Schriften einbetten"
-          }
-        }
-      }
-    },
     "Embed output intent profile" : {
       "localizations" : {
         "de" : {
@@ -1257,6 +1253,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF verschlüsseln"
+          }
+        }
+      }
+    },
+    "Encryption requires an owner or user password." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Verschlüsselung benötigt ein Eigentümer- oder Benutzerkennwort."
           }
         }
       }
@@ -1603,6 +1609,16 @@
         }
       }
     },
+    "Finder will open and select the three iPS2PDF container folders. Move them to the Trash to reset the app and both extensions. iPS2PDF will quit before you delete them." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Finder wird geöffnet und markiert die drei Container-Ordner von iPS2PDF. Verschieben Sie sie in den Papierkorb, um die App und beide Erweiterungen zurückzusetzen. iPS2PDF wird beendet, bevor Sie die Ordner löschen."
+          }
+        }
+      }
+    },
     "Flate" : {
       "localizations" : {
         "de" : {
@@ -1635,16 +1651,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ZIP"
-          }
-        }
-      }
-    },
-    "Finder will open and select the three iPS2PDF container folders. Move them to the Trash to reset the app and both extensions. iPS2PDF will quit before you delete them." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Der Finder wird geöffnet und markiert die drei Container-Ordner von iPS2PDF. Verschieben Sie sie in den Papierkorb, um die App und beide Erweiterungen zurückzusetzen. iPS2PDF wird beendet, bevor Sie die Ordner löschen."
           }
         }
       }
@@ -1705,16 +1711,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Allgemein"
-          }
-        }
-      }
-    },
-    "Generic CMYK Profile has been selected as the PDF/X output intent. Check whether this profile matches the intended print condition." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Generic CMYK Profile wurde als PDF/X-Ausgabeprofil ausgewählt. Prüfe, ob dieses Profil zur vorgesehenen Druckbedingung passt."
           }
         }
       }
@@ -2613,6 +2609,16 @@
         }
       }
     },
+    "Passwords must not be passed to Ghostscript while encryption is disabled." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei ausgeschalteter Verschlüsselung dürfen keine Kennwörter an Ghostscript übergeben werden."
+          }
+        }
+      }
+    },
     "PDF compatibility" : {
       "localizations" : {
         "de" : {
@@ -2955,6 +2961,16 @@
         }
       }
     },
+    "PDF/A requires incompatible features to be omitted or conversion to be aborted." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bei PDF/A müssen nicht kompatible Funktionen weggelassen oder die Konvertierung abgebrochen werden."
+          }
+        }
+      }
+    },
     "PDF/X condition identifier" : {
       "localizations" : {
         "de" : {
@@ -2976,6 +2992,7 @@
       }
     },
     "PDF/X output intent" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -3475,16 +3492,6 @@
         }
       }
     },
-    "Required PDF version, encryption, font embedding, output intent and color-space changes are listed as repairable consistency settings." : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Erforderliche Änderungen an PDF-Version, Verschlüsselung, Schrifteinbettung, Ausgabebedingung und Farbräumen werden als reparierbare Konsistenzeinstellungen aufgeführt."
-          }
-        }
-      }
-    },
     "Reset iPS2PDF?" : {
       "localizations" : {
         "de" : {
@@ -3829,6 +3836,16 @@
         }
       }
     },
+    "The device profile must be available and match the output color space. The default device profile will be used." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Geräteprofil muss verfügbar sein und zum Ausgabefarbraum passen. Es wird das Standard-Geräteprofil verwendet."
+          }
+        }
+      }
+    },
     "The device resolution must contain two positive values." : {
       "localizations" : {
         "de" : {
@@ -4055,6 +4072,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diese erkannten Schlüssel bleiben erhalten, obwohl sie kein eigenes Distiller-Bedienelement besitzen."
+          }
+        }
+      }
+    },
+    "This setting is not a supported Ghostscript value." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Einstellung enthält keinen von Ghostscript unterstützten Wert."
           }
         }
       }

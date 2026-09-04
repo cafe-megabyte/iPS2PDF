@@ -101,12 +101,8 @@ final class JoboptionsEditingSession {
         onChange?()
     }
 
-    @discardableResult
-    func setStandard(_ standard: PDFStandard) throws -> Bool {
-        let usesDefaultPDFXOutputIntent = standard.isPDFX
-            && SemanticJoboptions.needsDefaultPDFXOutputIntentProfile(in: document)
-        try apply(SemanticJoboptions.changeStandard(standard, in: document))
-        return usesDefaultPDFXOutputIntent
+    func setStandard(_ standard: PDFStandard) throws {
+        try apply(SemanticJoboptions.changeStandard(standard))
     }
 
     func commit() throws {

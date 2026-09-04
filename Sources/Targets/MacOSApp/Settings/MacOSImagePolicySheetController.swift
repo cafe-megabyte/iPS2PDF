@@ -92,7 +92,6 @@ final class MacOSImagePolicySheetController: NSViewController, NSWindowDelegate 
         let resolution = PolicyTextField(
             rawResolution?.textualValue ?? rawResolution?.postScript ?? ""
         )
-        resolution.placeholderString = rawResolution == nil ? String(localized: "Not set") : nil
         let resolutionPath = "/\(prefix)ImageMinResolution"
         resolution.toolTip = resolutionPath
         resolution.setAccessibilityHelp(resolutionPath)

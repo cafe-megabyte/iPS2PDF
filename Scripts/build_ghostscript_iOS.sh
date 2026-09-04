@@ -5,7 +5,7 @@ set -euo pipefail
 # directory. Resource packaging is handled by package_ghostscript_resources.sh.
 
 if [ "$#" -ne 6 ]; then
-    echo "Usage: build_ghostscript_iOS.sh <iphonesimulator|iphoneos> <architecture> <deployment-target> <sdk-name> <project-temp-dir> <source-archive>" >&2
+    echo "Usage: build_ghostscript_iOS.sh <iphonesimulator|iphoneos> <architecture> <deployment-target> <sdk-name> <project-temp-dir> <source-archive-or-directory>" >&2
     exit 64
 fi
 
@@ -14,12 +14,15 @@ architecture="$2"
 deployment_target="$3"
 sdk_name="$4"
 project_temp_dir="$5"
-source_archive="$6"
+source_input="$6"
 script_directory="$(cd "$(dirname "$0")" && pwd)"
 fingerprint_helpers="$script_directory/Shared/ghostscript_fingerprint.sh"
+archive_helpers="$script_directory/Shared/ghostscript_archive.sh"
 
 # shellcheck source=Shared/ghostscript_fingerprint.sh
 source "$fingerprint_helpers"
+# shellcheck source=Shared/ghostscript_archive.sh
+source "$archive_helpers"
 
 case "$platform" in
     iphonesimulator)
@@ -61,8 +64,7 @@ if [ -z "$project_temp_dir" ]; then
     exit 69
 fi
 
-if [ ! -f "$source_archive" ]; then
-    echo "Ghostscript source archive is missing: $source_archive" >&2
+if ! source_archive="$(ghostscript_resolve_source_archive "$source_input")"; then
     exit 70
 fi
 
@@ -86,6 +88,7 @@ input_fingerprint="$({
     ghostscript_hash_file "$source_archive"
     ghostscript_hash_file "$0"
     ghostscript_hash_file "$fingerprint_helpers"
+    ghostscript_hash_file "$archive_helpers"
 } | ghostscript_fingerprint)"
 
 can_reuse=true

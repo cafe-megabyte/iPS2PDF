@@ -9,7 +9,6 @@ struct DistillerOptionDefinition: Identifiable, Sendable {
     let keyPaths: [JoboptionsKeyPath]
     let semanticEditor: DistillerSemanticEditor
     let classification: DistillerControlClassification
-    let isDisabledBySelectedStandard: Bool
     let compatibilityNote: LocalizedStringResource?
 
     var id: String { key }

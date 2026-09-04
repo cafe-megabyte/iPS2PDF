@@ -1,12 +1,45 @@
 import Foundation
 
 enum JoboptionsConsistencyEngine {
+    /// Stored values always win in the editor. Only absent values use a
+    /// conversion default (including standard-specific proposals). Free text
+    /// has no synthesized display default and therefore stays empty.
+    static func displayValue(
+        forKey key: String,
+        in document: LosslessJoboptionsDocument?,
+        context: JoboptionsConsistencyContext = .empty
+    ) -> JoboptionsValue? {
+        if let stored = document?.value(forKey: key) { return stored }
+        guard let baseline = JoboptionsRuntimeDefaults.value(forKey: key) else { return nil }
+        guard let document else { return baseline }
+        return issues(in: document, context: context)
+            .first { $0.path == JoboptionsKeyPath(key: key) }?.proposedValue ?? baseline
+    }
+
+    static func pdfXBoxRulesForDisplay(
+        in document: LosslessJoboptionsDocument,
+        context: JoboptionsConsistencyContext = .empty
+    ) -> SemanticJoboptions.PDFXBoxRules {
+        let keys = ["PDFXNoTrimBoxError", "PDFXTrimBoxToMediaBoxOffset",
+                    "PDFXSetBleedBoxToMediaBox", "PDFXBleedBoxToTrimBoxOffset"]
+        let changes = keys.compactMap { key -> JoboptionsChange? in
+            guard document.value(forKey: key) == nil,
+                  let value = displayValue(forKey: key, in: document, context: context)
+            else { return nil }
+            return JoboptionsChange("/\(key)", value)
+        }
+        let presentation = (try? JoboptionsChangeSet(changes).applying(to: document)) ?? document
+        return SemanticJoboptions.pdfXBoxRules(in: presentation)
+    }
+
     static func issues(
         in document: LosslessJoboptionsDocument,
         context: JoboptionsConsistencyContext = .empty
     ) -> [JoboptionsConsistencyIssue] {
         var evaluator = Evaluator(document: document, context: context)
         evaluator.evaluateStandardRules()
+        evaluator.evaluateAdditionalParameterRules()
+        evaluator.evaluateDeviceProfileRules()
         evaluator.evaluateOutputIntentEmbeddingRules()
         evaluator.evaluateCompatibilityRules()
         evaluator.evaluateCompoundSettingRules()
@@ -122,6 +155,18 @@ enum JoboptionsConsistencyEngine {
 
             if standard.ghostscriptPDFAValue != nil {
                 propose(
+                    path: "/ProcessColorModel", value: .name("DeviceRGB"),
+                    reason: .standardColorConversion, rule: "standard.pdfa.process-color"
+                )
+                if ![1.0, 2.0].contains(working.value(forKey: "PDFACompatibilityPolicy")?.numberValue ?? -1) {
+                    propose(
+                        path: "/PDFACompatibilityPolicy",
+                        value: Self.integer(1),
+                        reason: .standardCompatibilityPolicy,
+                        rule: "standard.pdfa.compatibility-policy"
+                    )
+                }
+                propose(
                     path: "/ColorConversionStrategy",
                     value: .name("RGB"),
                     reason: .standardColorConversion,
@@ -137,6 +182,10 @@ enum JoboptionsConsistencyEngine {
                 }
                 evaluatePDFAProfile()
             } else if standard.ghostscriptPDFXValue != nil {
+                propose(
+                    path: "/ProcessColorModel", value: .name("DeviceCMYK"),
+                    reason: .standardColorConversion, rule: "standard.pdfx.process-color"
+                )
                 let strategy = standard == .pdfx1 ? "CMYK" : "UseDeviceIndependentColor"
                 propose(
                     path: "/ColorConversionStrategy",
@@ -154,6 +203,102 @@ enum JoboptionsConsistencyEngine {
                 }
                 evaluatePDFXProfile()
                 evaluatePDFXOutputIntentMetadata()
+            }
+        }
+
+        mutating func evaluateAdditionalParameterRules() {
+            for definition in DistillerOptionCatalog.options
+            where definition.category == .standards || definition.classification == .knownAdditional {
+                guard case .scalar = definition.semanticEditor,
+                      let current = working.value(forKey: definition.key),
+                      let fallback = JoboptionsRuntimeDefaults.scalarValues[definition.key]
+                else { continue }
+                let valid: Bool
+                switch definition.kind {
+                case let .name(choices):
+                    valid = choices.contains(current.textualValue ?? "")
+                case let .integer(range):
+                    valid = current.numberValue.map { Self.isInteger($0, in: range) } == true
+                default:
+                    continue
+                }
+                if !valid {
+                    propose(
+                        path: "/\(definition.key)", value: fallback,
+                        reason: .invalidAdditionalParameter,
+                        rule: "additional.\(definition.key)"
+                    )
+                }
+            }
+
+            if JoboptionsRuntimeDefaults.booleanValue(forKey: "Encrypt", in: working) {
+                let hasPassword = ["OwnerPassword", "UserPassword"].contains {
+                    !(working.value(forKey: $0)?.textualValue ?? "").isEmpty
+                }
+                if !hasPassword {
+                    propose(
+                        path: "/Encrypt", value: .boolean(false),
+                        reason: .encryptionNeedsPassword, rule: "encryption.password-required"
+                    )
+                } else {
+                    let revision = working.value(forKey: "EncryptionR")?.numberValue ?? 0
+                    let compatibility = working.value(forKey: "CompatibilityLevel")?.numberValue ?? 1.7
+                    if ![0.0, 2.0, 3.0].contains(revision) || (revision == 3 && compatibility < 1.4) {
+                        propose(
+                            path: "/EncryptionR", value: Self.integer(0),
+                            reason: .invalidAdditionalParameter, rule: "encryption.revision"
+                        )
+                    }
+                    // PDF encryption revisions reserve particular permission
+                    // bits. Imported values need the same repair as UI edits.
+                    let permissions = working.value(forKey: "Permissions")?.numberValue ?? -4
+                    let isRevision3 = working.value(forKey: "EncryptionR")?.numberValue == 3
+                    let allowed: UInt32 = isRevision3 ? 0xF3C : 0x3C
+                    let bits = UInt32(bitPattern: Int32(permissions))
+                    let normalized = Int32(bitPattern: (bits & allowed) | ~(allowed | 3))
+                    if permissions != Double(normalized) {
+                        propose(
+                            path: "/Permissions", value: Self.integer(Int(normalized)),
+                            reason: .invalidAdditionalParameter, rule: "encryption.permissions"
+                        )
+                    }
+                }
+            }
+            if !JoboptionsRuntimeDefaults.booleanValue(forKey: "Encrypt", in: working) {
+                for key in ["OwnerPassword", "UserPassword"]
+                where !(working.value(forKey: key)?.textualValue ?? "").isEmpty {
+                    propose(
+                        path: "/\(key)", value: .string(""),
+                        reason: .encryptionDisabled, rule: "encryption.disabled.\(key)"
+                    )
+                }
+            }
+        }
+
+        mutating func evaluateDeviceProfileRules() {
+            guard !context.availableProfiles.isEmpty else { return }
+            let colorSpace: String
+            switch working.value(forKey: "ColorConversionStrategy")?.textualValue {
+            case "CMYK": colorSpace = "CMYK"
+            case "Gray": colorSpace = "GRAY"
+            case "RGB", "sRGB": colorSpace = "RGB"
+            default:
+                switch working.value(forKey: "ProcessColorModel")?.textualValue {
+                case "DeviceCMYK": colorSpace = "CMYK"
+                case "DeviceGray": colorSpace = "GRAY"
+                default: colorSpace = "RGB"
+                }
+            }
+            for key in ["OutputICCProfile", "GraphicICCProfile", "ImageICCProfile", "TextICCProfile"] {
+                let selected = JoboptionsRuntimeDefaults.profileSelection(working.value(forKey: key))
+                guard !selected.isEmpty else { continue }
+                guard !context.availableProfiles.contains(where: {
+                    $0.matches(selected) && $0.colorSpace == colorSpace && $0.profileClass != "link"
+                }) else { continue }
+                propose(
+                    path: "/\(key)", value: .string(""),
+                    reason: .incompatibleDeviceProfile, rule: "profiles.device.\(key)"
+                )
             }
         }
 
@@ -234,12 +379,13 @@ enum JoboptionsConsistencyEngine {
             let current = working.value(forPath: path)?.textualValue
             if let current,
                context.availableProfiles.contains(where: {
-                   $0.colorSpace == "RGB" && $0.matches(current)
+                   $0.colorSpace == "RGB" && $0.profileClass != "link" && $0.matches(current)
                }) {
                 return
             }
             let replacement = context.availableProfiles.first(where: {
-                $0.colorSpace == "RGB" && $0.name.localizedCaseInsensitiveContains("sRGB")
+                $0.colorSpace == "RGB" && $0.profileClass != "link"
+                    && $0.name.localizedCaseInsensitiveContains("sRGB")
             })?.name ?? "sRGB Profile"
             propose(
                 path: path.description,
@@ -567,7 +713,8 @@ enum JoboptionsConsistencyEngine {
         }
 
         private static func isInteger(_ value: Double, in range: ClosedRange<Int>) -> Bool {
-            value.isFinite && value.rounded() == value && range.contains(Int(value))
+            value.isFinite && value.rounded() == value
+                && value >= Double(range.lowerBound) && value <= Double(range.upperBound)
         }
 
         private static func isPositiveArray(_ value: JoboptionsValue?, count: Int) -> Bool {

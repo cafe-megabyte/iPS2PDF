@@ -41,7 +41,7 @@ struct FrontConversionView: View {
 
                     PDFVersionDropdown(
                         selectedVersion: viewModel.selectedPDFVersion,
-                        isDisabled: viewModel.controlsAppearDisabled || viewModel.joboptionsRepository.activeStandard != .none
+                        isDisabled: viewModel.controlsAppearDisabled
                     ) { version in
                         viewModel.setPDFVersion(version)
                     }

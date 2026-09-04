@@ -253,21 +253,15 @@ final class SemanticJoboptionsTests: XCTestCase {
         XCTAssertEqual(edited.value(forKey: "Encrypt")?.boolValue, true)
     }
 
-    func testSelectingPDFXAddsOnlyTheMissingDefaultOutputIntent() throws {
+    func testSelectingPDFXChangesOnlyTheStandardEvenWithoutAnOutputIntent() throws {
         let missing = try makeDocument("/iPS2PDFStandard /none /PDFXOutputIntentProfile /None")
-        let missingChanges = SemanticJoboptions.changeStandard(.pdfx4, in: missing)
-        XCTAssertEqual(
-            missingChanges.paths.map(\.description),
-            ["/iPS2PDFStandard", "/PDFXOutputIntentProfile"]
-        )
+        let missingChanges = SemanticJoboptions.changeStandard(.pdfx4)
+        XCTAssertEqual(missingChanges.paths.map(\.description), ["/iPS2PDFStandard"])
         let defaulted = try missingChanges.applying(to: missing)
-        XCTAssertEqual(
-            defaulted.value(forKey: "PDFXOutputIntentProfile")?.textualValue,
-            SemanticJoboptions.defaultPDFXOutputIntentProfile
-        )
+        XCTAssertEqual(defaulted.value(forKey: "PDFXOutputIntentProfile")?.textualValue, "None")
 
         let selected = try makeDocument("/iPS2PDFStandard /none /PDFXOutputIntentProfile (My Press)")
-        let selectedChanges = SemanticJoboptions.changeStandard(.pdfx4, in: selected)
+        let selectedChanges = SemanticJoboptions.changeStandard(.pdfx4)
         XCTAssertEqual(selectedChanges.paths.map(\.description), ["/iPS2PDFStandard"])
         let preserved = try selectedChanges.applying(to: selected)
         XCTAssertEqual(preserved.value(forKey: "PDFXOutputIntentProfile")?.textualValue, "My Press")

@@ -42,7 +42,8 @@ enum GhostscriptRuntimeConversion {
         let runtimeDocument = try document.removingValues(forKeys: runtimeExcludedJoboptionsKeys)
         let runtimeJoboptionsURL = outputURL.deletingLastPathComponent()
             .appendingPathComponent("QuickLookRuntime.joboptions")
-        try runtimeDocument.data.write(to: runtimeJoboptionsURL, options: [.atomic])
+        try JoboptionsDeviceParameters.runtimeData(in: runtimeDocument)
+            .write(to: runtimeJoboptionsURL, options: [.atomic])
         defer { try? FileManager.default.removeItem(at: runtimeJoboptionsURL) }
         guard let ghostscriptDirectory = GhostscriptRuntimeResources.ghostscriptDirectoryURL else {
             throw Failure.missingResource("Ghostscript")
@@ -84,8 +85,18 @@ enum GhostscriptRuntimeConversion {
         let blendConversionStrategy = allowedBlendConversionStrategies.contains(
             document.value(forKey: "BlendConversionStrategy")?.textualValue ?? ""
         ) ? document.value(forKey: "BlendConversionStrategy")?.textualValue : nil
-        let allowTransparency = document.value(forKey: "AllowTransparency")?.boolValue == true
-        let epsCrop = document.value(forKey: "AutoPositionEPSFiles")?.boolValue == true
+        let allowTransparency = JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "AllowTransparency",
+            in: document
+        )
+        let epsCrop = JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "AutoPositionEPSFiles",
+            in: document
+        )
+        let embedSubstituteFonts = JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "EmbedSubstituteFonts",
+            in: document
+        )
         let lastPage: Int32 = pageSelection == .first ? 1 : 0
         let timeout: TimeInterval = pageSelection == .first ? 20 : 60
         let maximumOutput: Int64 = pageSelection == .first ? 67_108_864 : 536_870_912
@@ -107,6 +118,7 @@ enum GhostscriptRuntimeConversion {
                                     0,
                                     allowTransparency ? 1 : 0,
                                     epsCrop ? 1 : 0,
+                                    embedSubstituteFonts ? 1 : 0,
                                     pageSelection == .first ? 1 : 0,
                                     lastPage,
                                     compatibilityPointer,
@@ -154,16 +166,17 @@ enum GhostscriptRuntimeConversion {
         profilesDirectory: URL
     ) throws -> String? {
         let resolver = try GhostscriptProfileResolver(directoryURL: profilesDirectory)
-        let entries = try profileKeys.compactMap { key -> String? in
-            guard let name = document.value(forKey: key)?.textualValue,
-                  !name.isEmpty,
-                  name.caseInsensitiveCompare("None") != .orderedSame
-            else { return nil }
+        let entries = try profileKeys.compactMap { key -> (key: String, value: String)? in
+            let name = JoboptionsRuntimeDefaults.profileSelection(document.value(forKey: key))
+            guard !name.isEmpty else { return nil }
             let url = try resolver.resolve(name)
-            return "/\(key) (\(postScriptLiteral(url.path)))"
+            return (key, "(\(postScriptLiteral(url.path)))")
         }
         guard !entries.isEmpty else { return nil }
-        return "<< \(entries.joined(separator: " ")) >> setdistillerparams"
+        return GhostscriptProfileParameters.program(
+            entries: entries,
+            lockDistillerParams: JoboptionsRuntimeDefaults.booleanValue(forKey: "LockDistillerParams", in: document)
+        )
     }
 
     private static func openRegularFile(

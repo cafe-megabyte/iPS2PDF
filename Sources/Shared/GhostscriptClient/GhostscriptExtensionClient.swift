@@ -226,7 +226,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             stagedUserProfiles: stagedUserProfiles,
             bundledProfiles: bundledProfiles
         )
-        try runtimeDocument.data.write(to: joboptionsDestination, options: [.atomic])
+        try JoboptionsDeviceParameters.runtimeData(in: runtimeDocument)
+            .write(to: joboptionsDestination, options: [.atomic])
 
         if let inputURL {
             if stagesInputFile {
@@ -242,8 +243,14 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             options: [.atomic]
         )
         return PreparedJob(
-            allowTransparency: document.value(forKey: "AllowTransparency")?.boolValue ?? false,
-            epsCrop: document.value(forKey: "AutoPositionEPSFiles")?.boolValue ?? false,
+            allowTransparency: JoboptionsRuntimeDefaults.booleanValue(
+                forKey: "AllowTransparency",
+                in: document
+            ),
+            epsCrop: JoboptionsRuntimeDefaults.booleanValue(
+                forKey: "AutoPositionEPSFiles",
+                in: document
+            ),
             profileSelections: selections,
             userProfileKeys: userProfileKeys,
             embedOutputIntentProfile: SemanticJoboptions.embedsOutputIntentProfile(in: document),
@@ -345,10 +352,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
     private func selectedProfiles(document: LosslessJoboptionsDocument) -> [ProfileSelection] {
         Self.profileKeys.compactMap { key in
-            guard let name = document.value(forKey: key)?.textualValue,
-                  !name.isEmpty,
-                  name.caseInsensitiveCompare("None") != .orderedSame
-            else { return nil }
+            let name = JoboptionsRuntimeDefaults.profileSelection(document.value(forKey: key))
+            guard !name.isEmpty else { return nil }
             return ProfileSelection(key: key, name: name)
         }
     }

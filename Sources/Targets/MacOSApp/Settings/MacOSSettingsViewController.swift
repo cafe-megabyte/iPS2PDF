@@ -99,7 +99,6 @@ final class MacOSSettingsViewController: NSViewController {
         reloadJoboptions()
         reloadVersions()
         reloadPDFA()
-        versionPopup.isEnabled = repository.activeStandard == .none
         configureButton.isEnabled = repository.activeDocument != nil
     }
 
@@ -153,9 +152,7 @@ final class MacOSSettingsViewController: NSViewController {
             item.representedObject = version.rawValue
             versionPopup.menu?.addItem(item)
         }
-        let displayedVersion = repository.activeStandard.requiredCompatibilityLevel
-            ?? selectedPDFACompatibility.requiredPDFVersion?.rawValue
-            ?? repository.compatibilityLevel
+        let displayedVersion = repository.compatibilityLevel
         if let index = PDFVersion.allCases.firstIndex(where: {
             $0.rawValue == displayedVersion
         }) {
@@ -193,8 +190,7 @@ final class MacOSSettingsViewController: NSViewController {
     }
 
     @objc private func selectVersion(_ sender: NSPopUpButton) {
-        guard repository.activeStandard == .none,
-              let raw = sender.selectedItem?.representedObject as? String,
+        guard let raw = sender.selectedItem?.representedObject as? String,
               let version = PDFVersion(rawValue: raw)
         else { reload(); return }
         do {

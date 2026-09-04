@@ -73,6 +73,21 @@ final class GhostscriptCompatibilityAdjusterTests: XCTestCase {
         XCTAssertEqual(adjusted.value(forKey: "ColorImageFilter")?.textualValue, "DCTEncode")
     }
 
+    func testIgnoredEmbedOpenTypeValueSurvivesConsistencyProcessing() throws {
+        let document = try LosslessJoboptionsDocument(data: Data("""
+        <<
+          /iPS2PDFStandard /pdfa1b
+          /CompatibilityLevel 1.1
+          /EmbedOpenType false
+        >> setdistillerparams
+        """.utf8))
+
+        let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: document)
+
+        XCTAssertEqual(effective.value(forKey: "EmbedOpenType")?.boolValue, false)
+        XCTAssertTrue(effective.sourceText.contains("/EmbedOpenType false"))
+    }
+
     func testStandardRulesAreProposedWithoutChangingTheStoredDocument() throws {
         let document = try LosslessJoboptionsDocument(data: Data("""
         <<

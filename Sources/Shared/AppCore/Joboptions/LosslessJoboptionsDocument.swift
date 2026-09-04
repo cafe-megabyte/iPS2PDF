@@ -20,6 +20,13 @@ struct LosslessJoboptionsDocument: Sendable {
     private let parsed: ParsedSource
 
     var data: Data { source.data }
+
+    /// Runtime-only programs preserve the encoding of the original source.
+    /// This never changes the editable document or its parsed settings.
+    func data(appendingPostScript program: String) throws -> Data {
+        guard !program.isEmpty else { return data }
+        return data + (try source.encode("\n" + program + "\n"))
+    }
     var occurrences: [Occurrence] { parsed.occurrences }
     var keys: Set<String> {
         Set(parsed.occurrences.filter { $0.path.components.count == 1 }.map(\.key))

@@ -217,11 +217,14 @@ struct SemanticJoboptions: Sendable {
         kind: ImageKind
     ) -> DownsamplingConfiguration {
         let prefix = kind.rawValue
-        if document.value(forKey: "Downsample\(prefix)Images")?.boolValue == false {
+        let enabled = JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "Downsample\(prefix)Images",
+            in: document
+        )
+        if !enabled {
             return .off
         }
-        guard document.value(forKey: "Downsample\(prefix)Images")?.boolValue == true,
-              let rawMode = document.value(forKey: "\(prefix)ImageDownsampleType")?.textualValue,
+        guard let rawMode = document.value(forKey: "\(prefix)ImageDownsampleType")?.textualValue,
               let mode = DownsamplingMode(rawValue: rawMode),
               let resolutionValue = document.value(forKey: "\(prefix)ImageResolution")?.numberValue,
               resolutionValue.rounded() == resolutionValue,
@@ -376,10 +379,12 @@ struct SemanticJoboptions: Sendable {
     }
 
     static func monoSmoothing(in document: LosslessJoboptionsDocument) -> MonoSmoothingConfiguration {
-        let enabled = document.value(forKey: "AntiAliasMonoImages")?.boolValue
-        if enabled == false { return .off }
-        guard enabled == true,
-              let value = document.value(forKey: "MonoImageDepth")?.numberValue,
+        let enabled = JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "AntiAliasMonoImages",
+            in: document
+        )
+        if !enabled { return .off }
+        guard let value = document.value(forKey: "MonoImageDepth")?.numberValue,
               value.rounded() == value,
               [2, 4, 8].contains(Int(value))
         else { return .custom }
@@ -416,20 +421,6 @@ struct SemanticJoboptions: Sendable {
         ])
     }
 
-    static func changeStandard(
-        _ standard: PDFStandard,
-        in document: LosslessJoboptionsDocument
-    ) -> JoboptionsChangeSet {
-        var changes = [JoboptionsChange("/iPS2PDFStandard", .name(standard.rawValue))]
-        if standard.isPDFX, needsDefaultPDFXOutputIntentProfile(in: document) {
-            changes.append(JoboptionsChange(
-                "/PDFXOutputIntentProfile",
-                .string(defaultPDFXOutputIntentProfile)
-            ))
-        }
-        return JoboptionsChangeSet(changes)
-    }
-
     static func embedsOutputIntentProfile(in document: LosslessJoboptionsDocument) -> Bool {
         document.value(forKey: embedOutputIntentProfileKey)?.boolValue == true
     }
@@ -438,16 +429,6 @@ struct SemanticJoboptions: Sendable {
         JoboptionsChangeSet([
             JoboptionsChange("/\(embedOutputIntentProfileKey)", .boolean(embeds))
         ])
-    }
-
-    static func needsDefaultPDFXOutputIntentProfile(
-        in document: LosslessJoboptionsDocument
-    ) -> Bool {
-        guard let value = document.value(forKey: "PDFXOutputIntentProfile")?.textualValue else {
-            return true
-        }
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        return trimmed.isEmpty || trimmed.caseInsensitiveCompare("None") == .orderedSame
     }
 
     static func changePDFXBoxRules(
@@ -480,9 +461,13 @@ struct SemanticJoboptions: Sendable {
 
     static func pdfXBoxRules(in document: LosslessJoboptionsDocument) -> PDFXBoxRules {
         let trim: PDFXBoxRule
-        if document.value(forKey: "PDFXNoTrimBoxError")?.boolValue == true {
+        if JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "PDFXNoTrimBoxError",
+            in: document
+        ) {
             trim = .error
-        } else if let offsets = numericArray(document.value(forKey: "PDFXTrimBoxToMediaBoxOffset")),
+        } else if let offsets = numericArray(document.value(forKey: "PDFXTrimBoxToMediaBoxOffset")
+                    ?? JoboptionsRuntimeDefaults.value(forKey: "PDFXTrimBoxToMediaBoxOffset")),
                   offsets.count == 4 {
             trim = .mediaBox(offsets: offsets)
         } else {
@@ -490,9 +475,13 @@ struct SemanticJoboptions: Sendable {
         }
 
         let bleed: PDFXBoxRule
-        if document.value(forKey: "PDFXSetBleedBoxToMediaBox")?.boolValue == true {
+        if JoboptionsRuntimeDefaults.booleanValue(
+            forKey: "PDFXSetBleedBoxToMediaBox",
+            in: document
+        ) {
             bleed = .mediaBox(offsets: [0, 0, 0, 0])
-        } else if let offsets = numericArray(document.value(forKey: "PDFXBleedBoxToTrimBoxOffset")),
+        } else if let offsets = numericArray(document.value(forKey: "PDFXBleedBoxToTrimBoxOffset")
+                    ?? JoboptionsRuntimeDefaults.value(forKey: "PDFXBleedBoxToTrimBoxOffset")),
                   offsets.count == 4 {
             bleed = .trimBox(offsets: offsets)
         } else {

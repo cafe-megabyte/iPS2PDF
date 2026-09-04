@@ -5,21 +5,24 @@ set -euo pipefail
 # archive. Resource packaging is handled by package_ghostscript_resources.sh.
 
 if [ "$#" -ne 6 ]; then
-    echo "Usage: build_ghostscript_MacOS.sh <deployment-target> <sdk-name> <project-temp-dir> <source-archive> <script-patch> <artifact-directory>" >&2
+    echo "Usage: build_ghostscript_MacOS.sh <deployment-target> <sdk-name> <project-temp-dir> <source-archive-or-directory> <script-patch> <artifact-directory>" >&2
     exit 64
 fi
 
 deployment_target="$1"
 sdk_name="$2"
 project_temp_dir="$3"
-source_archive="$4"
+source_input="$4"
 script_patch="$5"
 artifact_directory="$6"
 script_directory="$(cd "$(dirname "$0")" && pwd)"
 fingerprint_helpers="$script_directory/Shared/ghostscript_fingerprint.sh"
+archive_helpers="$script_directory/Shared/ghostscript_archive.sh"
 
 # shellcheck source=Shared/ghostscript_fingerprint.sh
 source "$fingerprint_helpers"
+# shellcheck source=Shared/ghostscript_archive.sh
+source "$archive_helpers"
 
 case "$deployment_target" in
     *[!0-9.]* | "")
@@ -35,6 +38,10 @@ case "$sdk_name" in
         exit 66
         ;;
 esac
+
+if ! source_archive="$(ghostscript_resolve_source_archive "$source_input")"; then
+    exit 67
+fi
 
 for required_path in "$source_archive" "$script_patch"; do
     if [ ! -f "$required_path" ]; then
@@ -58,6 +65,7 @@ input_fingerprint="$({
     ghostscript_hash_file "$script_patch"
     ghostscript_hash_file "$0"
     ghostscript_hash_file "$fingerprint_helpers"
+    ghostscript_hash_file "$archive_helpers"
 } | ghostscript_fingerprint)"
 
 compile_stamp="$artifact_directory/compile.stamp"
