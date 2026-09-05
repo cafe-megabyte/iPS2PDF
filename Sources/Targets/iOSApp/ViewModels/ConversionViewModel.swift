@@ -4,6 +4,7 @@ import Foundation
 @MainActor
 final class ConversionViewModel: ObservableObject {
     @Published var selectedPDFVersion: PDFVersion
+    @Published private(set) var isPDFVersionConstrained = false
     @Published var selectedPDFACompatibility: PDFACompatibility
     @Published var isFileImporterPresented = false
     @Published private(set) var isProcessing = false
@@ -67,7 +68,10 @@ final class ConversionViewModel: ObservableObject {
     }
 
     func setPDFVersion(_ version: PDFVersion) {
-        guard !controlsAreDisabled else { return }
+        guard !controlsAreDisabled,
+              JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(
+                in: joboptionsRepository.activeDocument
+              ) == nil else { return }
         do {
             try joboptionsRepository.update(
                 key: "CompatibilityLevel",
@@ -380,7 +384,11 @@ final class ConversionViewModel: ObservableObject {
         default: .none
         }
         selectedPDFACompatibility = compatibility
-        selectedPDFVersion = PDFVersion(rawValue: joboptionsRepository.compatibilityLevel)
+        let constrainedVersion = JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(
+            in: joboptionsRepository.activeDocument
+        )
+        isPDFVersionConstrained = constrainedVersion != nil
+        selectedPDFVersion = PDFVersion(rawValue: constrainedVersion ?? joboptionsRepository.compatibilityLevel)
             ?? .v13
     }
 

@@ -1,6 +1,18 @@
 import Foundation
 
 enum JoboptionsConsistencyEngine {
+    /// The initial iOS page and compact macOS settings present this PDF/A
+    /// constraint instead of the stored version. A matching value is still constrained.
+    static func pdfAConstrainedCompatibilityLevel(
+        in document: LosslessJoboptionsDocument?
+    ) -> String? {
+        guard let raw = document?.value(forKey: "iPS2PDFStandard")?.textualValue,
+              let standard = PDFStandard(rawValue: raw),
+              standard.ghostscriptPDFAValue != nil
+        else { return nil }
+        return standard.requiredCompatibilityLevel
+    }
+
     /// Stored values always win in the editor. Only absent values use a
     /// conversion default (including standard-specific proposals). Free text
     /// has no synthesized display default and therefore stays empty.

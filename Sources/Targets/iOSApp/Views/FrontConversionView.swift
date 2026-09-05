@@ -41,10 +41,11 @@ struct FrontConversionView: View {
 
                     PDFVersionDropdown(
                         selectedVersion: viewModel.selectedPDFVersion,
-                        isDisabled: viewModel.controlsAppearDisabled
+                        isDisabled: viewModel.controlsAppearDisabled || viewModel.isPDFVersionConstrained
                     ) { version in
                         viewModel.setPDFVersion(version)
                     }
+                    .saturation(viewModel.isPDFVersionConstrained ? 0 : 1)
                 }
 
                 VStack(alignment: .leading, spacing: 8) {

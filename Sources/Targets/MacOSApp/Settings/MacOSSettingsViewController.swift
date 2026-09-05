@@ -152,7 +152,11 @@ final class MacOSSettingsViewController: NSViewController {
             item.representedObject = version.rawValue
             versionPopup.menu?.addItem(item)
         }
-        let displayedVersion = repository.compatibilityLevel
+        let constrainedVersion = JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(
+            in: repository.activeDocument
+        )
+        versionPopup.isEnabled = constrainedVersion == nil
+        let displayedVersion = constrainedVersion ?? repository.compatibilityLevel
         if let index = PDFVersion.allCases.firstIndex(where: {
             $0.rawValue == displayedVersion
         }) {
@@ -190,6 +194,9 @@ final class MacOSSettingsViewController: NSViewController {
     }
 
     @objc private func selectVersion(_ sender: NSPopUpButton) {
+        guard JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(
+            in: repository.activeDocument
+        ) == nil else { reload(); return }
         guard let raw = sender.selectedItem?.representedObject as? String,
               let version = PDFVersion(rawValue: raw)
         else { reload(); return }

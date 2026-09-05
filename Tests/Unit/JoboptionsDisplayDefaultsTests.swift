@@ -2,6 +2,35 @@ import Foundation
 import XCTest
 
 final class JoboptionsDisplayDefaultsTests: XCTestCase {
+    func testFrontPDFAVersionConstraintMatchesConversionWithoutChangingStoredValues() throws {
+        for (standard, expected) in [("pdfa1b", "1.4"), ("pdfa2b", "1.7"), ("pdfa3b", "1.7")] {
+            for stored in [nil, "1.3", expected] as [String?] {
+                let entry = stored.map { "/CompatibilityLevel \($0)" } ?? ""
+                let source = try document("/iPS2PDFStandard /\(standard) \(entry)")
+                let original = source.data
+                XCTAssertEqual(JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(in: source), expected)
+                let effective = try JoboptionsConsistencyEngine.effectiveDocument(from: source)
+                XCTAssertEqual(effective.value(forKey: "CompatibilityLevel")?.textualValue, expected)
+                XCTAssertEqual(source.data, original)
+                XCTAssertEqual(source.value(forKey: "CompatibilityLevel")?.textualValue, stored)
+                if let stored {
+                    XCTAssertEqual(JoboptionsConsistencyEngine.displayValue(forKey: "CompatibilityLevel", in: source)?.textualValue, stored)
+                }
+                let withoutPDFA = try source.replacingValue(forKey: "iPS2PDFStandard", with: .name("none"))
+                XCTAssertNil(JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(in: withoutPDFA))
+                XCTAssertEqual(withoutPDFA.value(forKey: "CompatibilityLevel")?.textualValue, stored)
+            }
+        }
+    }
+
+    func testFrontPDFAVersionExceptionDoesNotApplyToOtherStandards() throws {
+        XCTAssertNil(JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(in: nil))
+        for standard in ["none", "pdfx1", "pdfx3", "pdfx4", "unknown"] {
+            let source = try document("/iPS2PDFStandard /\(standard) /CompatibilityLevel 1.3")
+            XCTAssertNil(JoboptionsConsistencyEngine.pdfAConstrainedCompatibilityLevel(in: source))
+        }
+    }
+
     private func document(_ entries: String = "") throws -> LosslessJoboptionsDocument {
         try LosslessJoboptionsDocument(data: Data("% preserved\n<< \(entries) >> setdistillerparams\n".utf8))
     }
