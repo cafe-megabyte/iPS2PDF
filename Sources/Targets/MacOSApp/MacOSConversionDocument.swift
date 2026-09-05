@@ -18,6 +18,7 @@ final class MacOSConversionDocument: NSDocument {
     nonisolated(unsafe) private var sourceURL: URL?
     nonisolated(unsafe) private var sourceDisplayName = "Conversion.pdf"
     nonisolated(unsafe) private var convertedPDFURL: URL?
+    private let exportSnapshot = PDFEditingSnapshotStore()
     private var conversionIsActive = false
     private var defersInitialWindowShow = true
 
@@ -57,6 +58,10 @@ final class MacOSConversionDocument: NSDocument {
         viewModel.onPDFReady = { [weak self, weak window, weak windowController] url in
             guard let self else { return }
             convertedPDFURL = url
+            exportSnapshot.store(viewModel.editingSession?.current)
+            if let editing = viewModel.editingSession {
+                window?.identifier = NSUserInterfaceItemIdentifier("pdf-editing:" + editing.id.uuidString)
+            }
             updateChangeCount(.changeCleared)
             if let window {
                 resizeWindowForFirstPDFPage(at: url, window: window)
@@ -66,6 +71,12 @@ final class MacOSConversionDocument: NSDocument {
         }
         viewModel.onShouldShowWindow = { [weak self] in
             self?.showInitialWindowIfNeeded()
+        }
+        viewModel.onPDFEdited = { [weak self] revision, isEdited in
+            guard let self else { return }
+            exportSnapshot.store(revision)
+            convertedPDFURL = revision.input.url
+            updateChangeCount(isEdited ? .changeDone : .changeCleared)
         }
         viewModel.onTerminalState = { [weak self, weak window] in
             window?.standardWindowButton(.closeButton)?.isEnabled = true
@@ -97,8 +108,8 @@ final class MacOSConversionDocument: NSDocument {
     }
 
     nonisolated override func write(to url: URL, ofType typeName: String) throws {
-        guard let source = convertedPDFURL else { throw ConversionFailure.outputMissing }
-        try FileManager.default.copyItem(at: source, to: url)
+        guard let revision = exportSnapshot.value() else { throw ConversionFailure.outputMissing }
+        try FileManager.default.copyItem(at: revision.input.url, to: url)
     }
 
     override func printOperation(withSettings printSettings: [NSPrintInfo.AttributeKey: Any]) throws -> NSPrintOperation {
@@ -113,6 +124,28 @@ final class MacOSConversionDocument: NSDocument {
             throw ConversionFailure.outputMissing
         }
         return operation
+    }
+
+    @IBAction func showPDFInformation(_ sender: Any?) {
+        if let editing = viewModel.editingSession {
+            MacOSPDFInfoWindowController.present(editing: editing)
+            return
+        }
+        guard let convertedPDFURL else { return }
+        do {
+            // Snapshot now, before this document can remove its conversion workspace.
+            MacOSPDFInfoWindowController.present(input: try PDFInspectionInput(sourceURL: convertedPDFURL))
+        } catch { presentError(error) }
+    }
+
+    @IBAction func compressPDF(_ sender: Any?) {
+        if let editing = viewModel.editingSession { MacOSPDFCompressionWindowController.present(editing: editing) }
+        else { MacOSPDFCompressionWindowController.openPanel() }
+    }
+
+    override func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(showPDFInformation(_:)) { return convertedPDFURL != nil }
+        return super.validateMenuItem(menuItem)
     }
 
     override func close() {

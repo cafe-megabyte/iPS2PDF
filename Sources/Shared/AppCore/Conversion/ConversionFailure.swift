@@ -1,6 +1,7 @@
 import Foundation
 
 enum ConversionFailure: Error, Sendable {
+    case inputPasswordRequired
     case startupCleanup
     case workingDirectoryCleanup
     case inputIsNotRegularFile
@@ -17,6 +18,8 @@ enum ConversionFailure: Error, Sendable {
 
     var localizedMessage: String {
         switch self {
+        case .inputPasswordRequired:
+            String(localized: "The PDF requires a valid opening password.")
         case .startupCleanup:
             String(localized: "error_startup_cleanup")
         case .workingDirectoryCleanup:

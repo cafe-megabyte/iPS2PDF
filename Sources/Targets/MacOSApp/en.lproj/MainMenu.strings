@@ -391,3 +391,8 @@
 
 /* Class = "NSMenuItem"; title = "Show Substitutions"; ObjectID = "z6F-FW-3nz"; */
 "z6F-FW-3nz.title" = "Show Substitutions";
+
+"PDF-Inf-Open.title" = "Open for PDF Information…";
+"PDF-Inf-This.title" = "Information for This PDF";
+"PDF-Cnv-Open.title" = "Open for Conversion…";
+"PDF-Cmp-Open.title" = "Compress PDF…";

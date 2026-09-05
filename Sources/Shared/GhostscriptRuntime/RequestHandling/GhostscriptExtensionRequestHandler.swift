@@ -190,37 +190,41 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         var ghostscriptCode: Int32 = 0
         var stage: Int32 = 0
         gs_bridge_reset_cancellation()
-        let status = standard.withCString { standardPointer in
-            Self.withOptionalCString(compatibilityLevel) { compatibilityPointer in
-                Self.withOptionalPath(definitionURL) { definitionPointer in
-                    Self.withOptionalPath(ghostscriptDirectory) { ghostscriptPointer in
-                        Self.withOptionalPath(bundledProfileDirectory) { profilePointer in
-                            Self.withOptionalPath(profileOverrideDirectory) { overridesDirectoryPointer in
-                                Self.withOptionalCString(profileOverrides) { overridesPointer in
-                                    Self.withOptionalCString(blendConversionStrategy) { blendPointer in
-                                        gs_run_joboptions_with_fds(
-                                            input, output, joboptions, journal,
-                                            validationOnly ? 1 : 0,
-                                            allowTransparency ? 1 : 0,
-                                            epsCrop ? 1 : 0,
-                                            embedSubstituteFonts ? 1 : 0,
-                                            0,
-                                            0,
-                                            compatibilityPointer,
-                                            standardPointer,
-                                            definitionPointer,
-                                            ghostscriptPointer,
-                                            profilePointer,
-                                            overridesPointer,
-                                            overridesDirectoryPointer,
-                                            blendPointer,
-                                            Int32(postScriptRandomSeed),
-                                            limitsEnabled ? 1 : 0,
-                                            deadline,
-                                            maximumOutput,
-                                            &ghostscriptCode,
-                                            &stage
-                                        )
+        let inputPassword: String? = request[GhostscriptExtensionEnvelope.inputPDFPassword]
+        let status = Self.withOptionalCString(inputPassword) { passwordPointer in
+            standard.withCString { standardPointer in
+                Self.withOptionalCString(compatibilityLevel) { compatibilityPointer in
+                    Self.withOptionalPath(definitionURL) { definitionPointer in
+                        Self.withOptionalPath(ghostscriptDirectory) { ghostscriptPointer in
+                            Self.withOptionalPath(bundledProfileDirectory) { profilePointer in
+                                Self.withOptionalPath(profileOverrideDirectory) { overridesDirectoryPointer in
+                                    Self.withOptionalCString(profileOverrides) { overridesPointer in
+                                        Self.withOptionalCString(blendConversionStrategy) { blendPointer in
+                                            gs_run_joboptions_with_fds(
+                                                input, output, joboptions, journal,
+                                                validationOnly ? 1 : 0,
+                                                allowTransparency ? 1 : 0,
+                                                epsCrop ? 1 : 0,
+                                                embedSubstituteFonts ? 1 : 0,
+                                                0,
+                                                0,
+                                                compatibilityPointer,
+                                                standardPointer,
+                                                definitionPointer,
+                                                ghostscriptPointer,
+                                                profilePointer,
+                                                overridesPointer,
+                                                overridesDirectoryPointer,
+                                                blendPointer,
+                                                passwordPointer,
+                                                Int32(postScriptRandomSeed),
+                                                limitsEnabled ? 1 : 0,
+                                                deadline,
+                                                maximumOutput,
+                                                &ghostscriptCode,
+                                                &stage
+                                            )
+                                        }
                                     }
                                 }
                             }

@@ -5,6 +5,7 @@ struct AdvancedSettingsView: View {
     let onShowFront: () -> Void
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var selection: BackSelection? = .category(.general)
+    @State private var showsPDFLicenses = false
 
     private var repository: JoboptionsRepository { viewModel.joboptionsRepository }
 
@@ -19,6 +20,8 @@ struct AdvancedSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                Button { showsPDFLicenses = true } label: { Image(systemName: "doc.text") }
+                    .accessibilityLabel("PDF processing licenses")
                 Button(action: onShowFront) {
                     Label("Conversion", systemImage: "arrow.uturn.backward.circle.fill")
                 }
@@ -38,6 +41,7 @@ struct AdvancedSettingsView: View {
                 compactLayout
             }
         }
+        .sheet(isPresented: $showsPDFLicenses) { PDFProcessingLicensesView() }
     }
 
     private var compactLayout: some View {

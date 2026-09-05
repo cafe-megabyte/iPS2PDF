@@ -25,7 +25,8 @@ final class GhostscriptConverter: FileConverting, @unchecked Sendable {
         joboptionsURL: URL,
         standard: PDFStandard,
         securityLimitsEnabled: Bool,
-        postScriptRandomSeed: Int
+        postScriptRandomSeed: Int,
+        inputPassword: String? = nil
     ) async throws {
         try await helper.convert(
             inputURL: sourceURL,
@@ -33,7 +34,8 @@ final class GhostscriptConverter: FileConverting, @unchecked Sendable {
             joboptionsURL: joboptionsURL,
             standard: standard,
             limitsEnabled: securityLimitsEnabled,
-            postScriptRandomSeed: postScriptRandomSeed
+            postScriptRandomSeed: postScriptRandomSeed,
+            inputPassword: inputPassword
         )
     }
 

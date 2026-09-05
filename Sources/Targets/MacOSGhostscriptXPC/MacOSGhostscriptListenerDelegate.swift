@@ -11,7 +11,9 @@ final class MacOSGhostscriptListenerDelegate: NSObject, NSXPCListenerDelegate {
         connection.exportedInterface = NSXPCInterface(
             with: MacOSGhostscriptXPCProtocol.self
         )
-        connection.exportedObject = MacOSGhostscriptXPCService()
+        let service = MacOSGhostscriptXPCService()
+        connection.exportedObject = service
+        connection.invalidationHandler = { [weak service] in service?.connectionClosed() }
         connection.resume()
         return true
     }

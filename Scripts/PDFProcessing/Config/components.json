@@ -1,0 +1,218 @@
+[
+  {
+    "component": "Hyper Compress",
+    "license": "AGPL-3.0-only",
+    "resources": [
+      {
+        "file": "00-Hyper-Compress-LICENSE"
+      },
+      {
+        "file": "00-Hyper-Compress-NOTICE.md"
+      }
+    ]
+  },
+  {
+    "component": "PDFium",
+    "license": "BSD-3-Clause AND Apache-2.0",
+    "resources": [
+      {
+        "file": "01-PDFium-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "AGG 2.3",
+    "license": "MIT",
+    "resources": [
+      {
+        "file": "02-AGG-2.3-copying"
+      }
+    ]
+  },
+  {
+    "component": "FreeType",
+    "license": "FTL",
+    "resources": [
+      {
+        "file": "03-FreeType-LICENSE.TXT"
+      },
+      {
+        "file": "03-FreeType-FTL.TXT"
+      }
+    ]
+  },
+  {
+    "component": "Little CMS",
+    "license": "MIT",
+    "resources": [
+      {
+        "file": "04-Little-CMS-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "OpenJPEG",
+    "license": "BSD-2-Clause",
+    "resources": [
+      {
+        "file": "05-OpenJPEG-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "Chromium libjpeg-turbo",
+    "license": "BSD-3-Clause AND IJG AND Zlib",
+    "resources": [
+      {
+        "file": "06-Chromium-libjpeg-turbo-LICENSE.md"
+      },
+      {
+        "file": "06-Chromium-libjpeg-turbo-LICENSE.md.chromium"
+      },
+      {
+        "file": "06-Chromium-libjpeg-turbo-README.ijg"
+      }
+    ]
+  },
+  {
+    "component": "Abseil",
+    "license": "Apache-2.0",
+    "resources": [
+      {
+        "file": "07-Abseil-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "Brotli",
+    "license": "MIT",
+    "resources": [
+      {
+        "file": "08-Brotli-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "Dragonbox",
+    "license": "BSL-1.0",
+    "resources": [
+      {
+        "file": "09-Dragonbox-LICENSE-Boost"
+      }
+    ]
+  },
+  {
+    "component": "fast_float",
+    "license": "MIT",
+    "resources": [
+      {
+        "file": "10-fast_float-LICENSE-MIT"
+      }
+    ]
+  },
+  {
+    "component": "HarfBuzz",
+    "license": "MIT",
+    "resources": [
+      {
+        "file": "11-HarfBuzz-COPYING"
+      }
+    ]
+  },
+  {
+    "component": "ICU",
+    "license": "Unicode-3.0",
+    "resources": [
+      {
+        "file": "12-ICU-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "jbig2enc",
+    "license": "Apache-2.0",
+    "resources": [
+      {
+        "file": "13-jbig2enc-COPYING"
+      }
+    ]
+  },
+  {
+    "component": "Leptonica",
+    "license": "BSD-2-Clause",
+    "resources": [
+      {
+        "file": "14-Leptonica-leptonica-license.txt"
+      }
+    ]
+  },
+  {
+    "component": "Chromium zlib",
+    "license": "Zlib",
+    "resources": [
+      {
+        "file": "15-Chromium-zlib-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "jpegli",
+    "license": "BSD-3-Clause",
+    "resources": [
+      {
+        "file": "16-jpegli-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "Highway",
+    "license": "Apache-2.0",
+    "resources": [
+      {
+        "file": "17-Highway-LICENSE"
+      }
+    ]
+  },
+  {
+    "component": "qpdf",
+    "license": "Apache-2.0",
+    "resources": [
+      {
+        "file": "18-qpdf-qpdf-LICENSE.txt"
+      }
+    ]
+  },
+  {
+    "component": "qpdf libjpeg-turbo",
+    "license": "BSD-3-Clause AND IJG AND Zlib",
+    "resources": [
+      {
+        "file": "19-qpdf-libjpeg-turbo-libjpeg-turbo-LICENSE.md"
+      },
+      {
+        "file": "19-qpdf-libjpeg-turbo-libjpeg-turbo-README.ijg"
+      }
+    ]
+  },
+  {
+    "component": "AFDKO subset",
+    "license": "Apache-2.0",
+    "resources": [
+      {
+        "file": "20-AFDKO-LICENSE.txt"
+      }
+    ]
+  },
+  {
+    "component": "jpegli libjpeg-turbo headers",
+    "license": "BSD-3-Clause AND IJG AND Zlib",
+    "resources": [
+      {
+        "file": "21-jpegli-libjpeg-turbo-LICENSE.md"
+      },
+      {
+        "file": "21-jpegli-libjpeg-turbo-README.ijg"
+      }
+    ]
+  }
+]

@@ -1,0 +1,4 @@
+framework module PDFProcessingRuntime {
+    umbrella header "PDFProcessingRuntime.h"
+    export *
+}

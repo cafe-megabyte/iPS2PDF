@@ -3,10 +3,15 @@ import SwiftUI
 struct FrontConversionView: View {
     @ObservedObject var viewModel: ConversionViewModel
     let onShowSettings: () -> Void
+    let onShowPDFInfo: () -> Void
+    let onOpenFile: () -> Void
 
     var body: some View {
         VStack(spacing: 32) {
             HStack {
+                Button(action: onShowPDFInfo) { Label("PDF information", systemImage: "info.circle") }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.controlsAppearDisabled)
                 Spacer()
                 Button(action: onShowSettings) {
                     Label("Settings", systemImage: "slider.horizontal.3")
@@ -17,9 +22,7 @@ struct FrontConversionView: View {
 
             Spacer(minLength: 0)
 
-            Button(String(localized: "open_file")) {
-                viewModel.isFileImporterPresented = true
-            }
+            Button(String(localized: "Convert file…"), action: onOpenFile)
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .disabled(viewModel.controlsAppearDisabled)

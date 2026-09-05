@@ -1,0 +1,1113 @@
+diff --git a/core/fpdfapi/edit/cpdf_creator.cpp b/core/fpdfapi/edit/cpdf_creator.cpp
+index 31e004f..851c0a3 100644
+--- a/core/fpdfapi/edit/cpdf_creator.cpp
++++ b/core/fpdfapi/edit/cpdf_creator.cpp
+@@ -278,6 +278,9 @@ CPDF_Creator::Stage CPDF_Creator::WriteDoc_Stage1() {
+       if (!parser_->WriteToArchive(archive_.get(), saved_offset_)) {
+         return Stage::kInvalid;
+       }
++      if (!archive_->WriteString("\r\n")) {
++        return Stage::kInvalid;
++      }
+     }
+     if (is_original_ && parser_->GetLastXRefOffset() == 0) {
+       for (uint32_t num = 0; num <= parser_->GetLastObjNum(); ++num) {
+@@ -466,6 +469,9 @@ CPDF_Creator::Stage CPDF_Creator::WriteDoc_Stage4() {
+         !archive_->WriteString(" 0 obj <<")) {
+       return Stage::kInvalid;
+     }
++    if (!archive_->WriteString("/Type /XRef ")) {
++      return Stage::kInvalid;
++    }
+   }
+ 
+   if (parser_) {
+@@ -590,6 +596,9 @@ CPDF_Creator::Stage CPDF_Creator::WriteDoc_Stage4() {
+     if (!archive_->WriteString("\r\nendstream")) {
+       return Stage::kInvalid;
+     }
++    if (!archive_->WriteString("\r\nendobj")) {
++      return Stage::kInvalid;
++    }
+   }
+ 
+   if (!archive_->WriteString("\r\nstartxref\r\n") ||
+diff --git a/core/fpdfapi/edit/cpdf_pagecontentgenerator.cpp b/core/fpdfapi/edit/cpdf_pagecontentgenerator.cpp
+index 6fda89b..886f040 100644
+--- a/core/fpdfapi/edit/cpdf_pagecontentgenerator.cpp
++++ b/core/fpdfapi/edit/cpdf_pagecontentgenerator.cpp
+@@ -20,6 +20,10 @@
+ #include "core/fpdfapi/edit/cpdf_stringarchivestream.h"
+ #include "core/fpdfapi/font/cpdf_truetypefont.h"
+ #include "core/fpdfapi/font/cpdf_type1font.h"
++#include "core/fpdfapi/page/cpdf_color.h"
++#include "core/fpdfapi/page/cpdf_colorspace.h"
++#include "core/fpdfapi/page/cpdf_pattern.h"
++#include "core/fpdfapi/page/cpdf_patterncs.h"
+ #include "core/fpdfapi/page/cpdf_contentmarks.h"
+ #include "core/fpdfapi/page/cpdf_docpagedata.h"
+ #include "core/fpdfapi/page/cpdf_form.h"
+@@ -183,15 +187,19 @@ void RemoveOrRestoreUnusedResources(
+       continue;
+     }
+ 
+-    const std::vector<ByteString> keys = current_resource_dict->GetKeys();
+-    CPDF_PageObjectHolder::RemovedResourceMap removed_resource_map =
+-        RemoveUnusedResources(current_resource_dict, keys,
+-                              resource_in_use_of_current_type);
+-    if (!removed_resource_map.empty()) {
+-      // Note that this may create a new entry in `all_removed_resources_map`.
+-      // Only do this if `removed_resource_map` is not empty.
+-      SaveUnusedResources(removed_resource_map,
+-                          all_removed_resources_map[resource_key]);
++    std::vector<ByteString> keys;
++    if (current_resource_dict) {
++      keys = current_resource_dict->GetKeys();
++      CPDF_PageObjectHolder::RemovedResourceMap removed_resource_map =
++          RemoveUnusedResources(current_resource_dict, keys,
++                                resource_in_use_of_current_type);
++      if (!removed_resource_map.empty()) {
++        // Note that this may create a new entry in
++        // `all_removed_resources_map`.  Only do this if
++        // `removed_resource_map` is not empty.
++        SaveUnusedResources(removed_resource_map,
++                            all_removed_resources_map[resource_key]);
++      }
+     }
+ 
+     // Restore in-use objects if possible. To do so, first see if there is a
+@@ -329,7 +337,43 @@ CPDF_PageContentGenerator::CPDF_PageContentGenerator(
+ 
+ CPDF_PageContentGenerator::~CPDF_PageContentGenerator() = default;
+ 
++static bool AllExistingContentStreamsRewritten(
++    CPDF_PageObjectHolder* obj_holder,
++    const std::set<int32_t>& rewritten_stream_indices) {
++  int32_t existing_count = 0;
++  // Form XObjects keep their content in the XObject stream itself (index 0);
++  // pages keep theirs in /Contents (single stream or an array of streams).
++  if (obj_holder->GetMutableFormStream()) {
++    existing_count = 1;
++  } else if (RetainPtr<const CPDF_Object> contents =
++                 obj_holder->GetDict()->GetDirectObjectFor(
++                     pdfium::page_object::kContents)) {
++    // NOTE: must dereference  - /Contents is virtually always an indirect
++    // reference (`N 0 R`).  GetObjectFor would return the CPDF_Reference
++    // itself, which is neither an array nor a stream.
++    if (const CPDF_Array* arr = contents->AsArray()) {
++      existing_count = static_cast<int32_t>(arr->size());
++    } else if (contents->IsStream()) {
++      existing_count = 1;
++    }
++  }
++  for (int32_t i = 0; i < existing_count; ++i) {
++    if (!pdfium::Contains(rewritten_stream_indices, i)) {
++      return false;
++    }
++  }
++  return true;
++}
++
+ void CPDF_PageContentGenerator::GenerateContent() {
++  std::optional<fxcrt::ostringstream> canonical_stream =
++      GenerateCanonicalPageStream();
++  if (canonical_stream.has_value()) {
++    ReplaceContentStreamsWithSingleStream(std::move(canonical_stream.value()));
++    UpdateResourcesDict(/*prune_unused_resources=*/true);
++    return;
++  }
++
+   std::map<int32_t, fxcrt::ostringstream> new_stream_data =
+       GenerateModifiedStreams();
+   // If no streams were regenerated or removed, nothing to do here.
+@@ -337,8 +381,62 @@ void CPDF_PageContentGenerator::GenerateContent() {
+     return;
+   }
+ 
++  std::set<int32_t> rewritten_stream_indices;
++  for (auto& entry : new_stream_data) {
++    if (entry.second.tellp() > 0) {
++      rewritten_stream_indices.insert(entry.first);
++    }
++  }
++  const bool prune_unused_resources =
++      AllExistingContentStreamsRewritten(obj_holder_, rewritten_stream_indices);
++
+   UpdateContentStreams(std::move(new_stream_data));
+-  UpdateResourcesDict();
++  UpdateResourcesDict(prune_unused_resources);
++}
++
++std::optional<fxcrt::ostringstream>
++CPDF_PageContentGenerator::GenerateCanonicalPageStream() {
++  if (!obj_holder_->IsPage()) {
++    return std::nullopt;
++  }
++
++  bool has_dirty_page_objects = false;
++  for (auto& pPageObj : page_objects_) {
++    // Must include dirty inactive page objects: replacing the whole content
++    // stream is how their original bytes disappear from this page.
++    if (pPageObj->IsDirty()) {
++      has_dirty_page_objects = true;
++      break;
++    }
++  }
++
++  if (!has_dirty_page_objects && !obj_holder_->HasDirtyStreams()) {
++    return std::nullopt;
++  }
++
++  obj_holder_->TakeDirtyStreams();
++
++  fxcrt::ostringstream buf;
++  buf << "q\n";
++  ProcessDefaultGraphics(&buf);
++
++  std::unique_ptr<const CPDF_ContentMarks> empty_content_marks =
++      std::make_unique<CPDF_ContentMarks>();
++  const CPDF_ContentMarks* content_marks = empty_content_marks.get();
++
++  for (auto& pPageObj : page_objects_) {
++    if (!pPageObj->IsActive()) {
++      pPageObj->SetDirty(false);
++      continue;
++    }
++
++    content_marks = ProcessContentMarks(&buf, pPageObj, content_marks);
++    ProcessPageObject(&buf, pPageObj);
++  }
++
++  FinishMarks(&buf, content_marks);
++  buf << "Q\n";
++  return buf;
+ }
+ 
+ std::map<int32_t, fxcrt::ostringstream>
+@@ -448,6 +546,13 @@ CPDF_PageContentGenerator::GenerateModifiedStreams() {
+   return streams;
+ }
+ 
++void CPDF_PageContentGenerator::ReplaceContentStreamsWithSingleStream(
++    fxcrt::ostringstream&& stream_data) {
++  default_graphics_name_ = GetOrCreateDefaultGraphics();
++  CPDF_PageContentManager page_content_manager(obj_holder_, document_);
++  page_content_manager.ReplaceWithSingleStream(&stream_data);
++}
++
+ void CPDF_PageContentGenerator::UpdateContentStreams(
+     std::map<int32_t, fxcrt::ostringstream>&& new_stream_data) {
+   CHECK(!new_stream_data.empty());
+@@ -475,7 +580,8 @@ void CPDF_PageContentGenerator::UpdateContentStreams(
+   }
+ }
+ 
+-void CPDF_PageContentGenerator::UpdateResourcesDict() {
++void CPDF_PageContentGenerator::UpdateResourcesDict(
++    bool prune_unused_resources) {
+   RetainPtr<CPDF_Dictionary> resources = obj_holder_->GetMutableResources();
+   if (!resources) {
+     return;
+@@ -495,6 +601,10 @@ void CPDF_PageContentGenerator::UpdateResourcesDict() {
+   // shared. Checked for that and clone those as well.
+   CloneResourcesDictEntries(document_, resources);
+ 
++  if (!prune_unused_resources) {
++    return;
++  }
++
+   ResourcesMap seen_resources;
+   for (auto& page_object : page_objects_) {
+     if (!page_object->IsActive()) {
+@@ -505,11 +615,189 @@ void CPDF_PageContentGenerator::UpdateResourcesDict() {
+   if (!default_graphics_name_.IsEmpty()) {
+     seen_resources["ExtGState"].insert(default_graphics_name_);
+   }
++  for (const ByteString& name : emitted_colorspace_resources_) {
++    seen_resources["ColorSpace"].insert(name);
++  }
++  for (const ByteString& name : emitted_pattern_resources_) {
++    seen_resources["Pattern"].insert(name);
++  }
+ 
+   RemoveOrRestoreUnusedResources(std::move(resources), seen_resources,
+                                  obj_holder_->all_removed_resources_map());
+ }
+ 
++bool CPDF_PageContentGenerator::EmitComplexColor(fxcrt::ostringstream* buf,
++                                                 const CPDF_Color* color,
++                                                 bool is_stroke) {
++  if (!color) {
++    return false;
++  }
++
++  if (color->IsPattern()) {
++    RetainPtr<CPDF_Pattern> pattern = color->GetPattern();
++    if (!pattern) {
++      return false;
++    }
++    RetainPtr<CPDF_Object> pattern_obj = pattern->GetPatternObjForRegen();
++    if (!pattern_obj || pattern_obj->GetObjNum() == 0) {
++      return false;
++    }
++    ByteString name;
++    auto it = realized_pattern_names_.find(pattern_obj->GetObjNum());
++    if (it != realized_pattern_names_.end()) {
++      name = it->second;
++    } else {
++      name = RealizeResource(pattern_obj.Get(), "Pattern");
++      if (name.IsEmpty()) {
++        return false;
++      }
++      realized_pattern_names_[pattern_obj->GetObjNum()] = name;
++    }
++    emitted_pattern_resources_.insert(name);
++
++    // Uncoloured (PaintType 2) patterns carry the paint colour as scn
++    // operands and REQUIRE a /Pattern colourspace with the underlying space
++    // as its parameter (ISO 32000-1 §8.7.3.3): "[/Pattern base] cs c1..cn
++    // /Name scn".  The parsed colour's space is the CPDF_PatternCS; a
++    // non-null base marks the uncoloured form.
++    RetainPtr<CPDF_ColorSpace> pattern_space = color->GetColorSpace();
++    const CPDF_PatternCS* pattern_cs =
++        pattern_space ? pattern_space->AsPatternCS() : nullptr;
++    RetainPtr<CPDF_ColorSpace> base_cs =
++        pattern_cs ? pattern_cs->base_cs() : nullptr;
++    if (base_cs) {
++      pdfium::span<const float> pat_comps = color->GetRawPatternComps();
++      const uint32_t base_count = base_cs->ComponentCount();
++      if (base_count > 0 && pat_comps.size() >= base_count) {
++        ByteString pcs_name;
++        auto pcs_cached = realized_cs_names_.find(pattern_space.Get());
++        if (pcs_cached != realized_cs_names_.end()) {
++          pcs_name = pcs_cached->second;
++        } else {
++          auto pattern_cs_array = document_->NewIndirect<CPDF_Array>();
++          pattern_cs_array->AppendNew<CPDF_Name>("Pattern");
++          if (const CPDF_Array* base_array = base_cs->GetArray()) {
++            if (base_array->GetObjNum() != 0) {
++              pattern_cs_array->AppendNew<CPDF_Reference>(
++                  document_, base_array->GetObjNum());
++            } else {
++              RetainPtr<CPDF_Object> base_clone = base_array->Clone();
++              if (base_clone) {
++                document_->AddIndirectObject(base_clone);
++                pattern_cs_array->AppendNew<CPDF_Reference>(
++                    document_, base_clone->GetObjNum());
++              }
++            }
++          } else {
++            // Stock/device underlying space  - reference it by family name.
++            const char* device_name = nullptr;
++            switch (base_cs->GetFamily()) {
++              case CPDF_ColorSpace::Family::kDeviceGray:
++                device_name = "DeviceGray";
++                break;
++              case CPDF_ColorSpace::Family::kDeviceRGB:
++                device_name = "DeviceRGB";
++                break;
++              case CPDF_ColorSpace::Family::kDeviceCMYK:
++                device_name = "DeviceCMYK";
++                break;
++              default:
++                break;
++            }
++            if (device_name) {
++              pattern_cs_array->AppendNew<CPDF_Name>(device_name);
++            }
++          }
++          if (pattern_cs_array->size() == 2) {
++            pcs_name = RealizeResource(pattern_cs_array.Get(), "ColorSpace");
++            if (!pcs_name.IsEmpty()) {
++              realized_cs_names_[pattern_space.Get()] = pcs_name;
++            }
++          }
++        }
++        if (!pcs_name.IsEmpty()) {
++          emitted_colorspace_resources_.insert(pcs_name);
++          *buf << "/" << PDF_NameEncode(pcs_name)
++               << (is_stroke ? " CS " : " cs ");
++          for (uint32_t i = 0; i < base_count; ++i) {
++            WriteFloat(*buf, pat_comps[i]) << " ";
++          }
++          *buf << "/" << PDF_NameEncode(name)
++               << (is_stroke ? " SCN " : " scn ");
++          return true;
++        }
++      }
++    }
++
++    *buf << "/Pattern" << (is_stroke ? " CS /" : " cs /")
++         << PDF_NameEncode(name) << (is_stroke ? " SCN " : " scn ");
++    return true;
++  }
++
++  pdfium::span<const float> comps = color->GetRawNonPatternComps();
++  if (comps.empty()) {
++    return false;
++  }
++  RetainPtr<CPDF_ColorSpace> cs = color->GetColorSpace();
++  if (!cs) {
++    return false;
++  }
++
++  // DeviceCMYK: the plain k/K operator, no resource needed.
++  if (cs->GetFamily() == CPDF_ColorSpace::Family::kDeviceCMYK) {
++    if (comps.size() != 4) {
++      return false;
++    }
++    for (size_t i = 0; i < comps.size(); ++i) {
++      WriteFloat(*buf, comps[i]) << " ";
++    }
++    *buf << (is_stroke ? "K " : "k ");
++    return true;
++  }
++
++  // Every other colourspace: realize its backing array as a /ColorSpace
++  // resource and emit "/Name cs c1 .. cn scn".  Stock/device spaces have no
++  // backing array and were already handled above / by WriteColorToStream.
++  ByteString cs_name;
++  auto cached = realized_cs_names_.find(cs.Get());
++  if (cached != realized_cs_names_.end()) {
++    cs_name = cached->second;
++  } else {
++    const CPDF_Array* arr = cs->GetArray();
++    if (!arr) {
++      return false;
++    }
++    if (arr->GetObjNum() != 0) {
++      // Already an indirect object  - reference it directly (shared, no
++      // clone).
++      cs_name = RealizeResource(arr, "ColorSpace");
++    } else {
++      // Direct (inline) array  - clone into a fresh indirect object so it can
++      // be referenced by name.  The clone keeps inner /Reference entries
++      // (tint-transform function, alternate space, Indexed base) pointing at
++      // their existing objects, so nothing is duplicated.
++      RetainPtr<CPDF_Object> indirect = arr->Clone();
++      if (!indirect) {
++        return false;
++      }
++      document_->AddIndirectObject(indirect);
++      cs_name = RealizeResource(indirect.Get(), "ColorSpace");
++    }
++    if (cs_name.IsEmpty()) {
++      return false;
++    }
++    realized_cs_names_[cs.Get()] = cs_name;
++  }
++  emitted_colorspace_resources_.insert(cs_name);
++
++  *buf << "/" << PDF_NameEncode(cs_name) << (is_stroke ? " CS " : " cs ");
++  for (size_t i = 0; i < comps.size(); ++i) {
++    WriteFloat(*buf, comps[i]) << " ";
++  }
++  *buf << (is_stroke ? "SCN " : "scn ");
++  return true;
++}
++
+ ByteString CPDF_PageContentGenerator::RealizeResource(
+     const CPDF_Object* pResource,
+     ByteStringView type) const {
+@@ -816,11 +1104,17 @@ void CPDF_PageContentGenerator::ProcessPath(fxcrt::ostringstream* buf,
+ void CPDF_PageContentGenerator::ProcessGraphics(fxcrt::ostringstream* buf,
+                                                 CPDF_PageObject* pPageObj) {
+   *buf << "q ";
+-  if (WriteColorToStream(*buf, pPageObj->color_state().GetFillColor())) {
++  const CPDF_Color* fill_color = pPageObj->color_state().GetFillColor();
++  if (WriteColorToStream(*buf, fill_color)) {
+     *buf << " rg ";
++  } else {
++    EmitComplexColor(buf, fill_color, /*is_stroke=*/false);
+   }
+-  if (WriteColorToStream(*buf, pPageObj->color_state().GetStrokeColor())) {
++  const CPDF_Color* stroke_color = pPageObj->color_state().GetStrokeColor();
++  if (WriteColorToStream(*buf, stroke_color)) {
+     *buf << " RG ";
++  } else {
++    EmitComplexColor(buf, stroke_color, /*is_stroke=*/true);
+   }
+   float line_width = pPageObj->graph_state().GetLineWidth();
+   if (line_width != 1.0f) {
+diff --git a/core/fpdfapi/edit/cpdf_pagecontentgenerator.h b/core/fpdfapi/edit/cpdf_pagecontentgenerator.h
+index b37d06b..918b26e 100644
+--- a/core/fpdfapi/edit/cpdf_pagecontentgenerator.h
++++ b/core/fpdfapi/edit/cpdf_pagecontentgenerator.h
+@@ -10,12 +10,16 @@
+ #include <stdint.h>
+ 
+ #include <map>
++#include <optional>
++#include <set>
+ #include <vector>
+ 
+ #include "core/fxcrt/bytestring.h"
+ #include "core/fxcrt/fx_string_wrappers.h"
+ #include "core/fxcrt/unowned_ptr.h"
+ 
++class CPDF_Color;
++class CPDF_ColorSpace;
+ class CPDF_ContentMarks;
+ class CPDF_Document;
+ class CPDF_FormObject;
+@@ -47,6 +51,10 @@ class CPDF_PageContentGenerator {
+   void ProcessDefaultGraphics(fxcrt::ostringstream* buf);
+   void ProcessText(fxcrt::ostringstream* buf, CPDF_TextObject* pTextObj);
+   ByteString GetOrCreateDefaultGraphics() const;
++
++  bool EmitComplexColor(fxcrt::ostringstream* buf,
++                        const CPDF_Color* color,
++                        bool is_stroke);
+   ByteString RealizeResource(const CPDF_Object* pResource,
+                              ByteStringView type) const;
+   const CPDF_ContentMarks* ProcessContentMarks(fxcrt::ostringstream* buf,
+@@ -59,6 +67,13 @@ class CPDF_PageContentGenerator {
+   // streams are not touched.
+   std::map<int32_t, fxcrt::ostringstream> GenerateModifiedStreams();
+ 
++  std::optional<fxcrt::ostringstream> GenerateCanonicalPageStream();
++
++  // Replaces ALL of the page's content streams with the single `stream_data`
++  // (via CPDF_PageContentManager::ReplaceWithSingleStream).
++  void ReplaceContentStreamsWithSingleStream(
++      fxcrt::ostringstream&& stream_data);
++
+   // For each entry in `new_stream_data`, adds the string buffer to the page's
+   // content stream.
+   void UpdateContentStreams(
+@@ -69,14 +84,17 @@ class CPDF_PageContentGenerator {
+   // been parsed from or written to any content stream yet.
+   void UpdateStreamlessPageObjects(int new_content_stream_index);
+ 
+-  // Updates the resource dictionary for `obj_holder_` to account for all the
+-  // changes.
+-  void UpdateResourcesDict();
++  void UpdateResourcesDict(bool prune_unused_resources);
+ 
+   UnownedPtr<CPDF_PageObjectHolder> const obj_holder_;
+   UnownedPtr<CPDF_Document> const document_;
+   std::vector<UnownedPtr<CPDF_PageObject>> page_objects_;
+   ByteString default_graphics_name_;
++
++  std::map<const CPDF_ColorSpace*, ByteString> realized_cs_names_;
++  std::map<uint32_t, ByteString> realized_pattern_names_;
++  std::set<ByteString> emitted_colorspace_resources_;
++  std::set<ByteString> emitted_pattern_resources_;
+ };
+ 
+ #endif  // CORE_FPDFAPI_EDIT_CPDF_PAGECONTENTGENERATOR_H_
+diff --git a/core/fpdfapi/edit/cpdf_pagecontentmanager.cpp b/core/fpdfapi/edit/cpdf_pagecontentmanager.cpp
+index 82d93a8..26d5d6b 100644
+--- a/core/fpdfapi/edit/cpdf_pagecontentmanager.cpp
++++ b/core/fpdfapi/edit/cpdf_pagecontentmanager.cpp
+@@ -171,6 +171,28 @@ void CPDF_PageContentManager::UpdateStream(size_t stream_index,
+   stream_reference->SetRef(document_, new_stream->GetObjNum());
+ }
+ 
++void CPDF_PageContentManager::ReplaceWithSingleStream(
++    fxcrt::ostringstream* buf) {
++  RetainPtr<CPDF_Stream> form_stream = page_obj_holder_->GetMutableFormStream();
++  if (form_stream) {
++    form_stream->SetDataFromStringstreamAndRemoveFilter(buf);
++    return;
++  }
++
++  auto new_stream = document_->NewIndirect<CPDF_Stream>(buf);
++  RetainPtr<CPDF_Dictionary> page_dict = page_obj_holder_->GetMutableDict();
++  page_dict->SetNewFor<CPDF_Reference>("Contents", document_,
++                                       new_stream->GetObjNum());
++  contents_ = std::move(new_stream);
++  streams_to_remove_.clear();
++
++  for (const auto& obj : *page_obj_holder_) {
++    if (obj->IsActive()) {
++      obj->SetContentStream(0);
++    }
++  }
++}
++
+ void CPDF_PageContentManager::ScheduleRemoveStreamByIndex(size_t stream_index) {
+   streams_to_remove_.insert(stream_index);
+ }
+diff --git a/core/fpdfapi/edit/cpdf_pagecontentmanager.h b/core/fpdfapi/edit/cpdf_pagecontentmanager.h
+index 1a6d94b..644b4d3 100644
+--- a/core/fpdfapi/edit/cpdf_pagecontentmanager.h
++++ b/core/fpdfapi/edit/cpdf_pagecontentmanager.h
+@@ -35,6 +35,8 @@ class CPDF_PageContentManager {
+ 
+   bool HasStreamAtIndex(size_t stream_index);
+ 
++  void ReplaceWithSingleStream(fxcrt::ostringstream* buf);
++
+  private:
+   // Gets the Content stream at a given index. If Contents is a single stream
+   // rather than an array, it is retrievable at index 0.
+diff --git a/core/fpdfapi/page/cpdf_basedcs.h b/core/fpdfapi/page/cpdf_basedcs.h
+index 55a16ad..b2fcdd9 100644
+--- a/core/fpdfapi/page/cpdf_basedcs.h
++++ b/core/fpdfapi/page/cpdf_basedcs.h
+@@ -20,6 +20,8 @@ class CPDF_BasedCS : public CPDF_ColorSpace {
+ 
+   void EnableStdConversion(bool bEnabled) final;
+ 
++  RetainPtr<CPDF_ColorSpace> base_cs() const { return base_cs_; }
++
+  protected:
+   explicit CPDF_BasedCS(Family family);
+ 
+diff --git a/core/fpdfapi/page/cpdf_color.cpp b/core/fpdfapi/page/cpdf_color.cpp
+index 7709dfc..f09ca8e 100644
+--- a/core/fpdfapi/page/cpdf_color.cpp
++++ b/core/fpdfapi/page/cpdf_color.cpp
+@@ -136,3 +136,23 @@ RetainPtr<CPDF_Pattern> CPDF_Color::GetPattern() const {
+       std::get<std::unique_ptr<PatternValue>>(color_data_);
+   return pattern_value->GetPattern();
+ }
++
++RetainPtr<CPDF_ColorSpace> CPDF_Color::GetColorSpace() const {
++  return cs_;
++}
++
++pdfium::span<const float> CPDF_Color::GetRawNonPatternComps() const {
++  if (!std::holds_alternative<std::vector<float>>(color_data_)) {
++    return {};
++  }
++  return std::get<std::vector<float>>(color_data_);
++}
++
++pdfium::span<const float> CPDF_Color::GetRawPatternComps() const {
++  const auto* pv =
++      std::get_if<std::unique_ptr<PatternValue>>(&color_data_);
++  if (!pv || !*pv) {
++    return {};
++  }
++  return (*pv)->GetComps();
++}
+diff --git a/core/fpdfapi/page/cpdf_color.h b/core/fpdfapi/page/cpdf_color.h
+index 69f0226..baf941e 100644
+--- a/core/fpdfapi/page/cpdf_color.h
++++ b/core/fpdfapi/page/cpdf_color.h
+@@ -50,6 +50,16 @@ class CPDF_Color {
+   // Should only be called if IsPattern() returns true.
+   RetainPtr<CPDF_Pattern> GetPattern() const;
+ 
++  RetainPtr<CPDF_ColorSpace> GetColorSpace() const;
++  // The raw component values for non-pattern colours (empty for pattern /
++  // unset colours).  These are the exact operands of the original
++  // colour-setting operator, NOT converted values.
++  pdfium::span<const float> GetRawNonPatternComps() const;
++  // The raw component values carried by an UNCOLOURED (PaintType 2) pattern
++  // colour (span over the full fixed-size backing array; callers trim to the
++  // underlying space's component count).  Empty for non-pattern colours.
++  pdfium::span<const float> GetRawPatternComps() const;
++
+  protected:
+   bool IsPatternInternal() const;
+ 
+diff --git a/core/fpdfapi/page/cpdf_colorspace.h b/core/fpdfapi/page/cpdf_colorspace.h
+index 5821412..6026484 100644
+--- a/core/fpdfapi/page/cpdf_colorspace.h
++++ b/core/fpdfapi/page/cpdf_colorspace.h
+@@ -94,6 +94,7 @@ class CPDF_ColorSpace : public Retainable, public Observable {
+ 
+   uint32_t ComponentCount() const;
+   Family GetFamily() const { return family_; }
++  const CPDF_Array* GetArray() const { return array_.Get(); }
+   bool IsSpecial() const {
+     return GetFamily() == Family::kSeparation ||
+            GetFamily() == Family::kDeviceN || GetFamily() == Family::kIndexed ||
+diff --git a/core/fpdfapi/page/cpdf_form.cpp b/core/fpdfapi/page/cpdf_form.cpp
+index a363f9d..8100a05 100644
+--- a/core/fpdfapi/page/cpdf_form.cpp
++++ b/core/fpdfapi/page/cpdf_form.cpp
+@@ -121,6 +121,10 @@ RetainPtr<const CPDF_Stream> CPDF_Form::GetStream() const {
+   return form_stream_;
+ }
+ 
++RetainPtr<CPDF_Stream> CPDF_Form::GetMutableFormStream() {
++  return form_stream_;
++}
++
+ std::optional<std::pair<RetainPtr<CFX_DIBitmap>, CFX_Matrix>>
+ CPDF_Form::GetBitmapAndMatrixFromSoleImageOfForm() const {
+   // TODO(crbug.com/377660088): Determine if there is a case where only a single
+diff --git a/core/fpdfapi/page/cpdf_form.h b/core/fpdfapi/page/cpdf_form.h
+index ae864b0..bb8e944 100644
+--- a/core/fpdfapi/page/cpdf_form.h
++++ b/core/fpdfapi/page/cpdf_form.h
+@@ -60,6 +60,8 @@ class CPDF_Form final : public CPDF_PageObjectHolder,
+   // Never returns nullptr.
+   RetainPtr<const CPDF_Stream> GetStream() const;
+ 
++  RetainPtr<CPDF_Stream> GetMutableFormStream() override;
++
+  private:
+   void ParseContentInternal(const CPDF_AllStates* pGraphicStates,
+                             const CFX_Matrix* pParentMatrix,
+diff --git a/core/fpdfapi/page/cpdf_image.cpp b/core/fpdfapi/page/cpdf_image.cpp
+index c13ae2b..cfca8cf 100644
+--- a/core/fpdfapi/page/cpdf_image.cpp
++++ b/core/fpdfapi/page/cpdf_image.cpp
+@@ -83,6 +83,74 @@ void CPDF_Image::ConvertStreamToIndirectObject() {
+   document_->AddIndirectObject(stream_);
+ }
+ 
++namespace {
++
++bool OverwriteStreamData(CPDF_Stream* s,
++                         CPDF_Document* doc,
++                         DataVector<uint8_t> new_data,
++                         RetainPtr<CPDF_Dictionary> new_dict,
++                         bool data_is_decoded) {
++  if (!s || !new_dict)
++    return false;
++
++  // Replace dictionary entries (no streams allowed as values).
++  RetainPtr<CPDF_Dictionary> old = s->GetMutableDict();
++  if (!old)
++    return false;
++
++  // Clear existing keys.
++  for (const ByteString& k : old->GetKeys())
++    old->RemoveFor(k.AsStringView());
++
++  // Deep-copy all entries from new_dict into old.
++  CPDF_DictionaryLocker lock(new_dict);
++  for (auto it = lock.begin(); it != lock.end(); ++it)
++    old->SetFor(it->first, it->second->Clone());
++
++  // Swap in the bytes.
++  if (data_is_decoded) {
++    // Decoded pixels: also removes Filter/DecodeParms from the stream dict.
++    s->SetDataAndRemoveFilter(pdfium::span<const uint8_t>(new_data));
++  } else {
++    // Already filtered (e.g., JPEG with /Filter /DCTDecode).
++    s->TakeData(std::move(new_data));
++  }
++
++  if (doc)
++    doc->MaybePurgeImage(s->GetObjNum());
++
++  return true;
++}
++
++}  // namespace
++
++bool CPDF_Image::OverwriteStreamInPlace(DataVector<uint8_t> new_data,
++                                        RetainPtr<CPDF_Dictionary> new_dict,
++                                        bool data_is_decoded) {
++  // Ensure we can mutate the underlying stream.
++  if (stream_->IsInline())
++    ConvertStreamToIndirectObject();
++
++  RetainPtr<const CPDF_Stream> s_const = GetStream();
++  if (!s_const)
++    return false;
++
++  // Get a mutable stream by objnum.
++  RetainPtr<CPDF_Stream> s =
++      ToStream(document_->GetMutableIndirectObject(s_const->GetObjNum()));
++  if (!s)
++    return false;
++
++  const bool ok =
++      OverwriteStreamData(s.Get(), document_, std::move(new_data),
++                          std::move(new_dict), data_is_decoded);
++  if (ok) {
++    // Refresh cached flags/size from the new dictionary.
++    FinishInitialization();
++  }
++  return ok;
++}
++
+ RetainPtr<const CPDF_Dictionary> CPDF_Image::GetDict() const {
+   return stream_ ? stream_->GetDict() : nullptr;
+ }
+diff --git a/core/fpdfapi/page/cpdf_image.h b/core/fpdfapi/page/cpdf_image.h
+index 175cfc1..24e53a1 100644
+--- a/core/fpdfapi/page/cpdf_image.h
++++ b/core/fpdfapi/page/cpdf_image.h
+@@ -10,6 +10,7 @@
+ #include <stdint.h>
+ 
+ #include "core/fpdfapi/page/cpdf_colorspace.h"
++#include "core/fxcrt/data_vector.h"
+ #include "core/fxcrt/retain_ptr.h"
+ #include "core/fxcrt/span.h"
+ #include "core/fxcrt/unowned_ptr.h"
+@@ -34,6 +35,10 @@ class CPDF_Image final : public Retainable {
+   // Can only be called when `IsInline()` returns true.
+   void ConvertStreamToIndirectObject();
+ 
++  bool OverwriteStreamInPlace(DataVector<uint8_t> new_data,
++                              RetainPtr<CPDF_Dictionary> new_dict,
++                              bool data_is_decoded);
++
+   RetainPtr<const CPDF_Dictionary> GetDict() const;
+   RetainPtr<const CPDF_Stream> GetStream() const;
+   RetainPtr<const CPDF_Dictionary> GetOC() const;
+diff --git a/core/fpdfapi/page/cpdf_pageobjectholder.cpp b/core/fpdfapi/page/cpdf_pageobjectholder.cpp
+index a264d8e..5f6c074 100644
+--- a/core/fpdfapi/page/cpdf_pageobjectholder.cpp
++++ b/core/fpdfapi/page/cpdf_pageobjectholder.cpp
+@@ -6,6 +6,8 @@
+ 
+ #include "core/fpdfapi/page/cpdf_pageobjectholder.h"
+ 
++#include "core/fpdfapi/parser/cpdf_stream.h"
++
+ #include <algorithm>
+ #include <utility>
+ 
+@@ -56,6 +58,10 @@ bool CPDF_PageObjectHolder::IsPage() const {
+   return false;
+ }
+ 
++RetainPtr<CPDF_Stream> CPDF_PageObjectHolder::GetMutableFormStream() {
++  return nullptr;
++}
++
+ void CPDF_PageObjectHolder::StartParse(
+     std::unique_ptr<CPDF_ContentParser> pParser) {
+   DCHECK_EQ(parse_state_, ParseState::kNotParsed);
+diff --git a/core/fpdfapi/page/cpdf_pageobjectholder.h b/core/fpdfapi/page/cpdf_pageobjectholder.h
+index 7ca2bbf..9e231b9 100644
+--- a/core/fpdfapi/page/cpdf_pageobjectholder.h
++++ b/core/fpdfapi/page/cpdf_pageobjectholder.h
+@@ -30,6 +30,7 @@
+ class CPDF_ContentParser;
+ class CPDF_Document;
+ class CPDF_PageObject;
++class CPDF_Stream;
+ class PauseIndicatorIface;
+ 
+ // These structs are used to keep track of resources that have already been
+@@ -78,6 +79,8 @@ class CPDF_PageObjectHolder {
+ 
+   virtual bool IsPage() const;
+ 
++  virtual RetainPtr<CPDF_Stream> GetMutableFormStream();
++
+   void StartParse(std::unique_ptr<CPDF_ContentParser> pParser);
+   void ContinueParse(PauseIndicatorIface* pPause);
+   ParseState GetParseState() const { return parse_state_; }
+diff --git a/core/fpdfapi/page/cpdf_pattern.h b/core/fpdfapi/page/cpdf_pattern.h
+index 5aaf703..a8164e8 100644
+--- a/core/fpdfapi/page/cpdf_pattern.h
++++ b/core/fpdfapi/page/cpdf_pattern.h
+@@ -19,6 +19,8 @@ class CPDF_TilingPattern;
+ 
+ class CPDF_Pattern : public Retainable, public Observable {
+  public:
++  RetainPtr<CPDF_Object> GetPatternObjForRegen() const { return pattern_obj_; }
++
+   // Values used in PDFs. Do not change.
+   enum PatternType { kTiling = 1, kShading = 2 };
+ 
+diff --git a/core/fxcodec/fax/faxmodule.cpp b/core/fxcodec/fax/faxmodule.cpp
+index 4acd313..310d297 100644
+--- a/core/fxcodec/fax/faxmodule.cpp
++++ b/core/fxcodec/fax/faxmodule.cpp
+@@ -28,9 +28,7 @@
+ #include "core/fxcrt/span_util.h"
+ #include "core/fxge/calculate_pitch.h"
+ 
+-#if BUILDFLAG(IS_WIN)
+ #include "core/fxge/dib/cfx_dibbase.h"
+-#endif
+ 
+ namespace fxcodec {
+ 
+@@ -715,7 +713,6 @@ uint32_t FaxModule::FaxG4Decode(pdfium::span<const uint8_t> src_span,
+   return bitpos;
+ }
+ 
+-#if BUILDFLAG(IS_WIN)
+ namespace {
+ constexpr std::array<const uint8_t, 128> kBlackRunTerminator = {{
+     0x37, 10, 0x02, 3,  0x03, 2,  0x02, 2,  0x03, 3,  0x03, 4,  0x02, 4,
+@@ -908,6 +905,4 @@ DataVector<uint8_t> FaxModule::FaxEncode(RetainPtr<const CFX_DIBBase> src) {
+   return encoder.Encode();
+ }
+ 
+-#endif  // BUILDFLAG(IS_WIN)
+-
+ }  // namespace fxcodec
+diff --git a/core/fxcodec/fax/faxmodule.h b/core/fxcodec/fax/faxmodule.h
+index 0efa8f2..7975ff6 100644
+--- a/core/fxcodec/fax/faxmodule.h
++++ b/core/fxcodec/fax/faxmodule.h
+@@ -14,10 +14,8 @@
+ #include "build/build_config.h"
+ #include "core/fxcrt/span.h"
+ 
+-#if BUILDFLAG(IS_WIN)
+ #include "core/fxcrt/data_vector.h"
+ #include "core/fxcrt/retain_ptr.h"
+-#endif
+ 
+ class CFX_DIBBase;
+ 
+@@ -47,10 +45,7 @@ class FaxModule {
+                               int pitch,
+                               pdfium::span<uint8_t> dest_buf);
+ 
+-#if BUILDFLAG(IS_WIN)
+-  // `src` must have a BPP value of 1.
+   static DataVector<uint8_t> FaxEncode(RetainPtr<const CFX_DIBBase> src);
+-#endif  // BUILDFLAG(IS_WIN)
+ 
+   FaxModule() = delete;
+   FaxModule(const FaxModule&) = delete;
+diff --git a/core/fxcodec/flate/flatemodule.cpp b/core/fxcodec/flate/flatemodule.cpp
+index 8ceb2dd..46c8810 100644
+--- a/core/fxcodec/flate/flatemodule.cpp
++++ b/core/fxcodec/flate/flatemodule.cpp
+@@ -70,8 +70,8 @@ size_t FlateCompress(pdfium::span<const uint8_t> src_span,
+                      pdfium::span<uint8_t> dest_span) {
+   const auto src_size = pdfium::checked_cast<unsigned long>(src_span.size());
+   auto dest_size = pdfium::checked_cast<unsigned long>(dest_span.size());
+-  if (compress(dest_span.data(), &dest_size, src_span.data(), src_size) !=
+-      Z_OK) {
++  if (compress2(dest_span.data(), &dest_size, src_span.data(), src_size,
++                Z_BEST_COMPRESSION) != Z_OK) {
+     return 0;
+   }
+   return pdfium::checked_cast<size_t>(dest_size);
+diff --git a/core/fxcodec/fx_codec.cpp b/core/fxcodec/fx_codec.cpp
+index 7a526c9..4f439c8 100644
+--- a/core/fxcodec/fx_codec.cpp
++++ b/core/fxcodec/fx_codec.cpp
+@@ -24,9 +24,15 @@
+ #if BUILDFLAG(IS_WIN)
+ namespace {
+ 
++bool HyperJpegEncodeForPS(const RetainPtr<const CFX_DIBBase>& pSource,
++                          uint8_t** dest_buf,
++                          size_t* dest_size) {
++  return JpegModule::JpegEncode(pSource, dest_buf, dest_size);
++}
++
+ constexpr EncoderIface kEncoderIface = {
+     BasicModule::A85Encode, FaxModule::FaxEncode, FlateModule::Encode,
+-    JpegModule::JpegEncode, BasicModule::RunLengthEncode};
++    HyperJpegEncodeForPS, BasicModule::RunLengthEncode};
+ 
+ }  // namespace
+ #endif
+diff --git a/core/fxcodec/jpeg/jpeg_common.c b/core/fxcodec/jpeg/jpeg_common.c
+index d2798f6..b3b966d 100644
+--- a/core/fxcodec/jpeg/jpeg_common.c
++++ b/core/fxcodec/jpeg/jpeg_common.c
+@@ -87,10 +87,8 @@ void jpeg_common_error_fatal(j_common_ptr cinfo) {
+   longjmp(pCommon->jmpbuf, -1);
+ }
+ 
+-#if BUILDFLAG(IS_WIN)
+ void jpeg_common_dest_do_nothing(j_compress_ptr cinfo) {}
+ 
+ boolean jpeg_common_dest_empty(j_compress_ptr cinfo) {
+   return FALSE;
+ }
+-#endif  // BUILDFLAG(IS_WIN)
+diff --git a/core/fxcodec/jpeg/jpeg_common.h b/core/fxcodec/jpeg/jpeg_common.h
+index b82ea60..8413746 100644
+--- a/core/fxcodec/jpeg/jpeg_common.h
++++ b/core/fxcodec/jpeg/jpeg_common.h
+@@ -61,10 +61,8 @@ void jpeg_common_error_do_nothing_int(j_common_ptr cinfo, int arg);
+ void jpeg_common_error_do_nothing_char(j_common_ptr cinfo, char* arg);
+ void jpeg_common_error_fatal(j_common_ptr cinfo);
+ 
+-#if BUILDFLAG(IS_WIN)
+ void jpeg_common_dest_do_nothing(j_compress_ptr cinfo);
+ boolean jpeg_common_dest_empty(j_compress_ptr cinfo);
+-#endif  // BUILDFLAG(IS_WIN)
+ 
+ #ifdef __cplusplus
+ }  // extern "C"
+diff --git a/core/fxcodec/jpeg/jpegmodule.cpp b/core/fxcodec/jpeg/jpegmodule.cpp
+index 3cf8818..d11573e 100644
+--- a/core/fxcodec/jpeg/jpegmodule.cpp
++++ b/core/fxcodec/jpeg/jpegmodule.cpp
+@@ -18,7 +18,6 @@
+ #include "core/fxcodec/jpeg/skia_scanline_decoder.h"
+ #endif
+ 
+-#if BUILDFLAG(IS_WIN)
+ #include <type_traits>
+ 
+ #include "core/fxcodec/jpeg/jpeg_common.h"
+@@ -29,7 +28,6 @@
+ #include "core/fxcrt/retain_ptr.h"
+ #include "core/fxge/dib/cfx_dibbase.h"
+ #include "core/fxge/dib/fx_dib.h"
+-#endif  // BUILDFLAG(IS_WIN)
+ 
+ namespace fxcodec {
+ 
+@@ -64,10 +62,13 @@ std::optional<JpegModule::ImageInfo> JpegModule::LoadInfo(
+   return LibjpegScanlineDecoder::LoadInfo(src_span);
+ }
+ 
+-#if BUILDFLAG(IS_WIN)
+ bool JpegModule::JpegEncode(const RetainPtr<const CFX_DIBBase>& pSource,
+                             uint8_t** dest_buf,
+-                            size_t* dest_size) {
++                            size_t* dest_size,
++                            int quality,
++                            int subsample,
++                            bool optimize_huffman,
++                            bool progressive) {
+   jpeg_error_mgr jerr;
+   jerr.error_exit = jpeg_common_error_do_nothing;
+   jerr.emit_message = jpeg_common_error_do_nothing_int;
+@@ -126,6 +127,44 @@ bool JpegModule::JpegEncode(const RetainPtr<const CFX_DIBBase>& pSource,
+   }
+ 
+   jpeg_set_defaults(&cinfo);
++  if (quality < 0) quality = 0;
++  if (quality > 100) quality = 100;
++  jpeg_set_quality(&cinfo, quality, TRUE);
++
++  // Chroma subsampling  - only meaningful when the input has colour
++  // components (i.e. nComponents == 3 RGB or == 4 CMYK).  Grayscale
++  // has no chroma plane.  libjpeg encodes this as per-component
++  // h_samp_factor / v_samp_factor; the standard combos:
++  //   4:2:0  Y(2,2) Cb(1,1) Cr(1,1)
++  //   4:2:2  Y(2,1) Cb(1,1) Cr(1,1)
++  //   4:4:4  Y(1,1) Cb(1,1) Cr(1,1)
++  if (nComponents >= 3 && subsample > 0 && cinfo.num_components >= 3) {
++    int y_h = 2, y_v = 2;  // 4:2:0 (libjpeg's default at high quality)
++    if (subsample == 2) {
++      y_h = 2; y_v = 1;    // 4:2:2
++    } else if (subsample == 3) {
++      y_h = 1; y_v = 1;    // 4:4:4
++    }
++    cinfo.comp_info[0].h_samp_factor = y_h;
++    cinfo.comp_info[0].v_samp_factor = y_v;
++    for (int c = 1; c < cinfo.num_components; ++c) {
++      cinfo.comp_info[c].h_samp_factor = 1;
++      cinfo.comp_info[c].v_samp_factor = 1;
++    }
++  }
++
++  // Two-pass Huffman optimization  - adds ~5-10% savings at the
++  // same visual quality, at the cost of a second encoding pass.
++  if (optimize_huffman) {
++    cinfo.optimize_coding = TRUE;
++  }
++
++  // Progressive JPEG (scan-based).  Helps decoders show low-res
++  // approximations early; usually slightly smaller for large images.
++  if (progressive) {
++    jpeg_simple_progression(&cinfo);
++  }
++
+   jpeg_start_compress(&cinfo, TRUE);
+   JSAMPROW row_pointer[1];
+   JDIMENSION row;
+@@ -175,6 +214,5 @@ bool JpegModule::JpegEncode(const RetainPtr<const CFX_DIBBase>& pSource,
+ 
+   return true;
+ }
+-#endif  // BUILDFLAG(IS_WIN)
+ 
+ }  // namespace fxcodec
+diff --git a/core/fxcodec/jpeg/jpegmodule.h b/core/fxcodec/jpeg/jpegmodule.h
+index 9487466..ee651c7 100644
+--- a/core/fxcodec/jpeg/jpegmodule.h
++++ b/core/fxcodec/jpeg/jpegmodule.h
+@@ -16,10 +16,8 @@
+ #include "build/build_config.h"
+ #include "core/fxcrt/span.h"
+ 
+-#if BUILDFLAG(IS_WIN)
+ #include "core/fxcrt/compiler_specific.h"
+ #include "core/fxcrt/retain_ptr.h"
+-#endif
+ 
+ class CFX_DIBBase;
+ 
+@@ -52,12 +50,14 @@ class JpegModule {
+   static std::optional<ImageInfo> LoadInfo(
+       pdfium::span<const uint8_t> src_span);
+ 
+-#if BUILDFLAG(IS_WIN)
+   UNSAFE_BUFFER_USAGE static bool JpegEncode(
+       const RetainPtr<const CFX_DIBBase>& pSource,
+       uint8_t** dest_buf,
+-      size_t* dest_size);
+-#endif  // BUILDFLAG(IS_WIN)
++      size_t* dest_size,
++      int quality = 75,
++      int subsample = 0,
++      bool optimize_huffman = false,
++      bool progressive = false);
+ 
+   JpegModule() = delete;
+   JpegModule(const JpegModule&) = delete;
+diff --git a/core/fxge/BUILD.gn b/core/fxge/BUILD.gn
+index c21a5f0..b66affa 100644
+--- a/core/fxge/BUILD.gn
++++ b/core/fxge/BUILD.gn
+@@ -175,7 +175,8 @@ source_set("fxge") {
+     sources += [ "linux/fx_linux_impl.cpp" ]
+   }
+ 
+-  if (is_mac) {
++  # The Quartz implementation uses APIs available on both macOS and iOS.
++  if (is_apple) {
+     sources += [
+       "apple/capple_platform.cpp",
+       "apple/capple_platform.h",
+diff --git a/fpdfsdk/BUILD.gn b/fpdfsdk/BUILD.gn
+index fa21e20..3905ce8 100644
+--- a/fpdfsdk/BUILD.gn
++++ b/fpdfsdk/BUILD.gn
+@@ -5,6 +5,10 @@
+ import("../pdfium.gni")
+ import("../testing/test.gni")
+ 
++declare_args() {
++  hyper_enable_compress = true
++}
++
+ source_set("fpdfsdk") {
+   sources = [
+     "cpdfsdk_annot.cpp",
+@@ -84,6 +88,21 @@ source_set("fpdfsdk") {
+     "formfiller",
+     "pwl",
+   ]
++  if (hyper_enable_compress) {
++    sources += [
++      "hyper_jbig2_wrap.cc",
++      "hyper_type1_wrap.cc",
++      "fpdf_compress.cpp",
++    ]
++    deps += [
++      "//third_party/afdko:afdko",
++      "//third_party/brotli:enc",
++      "//third_party/harfbuzz",
++      "//third_party/jbig2enc:jbig2enc",
++      "//third_party/leptonica:leptonica",
++    ]
++  }
++
+   allow_circular_includes_from = [
+     "../fxjs",
+     "formfiller",
+diff --git a/testing/test.gni b/testing/test.gni
+index 6ad2c2d..59fcd93 100644
+--- a/testing/test.gni
++++ b/testing/test.gni
+@@ -207,7 +207,8 @@ template("test") {
+       }
+ 
+       _bundle_id_suffix = target_name
+-      if (ios_automatically_manage_certs) {
++      if (defined(ios_automatically_manage_certs) &&
++          ios_automatically_manage_certs) {
+         # Use the same bundle identifier for all unit tests when managing
+         # certificates automatically as the number of free certs is limited.
+         _bundle_id_suffix = "generic-unit-test"

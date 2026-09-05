@@ -52,6 +52,20 @@ final class MacOSDocumentViewController: NSViewController {
         case .preparing, .converting:
             showConversionProgress()
 
+        case .awaitingPassword:
+            let password = MacOSPDFPasswordView(controller: viewModel.passwordController)
+            password.translatesAutoresizingMaskIntoConstraints = false
+            contentContainer.addSubview(password)
+            NSLayoutConstraint.activate([
+                password.leadingAnchor.constraint(equalTo: contentContainer.leadingAnchor),
+                password.trailingAnchor.constraint(equalTo: contentContainer.trailingAnchor),
+                password.topAnchor.constraint(equalTo: contentContainer.topAnchor),
+                password.bottomAnchor.constraint(equalTo: contentContainer.bottomAnchor)
+            ])
+
+        case .cancelled:
+            showMessage(String(localized: "Conversion cancelled"), symbolName: "xmark.circle")
+
         case let .pdf(url):
             showPDF(at: url)
 

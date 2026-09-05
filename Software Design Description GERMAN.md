@@ -2,16 +2,16 @@
 
 ## 1. Zweck
 
-iPS2PDF ist eine iOS-/iPadOS-App mit SwiftUI und eine native MacOS-App mit AppKit. Sie nimmt eine beliebige reguläre Datei entgegen, konvertiert diese über Ghostscript in eine PDF-Datei und zeigt das erzeugte PDF anschließend systemnah an.
+iPS2PDF ist eine iOS-/iPadOS-App mit SwiftUI und eine native MacOS-App mit AppKit. Sie konvertiert reguläre Dateien über Ghostscript in PDF und bietet zusätzlich eine umfassende Informationsanzeige für vorhandene PDFs.
 
 Die App unterstützt zwei Eingangswege:
 
 1. Auswahl einer Datei innerhalb der App.
 2. Übergabe einer Datei über **„Öffnen mit iPS2PDF“**.
 
-Beide Wege münden in denselben Konvertierungsworkflow.
+Explizite Konvertierungsauswahl und externe Übergabe teilen die Dateiübernahme. Extern übergebene PDFs öffnen standardmäßig die Informationsanzeige; explizit zur Konvertierung ausgewählte PDFs bleiben Konvertierungseingaben.
 
-Die App untersucht den Dateityp oder Dateiinhalt vor der Konvertierung nicht. Jede akzeptierte Datei wird identisch an Ghostscript übergeben. Ob der Dateiinhalt von Ghostscript verarbeitet werden kann, entscheidet ausschließlich Ghostscript.
+Das gemeinsame Routing erkennt PDFs an `.pdf` ohne Beachtung der Groß-/Kleinschreibung oder an einem `%PDF-d.d`-Header innerhalb der ersten 1.024 Bytes. Diese Erkennung bestimmt bei externen Übergaben den Info-Standardweg. Der explizite Konvertierungsweg bleibt für beliebige reguläre Dateien offen; deren Verarbeitbarkeit entscheidet Ghostscript.
 
 ---
 
@@ -88,7 +88,7 @@ Weitere dauerhaft sichtbare Funktionen sind auf dem Hauptscreen nicht erforderli
 
 ## 4.1 Öffnen-Dialog
 
-Der Öffnen-Button öffnet den systemeigenen Dateiauswahldialog.
+Der Button „Datei konvertieren …“ öffnet den systemeigenen Dateiauswahldialog für eine explizite Konvertierung. Der zusätzliche PDF-Info-Button öffnet einen PDF-Picker für die Informationsanzeige.
 
 Der Benutzer darf **jede reguläre Datei** auswählen.
 
@@ -105,7 +105,7 @@ Verzeichnisse bzw. Ordner sind keine gültigen Eingaben.
 
 Der Datei-Picker erlaubt ausschließlich **Einzelauswahl**.
 
-Auf dem Mac, wenn die iPad-Version der App ausgeführt wird, kann eine einzelne Datei auch aus dem Finder in das App-Fenster gezogen werden. Sie durchläuft anschließend denselben Verarbeitungsworkflow wie eine über den Datei-Picker ausgewählte Datei.
+Auf dem Mac, wenn die iPad-Version der App ausgeführt wird, kann eine einzelne Datei auch aus dem Finder in das App-Fenster gezogen werden. Sie durchläuft das automatische Routing: PDF zur Informationsanzeige, andere Eingaben zum bisherigen Verarbeitungsworkflow.
 
 ---
 
@@ -188,9 +188,7 @@ Ist beim Aktivierungsversuch noch keine `UIWindowScene` verfügbar, bleibt die l
 
 # 6. Einheitliche Behandlung aller Eingaben
 
-Es existiert keine Dateityperkennung vor Ghostscript.
-
-Es gibt keine Sonderbehandlung für:
+Vor der Auswahl des Workflows erkennt der Router externe PDFs wie in Abschnitt 1 beschrieben. Innerhalb des ausdrücklich gewählten Konvertierungswegs gibt es weiterhin keine Typbeschränkung für:
 
 - `.ps`
 - `.eps`
@@ -199,7 +197,7 @@ Es gibt keine Sonderbehandlung für:
 - Dateien ohne Endung
 - beliebige andere Endungen
 
-Jede reguläre Datei durchläuft denselben Ablauf:
+Jede zur Konvertierung bestimmte reguläre Datei durchläuft folgenden Ablauf (bei geschützten PDFs mit Kennwortabfrage vor der Helper-Übergabe):
 
 ```text
 File received
@@ -370,7 +368,7 @@ Temporary:
 Current conversion/Schöne Datei.test.xyz
 ```
 
-Im privaten Arbeitsverzeichnis erfolgt keine generische Umbenennung in `input`. Für die anschließende Übergabe an die Ghostscript-Extension wird dieselbe Datei unverändert nach `ConversionInput/input` kopiert. Der Inhalt wird weder klassifiziert noch verändert.
+Im privaten Arbeitsverzeichnis erfolgt keine generische Umbenennung in `input`. Für die anschließende Übergabe an die Ghostscript-Extension wird dieselbe Datei unverändert nach `ConversionInput/input` kopiert. Die Bytes bleiben unverändert; die Klassifikation des Arbeitsablaufs ist zu diesem Zeitpunkt bereits erfolgt.
 
 ---
 
@@ -1696,3 +1694,56 @@ Ein erzeugtes PDF ist zunächst ein ungespeichertes `NSDocument`; seine erste Sp
 ## 31.8 Signierung
 
 MacOS-App und XPC-Service sind sandboxed und besitzen dieselbe App-Group-Entitlement `group.de.cafe-megabyte.iPS2PDF`. Für einen produktiven oder vollständigen lokalen Lauf müssen beide neuen Bundle-Identifier sowie der App-Group-Zugriff im verwendeten Apple-Developer-Team registriert sein und mit zueinander passenden Profilen bzw. Identitäten signiert werden.
+
+
+# 32. PDF-Informationsanzeige (September 2026)
+
+Dieser Abschnitt beschreibt den ergänzten Informationsweg. Aussagen über die Ghostscript-Konvertierung in älteren Abschnitten gelten für Dateien, die nach dem Routing zur Konvertierung bestimmt sind.
+
+## 32.1 Gemeinsame Auswertung, getrennte Oberflächen
+
+`AppCore/PDFInspection` liefert reine Swift-Berichte aus den unveränderten Originalbytes. `PDFInspectionInput` hält eine private Dateikopie und die ursprünglichen Dateisystem-Zeitangaben. `PDFInspectionSession` verwaltet Hintergrundauswertung, Fortschritt, Kennwortzustand und Abbruch; veraltete Ergebnisse werden über eine Generation verworfen. PDFKit und Core Graphics erhalten getrennte Dokumentinstanzen, da PDFKit bestimmte Unicode-Kennwörter anders behandelt.
+
+Beide Oberflächen verwenden Übersicht, Schriften, Farben, Sicherheit, Seiten und Inhalte. Gewöhnliche Metadaten stehen in der Übersicht; technische Info-/XMP-/Katalogangaben sind einklappbar. Große Werte sind vollständig kopier- und exportierbar; AppKit bietet zusätzlich einen Doppelklick-Dialog für vollständigen Text.
+
+Das Lesen umfasst Ressourcen und tatsächliche Inhaltsverwendung auf allen Seiten, verschachtelte Form-XObjects, Muster, Annotation-Appearances, Type-3-Glyphen, Bilder einschließlich Inline-Bildern und deren ermittelbare Auflösung. ICC-Profile werden nach Inhalt dedupliziert und mit allen Fundstellen sowie Output-Intents aufgeführt. Seiten enthalten Boxen, Herkunft der Angaben, Drehung, UserUnit und eine Formatübersicht. Sicherheit enthält native Rechte und separat deklarierte Beschränkungen, Verschlüsselungsparameter sowie vorhandene/leere Signaturfelder. Aktionen und JavaScript werden beschrieben, nicht ausgeführt.
+
+Standards sind ausschließlich Deklarationen aus Info/XMP. Es gibt keine Preflight-Funktion, keine Kompatibilitätsableitung und keine kryptografische Signaturprüfung. Einbettungsstatus beschreibt die Fontstruktur; Glyphen- und Fontprogrammvalidierung gehören nicht dazu. Nicht lesbare Angaben bleiben unbestimmt. Grenzen für Rekursion, Ressourcen und Inhaltsoperationen verhindern endlose Auswertung; erreichte Grenzen werden als unvollständige Analyse angezeigt.
+
+## 32.2 Probleme und Darstellung
+
+Verwendete, nicht eingebettete Schriften erhalten die gleiche gelbe Hervorhebung wie die Detail-Einstellungen der jeweiligen Plattform. Nicht verwendete Fontressourcen erzeugen keine Warnung; Type-3-Glyphen sind ein eigenes Einbettungsmodell. Ein kompakter Hinweis oberhalb der scrollbaren Details führt direkt zu den zuerst sortierten Schriftproblemen und öffnet eingeklappte Warnungsabschnitte. Ohne solche Probleme existiert kein Problembereich. Fortschritt und unvollständige Analyse sind separate Zustände.
+
+Auf iOS/iPadOS ist genau ein Info-Sheet geöffnet. Im konvertierten PDF öffnet das SF Symbol `info` in der oberen Leiste ein weiteres Sheet über dem bestehenden PDF-Viewer. Auf MacOS öffnen PDF-Picker-Mehrfachauswahl, externe Übergaben und die Aktion für das aktuelle PDF unabhängige AppKit-Fenster. Ihre Dateikopie bleibt nach Schließen des ursprünglichen Konvertierungsfensters gültig.
+
+## 32.3 Routing und Kennwörter
+
+Externe URLs, Share-Handoffs und Drag/Drop verwenden `IncomingDocumentPurpose.automatic`: PDF-Endung oder PDF-Dateikopf führen zur Info-Anzeige. Auf dem Mac gilt dies auch für `application(_:openFiles:)` (Finder/Dock). Die Auswahl „Datei konvertieren …“ setzt ausdrücklich `.conversion` und verarbeitet weiterhin PDFs durch Ghostscript. `.joboptions` bleiben im bestehenden Importweg.
+
+Geschützte PDFs können sowohl in der Info-Anzeige als auch vor der Konvertierung entsperrt werden. Falsches Kennwort bleibt wiederholbar; Abbruch beendet den Vorgang. Ein leeres Öffnungskennwort erfordert keine Eingabe. Kennwörter bleiben im Arbeitsspeicher beziehungsweise der flüchtigen XPC-Anfrage (Schema 5); sie werden nicht als Einstellung gespeichert und aus Fehlerdiagnosen entfernt. Der MacOS-Serienslot und die Ghostscript-Laufzeitgrenze werden erst nach Kennworteingabe beansprucht.
+
+Core Graphics stellt das Verschlüsselungsdictionary nicht direkt bereit. Ein begrenzter Trailer-Leser ermittelt die nötigen Verweise; eine ausschließlich temporäre inkrementelle Katalogergänzung lässt Core Graphics die Originalobjekte auflösen. Die Verschlüsselungsalgorithmen und XRef-Objekte werden weiterhin vom System gelesen. Verschlüsselungs-Schlüsselmaterial wird nicht ausgegeben. Für gültiges unverschlüsseltes XMP in älteren verschlüsselten Ghostscript-Ausgaben besteht eine entsprechende native Wiedergewinnung aus einer isolierten Kopie.
+
+Der Ghostscript-C-Bridge übergibt das Kennwort als einzelnes UTF-8-Argument ohne Shell. Spezifische Kennwortfehler im Journal werden auch bei Rückgabecode 0 erkannt. Beim erneuten Öffnen des Ausgabedeskriptors mit `w` setzt die Bridge Dateilänge und Position zurück; damit können bei einem pdfwrite-Geräteneustart keine zwei PDFs aneinandergehängt werden.
+
+## 32.4 Bericht und Prüfung
+
+Kopieren stellt einen Zwischenablageeintrag mit gleichwertigem RTF und Unicode-Klartext bereit. Export/Teilen erzeugt `.rtf` oder UTF-8-`.txt`, jeweils mit dem gesamten Bericht und vollständigem XMP am Ende. RTF erhält die gelbe Warnungsmarkierung; Klartext benennt Warnungen ausdrücklich.
+
+Gezielte Fixtures und Tests prüfen Schriftverwendung/-einbettung, ICC/Output-Intents, Standarddeklarationen, XMP-Fallback, Seitenformate, Originaldateilebensdauer, RC4/AES, Benutzer-/Eigentümer-/Unicode-/Leerkennwörter, klassische/XRef-Stream-/inkrementelle Dateien, Routing und Berichtsexport. iOS-Integrationstests sprechen die echte Ghostscript-Extension an. Der separate MacOS-Smoke-Test nutzt das gebündelte Framework; die vollständige App-Group-/XPC-Kette erfordert gültige Provisionierung. Ein Info-Bericht ersetzt keine externe Standardvalidierung.
+
+
+## 32.6 Korrekturen nach unabhängiger Prüfung vom 5. September 2026
+
+Die Gegenbeispiele aus `Pruefbericht-PDF-Informationen.md` liegen unverändert unter `Tests/Unit/Fixtures/Review`. `PDFInspectionReviewTests` sichert die konkret nachgewiesenen Fehler ab. Die Korrekturen erweitern keine Standardvalidierung: Behauptungen aus Metadaten bleiben Behauptungen.
+
+- Der Verschlüsselungsleser wandelt Zahlen nur nach exakter Bereichsprüfung in Ganzzahlen um. Ein nicht interpretierbarer Schlüsselumfang bleibt unbekannt und erzeugt einen Teilresultathinweis. Die Ausschlussmenge `O`, `U`, `OE`, `UE`, `Perms`, `Recipients` wird innerhalb der Verschlüsselungsdarstellung rekursiv durch Dictionaries und Arrays weitergereicht.
+- Vorhandenes, nicht dekodierbares XMP wird als unbekannt angezeigt, nicht als fehlende Standardangabe. Unlesbare ICC-Header, Tagtabellen und Tagbereiche markieren die Auswertung ebenfalls als unvollständig. Nicht dekodierbare Objektmetadaten oder ICC-Streams behalten einen sichtbaren Eintrag.
+- XMP-Eigenschaften werden nach dem Parsen je RDF-Subjekt zusammengeführt. Wiederholte widersprüchliche Angaben bleiben ausdrücklich erkennbar; der Leser bildet daraus keine erfundenen Kombinationen von PDF/A-Teil und Konformitätsstufe. Standard-Namensräume werden anhand ihrer vollständigen URI erkannt, unabhängig vom Präfixnamen.
+- `PDFNavigationReader` liest Seitenlabels und Lesezeichen direkt aus dem separat entsperrten Core-Graphics-Dokument. Die weiterhin gesperrte PDFKit-Instanz kann diese Daten damit nicht mehr still verschwinden lassen. Der Leser begrenzt Baumtiefe, Objektzahl, Zyklen und die Expansion numerischer Seitenlabels; erreichte Grenzen werden gemeldet.
+- Inhaltsauswertung bewahrt die Ressourcen des aufrufenden Inhalts für Forms ohne eigene Ressourcen. Direkte RGB-, CMYK- und Grau-Operatoren sowie benannte Farbraumauswahl werden aufgenommen. Formularfelder berücksichtigen übergeordnete Typen/Eigenschaften und erhalten vollständig qualifizierte Namen.
+- Bei Bildern in Typ-3-Glyphen ist die effektive Auflösung ausdrücklich unbekannt, solange die vollständige Texttransformation nicht ausgewertet wird. Pixelmaße und übrige Bildangaben bleiben sichtbar. Dies ersetzt die zuvor falsche PPI-Zahl und führt zu einem Teilresultat; reine vektorielle Typ-3-Schriften erzeugen deshalb keinen Hinweis.
+- Die effektive PDF-Version ist die höhere interpretierbare Angabe aus Header und Katalog. Beide Rohangaben bleiben sichtbar.
+- Einzelmeldungen liegen im gemeinsamen einklappbaren Abschnitt „Details zur Auswertung“. Der feste Status ist kompakt; „Details“ öffnet den Abschnitt und scrollt zu ihm. RTF/Klartext geben jede Meldung einmal aus. Der Schriftwarnhinweis bleibt davon unabhängig und entfällt weiterhin, wenn keine fehlenden verwendeten Schriften vorliegen.
+
+Ein eigener AppKit-Layout-Smoke-Test kompiliert die produktive Ansicht in einer temporären Prüf-App. Er misst bei 35 Meldungen die Höhe des festen Status und des Scrollbereichs, prüft den Details-Sprung sowie das kleine Fensterformat. Die Prüf-App benötigt weder App-Group-Provisionierung noch einen Simulator. Dies ersetzt weiterhin keinen signierten Produktlauf durch die XPC-Kette.

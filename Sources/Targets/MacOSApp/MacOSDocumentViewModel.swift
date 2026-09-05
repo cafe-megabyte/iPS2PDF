@@ -1,10 +1,13 @@
 import Foundation
+import Combine
 
 @MainActor
 final class MacOSDocumentViewModel {
     enum Phase {
         case preparing
         case converting
+        case awaitingPassword
+        case cancelled
         case pdf(URL)
         case importedJoboptions
         case failed(String)
@@ -26,15 +29,21 @@ final class MacOSDocumentViewModel {
     var onPhaseChange: ((Phase) -> Void)?
     var onSpinnerVisibilityChange: ((Bool) -> Void)?
     var onPDFReady: ((URL) -> Void)?
+    var onPDFEdited: ((PDFEditingRevision, Bool) -> Void)?
     var onTerminalState: (() -> Void)?
     var onJoboptionsImported: (() -> Void)?
     var onShouldShowWindow: (() -> Void)?
+
+    let passwordController = PDFPasswordController()
 
     private let workspace = MacOSDocumentWorkspace()
     private let repository: JoboptionsRepository
     private let coordinator: MacOSConversionCoordinator
     private let router = IncomingDocumentRouter()
     private var didStart = false
+    private var conversionTask: Task<Void, Never>?
+    private(set) var editingSession: PDFEditingSession?
+    private var editingObservation: AnyCancellable?
 
     init(
         repository: JoboptionsRepository = MacOSApplicationModel.shared.joboptionsRepository,
@@ -55,7 +64,7 @@ final class MacOSDocumentViewModel {
         phase = .preparing
         startSpinnerDelay()
 
-        Task { [weak self] in
+        conversionTask = Task { [weak self] in
             guard let self else { return }
             let didStartAccess = sourceURL.startAccessingSecurityScopedResource()
             defer {
@@ -65,7 +74,7 @@ final class MacOSDocumentViewModel {
                 let stagedURL = try await workspace.stageInput(from: sourceURL)
                 await repository.waitUntilReady()
 
-                switch try router.classify(stagedURL) {
+                switch try router.classify(stagedURL, purpose: .conversion) {
                 case let .joboptions(joboptionsURL, _):
                     phase = .converting
                     try await coordinator.validate(joboptionsURL: joboptionsURL)
@@ -73,7 +82,7 @@ final class MacOSDocumentViewModel {
                     finish(with: .importedJoboptions)
                     onJoboptionsImported?()
 
-                case let .conversionInput(inputURL):
+                case let .conversionInput(inputURL), let .pdfInformation(inputURL):
                     phase = .converting
                     let settings = try repository.snapshot()
                     let joboptionsURL = try await workspace.writeJoboptions(
@@ -82,16 +91,50 @@ final class MacOSDocumentViewModel {
                     let outputURL = await workspace.outputURL(
                         sourceName: sourceURL.lastPathComponent
                     )
-                    try await coordinator.convert(
-                        inputURL: inputURL,
-                        outputURL: outputURL,
-                        joboptionsURL: joboptionsURL,
-                        settings: settings
-                    )
+                    var inputPassword: String?
+                    if !(await PDFPasswordController.canOpen(inputURL, password: nil)) {
+                        phase = .awaitingPassword
+                        showsSpinner = false
+                        onShouldShowWindow?()
+                        inputPassword = try await passwordController.password(for: inputURL)
+                    }
+                    while true {
+                        phase = .converting
+                        startSpinnerDelay()
+                        do {
+                            try await coordinator.convert(
+                                inputURL: inputURL,
+                                outputURL: outputURL,
+                                joboptionsURL: joboptionsURL,
+                                settings: settings,
+                                inputPassword: inputPassword
+                            )
+                            break
+                        } catch ConversionFailure.inputPasswordRequired {
+                            phase = .awaitingPassword
+                            showsSpinner = false
+                            onShouldShowWindow?()
+                            inputPassword = try await passwordController.password(for: inputURL, force: true)
+                        }
+                    }
+                    inputPassword = nil
                     try await workspace.validatePDF(at: outputURL)
-                    onPDFReady?(outputURL)
-                    finish(with: .pdf(outputURL))
+                    let snapshot = try await Task.detached(priority: .userInitiated) {
+                        try PDFInspectionInput(sourceURL: outputURL)
+                    }.value
+                    let editing = try PDFEditingSession(input: snapshot)
+                    editingSession = editing
+                    let originalID = editing.current?.id
+                    editingObservation = editing.$current.dropFirst().sink { [weak self] revision in
+                        guard let self, let revision else { return }
+                        phase = .pdf(revision.input.url)
+                        onPDFEdited?(revision, revision.id != originalID)
+                    }
+                    onPDFReady?(snapshot.url)
+                    finish(with: .pdf(snapshot.url))
                 }
+            } catch is CancellationError {
+                finish(with: .cancelled)
             } catch let failure as ConversionFailure {
                 finish(with: .failed(Self.message(for: failure)))
             } catch {
@@ -101,6 +144,8 @@ final class MacOSDocumentViewModel {
     }
 
     func clearWorkspace() {
+        conversionTask?.cancel()
+        passwordController.cancel()
         Task { try? await workspace.clear() }
     }
 
@@ -112,7 +157,7 @@ final class MacOSDocumentViewModel {
             case .preparing, .converting:
                 showsSpinner = true
                 onShouldShowWindow?()
-            case .pdf, .importedJoboptions, .failed:
+            case .pdf, .importedJoboptions, .failed, .awaitingPassword, .cancelled:
                 break
             }
         }

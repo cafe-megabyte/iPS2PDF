@@ -14,23 +14,43 @@ enum PendingShareDocument {
         fileManager: FileManager = .default,
         containerURL: URL? = nil
     ) throws -> URL {
-        let directoryURL = try directory(fileManager: fileManager, containerURL: containerURL)
-        AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
-        try? fileManager.removeItem(at: directoryURL)
-        try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        let directoryURL = try prepareDirectory(fileManager: fileManager, containerURL: containerURL)
 
         let sourceURL = directoryURL.appendingPathComponent(AppGroupWorkspace.sharedTextFileName)
         try text.write(to: sourceURL, atomically: true, encoding: .utf8)
         return sourceURL
     }
 
+    static func writeFile(
+        from sourceURL: URL,
+        preferredFileName: String? = nil,
+        fileManager: FileManager = .default,
+        containerURL: URL? = nil
+    ) throws -> URL {
+        let directoryURL = try prepareDirectory(fileManager: fileManager, containerURL: containerURL)
+        let fileName = safeFileName(preferredFileName ?? sourceURL.lastPathComponent)
+        let destinationURL = directoryURL.appendingPathComponent(fileName)
+        try AppGroupWorkspace.publishFile(
+            from: sourceURL,
+            to: destinationURL,
+            fileManager: fileManager
+        )
+        return destinationURL
+    }
+
     static func pendingSourceURL(
         fileManager: FileManager = .default,
         containerURL: URL? = nil
     ) throws -> URL? {
-        let sourceURL = try directory(fileManager: fileManager, containerURL: containerURL)
-            .appendingPathComponent(AppGroupWorkspace.sharedTextFileName)
-        return fileManager.fileExists(atPath: sourceURL.path) ? sourceURL : nil
+        let directoryURL = try directory(fileManager: fileManager, containerURL: containerURL)
+        guard fileManager.fileExists(atPath: directoryURL.path) else { return nil }
+        return try fileManager.contentsOfDirectory(
+            at: directoryURL,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: [.skipsHiddenFiles]
+        ).first {
+            try $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile == true
+        }
     }
 
     /// Claims the pending handoff exactly once and moves it into the main app's
@@ -89,5 +109,21 @@ enum PendingShareDocument {
             fileManager: fileManager,
             containerURL: containerURL
         )
+    }
+
+    private static func prepareDirectory(
+        fileManager: FileManager,
+        containerURL: URL?
+    ) throws -> URL {
+        let directoryURL = try directory(fileManager: fileManager, containerURL: containerURL)
+        AppGroupWorkspace.prepareForRemoval(at: directoryURL, fileManager: fileManager)
+        try? fileManager.removeItem(at: directoryURL)
+        try fileManager.createDirectory(at: directoryURL, withIntermediateDirectories: true)
+        return directoryURL
+    }
+
+    private static func safeFileName(_ proposedName: String) -> String {
+        let fileName = URL(fileURLWithPath: proposedName).lastPathComponent
+        return fileName.isEmpty || fileName == "." ? "SharedDocument" : fileName
     }
 }

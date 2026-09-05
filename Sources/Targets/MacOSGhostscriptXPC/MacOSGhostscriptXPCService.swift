@@ -2,7 +2,9 @@ import Foundation
 import os
 
 final class MacOSGhostscriptXPCService: NSObject, MacOSGhostscriptXPCProtocol {
-    private let handler = GhostscriptExtensionRequestHandler()
+    private let handler = PDFProcessingRequestDispatcher()
+
+    func connectionClosed() { handler.cancelProcessing() }
 
     func send(
         _ request: Data,

@@ -1,10 +1,32 @@
 # iPS2PDF
 
-iPS2PDF converts files to PDF with a statically linked Ghostscript library. Its iOS and iPadOS interface uses SwiftUI; the MacOS app uses AppKit. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Open**. Every MacOS conversion gets an independent PDF document window.
+iPS2PDF converts files to PDF with a statically linked Ghostscript library. Its iOS and iPadOS interface uses SwiftUI; the MacOS app uses AppKit. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Convert file…**. Every MacOS conversion gets an independent PDF document window.
 
 Ghostscript never runs in either main app process. iOS delegates it to the existing ExtensionKit helper; MacOS embeds a private XPC service. The MacOS Quick Look extensions execute Ghostscript directly through the same bridge because they cannot use the app's XPC service. The app and the relevant helper stage exactly one current job in their shared App Group, while a FIFO coordinator serializes requests from multiple MacOS document windows. XPC carries control metadata, not document payloads.
 
-The input is intentionally not filtered by filename extension or content. Ghostscript decides whether a file can be processed.
+External PDFs open the information viewer by default. A case-insensitive `.pdf` suffix or a `%PDF-d.d` header in the first 1,024 bytes identifies this route. Explicit **Convert file…** selection still sends a PDF to Ghostscript; other conversion inputs remain unrestricted. Ghostscript decides whether a conversion input can be processed.
+
+## PDF information
+
+The apps inspect original PDF bytes through a shared Core Graphics/PDFKit reader. The SwiftUI iOS sheet and AppKit MacOS windows use the same categories: overview, fonts, colors, security, pages and contents. Overview includes ordinary document metadata, additional Info/XMP properties and separate file-system dates. Detailed sections cover font embedding and actual content usage, ICC profiles/output intents, declared and effective permissions, page boxes/formats, images, forms, signatures, attachments, actions and catalog properties.
+
+**Standards are declarations from the document, not validation results.** There is no preflight, compatibility inference or signature verification. Unavailable properties and incomplete analysis are identified explicitly. The reader has recursion, object and operation limits; it does not promise to interpret every proprietary PDF extension.
+
+Used fonts without an embedded program have the same yellow background as consistency issues in detailed settings. A fixed warning links to the first affected font. Without such findings, the warning area is absent. Full embedding versus subsetting describes the PDF structure; glyph completeness is not validated. Raw XMP remains available. Standard declarations use exact namespace URIs, merge properties of the same RDF subject and explicitly display conflicting values. Unreadable XMP or ICC data makes analysis incomplete; unreadable XMP never means that no standard was specified.
+
+On iOS, the front page opens one information sheet. The converted-PDF viewer has an `info` SF Symbol in its top bar and presents a second sheet above that viewer. On MacOS, **PDF information…** (⇧⌘I) accepts multiple PDFs, creating independent windows; **Information for current PDF** (⌘I) inspects the current conversion result. Each viewer owns an immutable temporary input snapshot.
+
+A compact analysis status links to an initially collapsed details section containing all individual notices. This keeps the Mac table usable even with many affected pages; iOS uses the same section.
+
+Copy places equivalent RTF and Unicode plain text in one clipboard item. Export/share offers `.rtf` and UTF-8 `.txt`; both contain the entire report, with raw XMP last. RTF preserves warning highlighting.
+
+Opening-password prompts support both information display and explicitly selected Ghostscript conversion, including retry and cancellation. Passwords are transient request data, not saved settings. The MacOS conversion queue and helper deadline begin after password entry. Declared PDF permission bits are displayed separately from the rights exposed by the authenticated native reader.
+
+The shared encryption reader only lexes bounded trailer dictionaries; Core Graphics resolves referenced objects, cross-reference streams and encryption. A disposable appended catalog makes the original encryption dictionary accessible through the public native API. The original file is never rewritten. Sensitive encryption entries (`O`, `U`, `OE`, `UE`, `Perms`, `Recipients`) are excluded recursively, including crypt-filter dictionaries and arrays. Numeric conversion checks reject out-of-range encryption lengths. This does not implement an independent full PDF parser.
+
+Bookmarks and page labels are read directly from the independently unlocked Core Graphics document, including Unicode-password files that PDFKit cannot unlock. Resource inheritance is retained when scanning Form XObjects; direct Device color operators are also recorded. Form fields include inherited properties and qualified names. The effective PDF version is the higher valid value from header and catalog. Images inside Type-3 glyphs retain their pixel properties, but effective PPI is explicitly unknown because the full text rendering matrix is not evaluated.
+
+Validation fixtures are in `Tests/Unit/Fixtures` (see its README). iOS integration tests exercise the real Ghostscript extension, password cases, incoming-file routing, sheet presentation and RTF/plain-text equivalence. After a MacOS build, `Scripts/test_pdf_information_macos.sh <Debug-products> <scratch-directory>` tests the bundled MacOS Ghostscript framework and report sharing without provisioning; a signed app/XPC run must still be checked separately. `Scripts/test_pdf_information_layout_macos.sh <scratch-directory>` checks the production AppKit view with 35 notices, its Details button and minimum-size layout without a simulator.
 
 ## Building
 
@@ -62,6 +84,7 @@ Sources/
 │   │   ├── Incoming/
 │   │   ├── Joboptions/
 │   │   ├── Models/
+│   │   ├── PDFInspection/
 │   │   └── Storage/
 │   ├── GhostscriptClient/
 │   ├── GhostscriptRuntime/
@@ -69,6 +92,7 @@ Sources/
 │   │   ├── Profiles/
 │   │   ├── RequestHandling/
 │   │   └── Resources/
+│   ├── ICCMetadata/
 │   ├── IPC/
 │   ├── MacOSGhostscriptRuntime/
 │   └── Resources/
@@ -96,7 +120,7 @@ The shared component memberships are intentionally folder-granular:
 
 | Component | Consumers |
 | --- | --- |
-| `AppCore/Conversion`, `Incoming`, `Models` | iOS app, MacOS app, unit tests |
+| `AppCore/Conversion`, `Incoming`, `Models`, `PDFInspection` | iOS app, MacOS app, unit tests |
 | `AppCore/Joboptions` | iOS app, MacOS app, Quick Look, Thumbnail, unit tests |
 | `AppCore/Storage`, `GhostscriptClient`, `Resources/App` | iOS app, MacOS app |
 | `Targets/iOSApp/AppUI` | iOS app |

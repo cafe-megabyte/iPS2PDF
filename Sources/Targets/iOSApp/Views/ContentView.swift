@@ -7,12 +7,15 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var showsBack = false
+    @State private var opensInformation = false
 
     var body: some View {
         ZStack {
             FrontConversionView(
                 viewModel: viewModel,
-                onShowSettings: { setBackVisible(true) }
+                onShowSettings: { setBackVisible(true) },
+                onShowPDFInfo: { opensInformation = true; viewModel.isFileImporterPresented = true },
+                onOpenFile: { opensInformation = false; viewModel.isFileImporterPresented = true }
             )
             .opacity(showsBack ? 0 : 1)
             .rotation3DEffect(
@@ -44,18 +47,23 @@ struct ContentView: View {
         .contentShape(Rectangle())
         .fileImporter(
             isPresented: $viewModel.isFileImporterPresented,
-            allowedContentTypes: [.data, .joboptions],
+            allowedContentTypes: opensInformation ? [.pdf] : [.data, .joboptions],
             allowsMultipleSelection: false
         ) { result in
             switch result {
             case let .success(urls):
                 if let url = urls.first {
-                    viewModel.handleSelectedFile(url)
+                    if opensInformation { viewModel.presentedPDFInfo = PDFInspectionSession(url: url) }
+                    else { viewModel.handleSelectedFile(url) }
                 }
             case .failure:
                 break
             }
         }
+        .sheet(item: $viewModel.presentedPDFInfo, onDismiss: viewModel.pdfInfoDidDismiss) { session in
+            PDFInfoView(session: session)
+        }
+        .modifier(PDFPasswordPresenter(controller: viewModel.passwordController))
         .onOpenURL { url in
             viewModel.handleOpenURL(url)
         }

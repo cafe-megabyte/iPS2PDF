@@ -1,0 +1,134 @@
+import Combine
+import PDFKit
+import SwiftUI
+import UIKit
+import XCTest
+@testable import iPS2PDF
+
+private actor RoutingConverter: FileConverting {
+    private(set) var calls = 0
+    func validateJoboptions(at joboptionsURL: URL) async throws { }
+    func convert(sourceURL: URL, outputURL: URL, joboptionsURL: URL, standard: PDFStandard, securityLimitsEnabled: Bool, postScriptRandomSeed: Int, inputPassword: String?) async throws {
+        calls += 1
+        try FileManager.default.copyItem(at: sourceURL, to: outputURL)
+    }
+}
+
+private final class RoutingFileManager: FileManager, @unchecked Sendable {
+    private let root = FileManager.default.temporaryDirectory.appendingPathComponent("RoutingWorkspace-\(UUID().uuidString)")
+    override var temporaryDirectory: URL { root }
+    deinit { try? FileManager.default.removeItem(at: root) }
+}
+
+final class PDFRoutingIntegrationTests: XCTestCase {
+    @MainActor private func model(converter: RoutingConverter = RoutingConverter()) -> ConversionViewModel {
+        ConversionViewModel(workingDirectoryService: WorkingDirectoryService(fileManager: RoutingFileManager()), converter: converter)
+    }
+    @MainActor private func fixture(extension suffix: String, missingFont: Bool = false) throws -> URL {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("PDFRouting-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let url = directory.appendingPathComponent("Routing." + suffix)
+        if missingFont {
+            let content = "BT /F1 14 Tf 20 100 Td (Missing font) Tj ET"
+            let objects = ["<< /Type /Catalog /Pages 2 0 R >>", "<< /Type /Pages /Count 1 /Kids [3 0 R] >>", "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>", "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>", "<< /Length \(content.utf8.count) >>\nstream\n\(content)\nendstream"]
+            var data = Data("%PDF-1.4\n".utf8), offsets = [0]
+            for (index, object) in objects.enumerated() { offsets.append(data.count); data.append(Data("\(index + 1) 0 obj\n\(object)\nendobj\n".utf8)) }
+            let xref = data.count
+            let entries = offsets.dropFirst().map { String(format: "%010d 00000 n \n", $0) }.joined()
+            data.append(Data("xref\n0 6\n0000000000 65535 f \n\(entries)trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+            try data.write(to: url)
+        } else {
+            let renderer = UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 200, height: 200))
+            try renderer.pdfData { context in context.beginPage(); ("PDF routing" as NSString).draw(at: CGPoint(x: 20, y: 20), withAttributes: [.font: UIFont.systemFont(ofSize: 14)]) }.write(to: url)
+        }
+        return url
+    }
+    @MainActor private func finish(_ model: ConversionViewModel, action: () -> Void) async {
+        let done = expectation(description: "Routing finished")
+        let observation = model.$isProcessing.dropFirst().filter { !$0 }.prefix(1).sink { _ in done.fulfill() }
+        action()
+        await fulfillment(of: [done], timeout: 15)
+        observation.cancel()
+    }
+    @MainActor func testExternalPDFHeaderOpensInformationWithoutCallingConverter() async throws {
+        let converter = RoutingConverter()
+        let model = model(converter: converter)
+        let url = try fixture(extension: "dat")
+        defer { model.presentedPDFInfo?.cancel(); try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        await finish(model) { model.handleOpenURL(url) }
+        XCTAssertNotNil(model.presentedPDFInfo)
+        XCTAssertNil(model.presentedPDF)
+        let calls = await converter.calls
+        XCTAssertEqual(calls, 0)
+        XCTAssertNil(model.alert)
+    }
+    @MainActor func testExplicitPDFSelectionStillCallsConverter() async throws {
+        let converter = RoutingConverter()
+        let model = model(converter: converter)
+        let url = try fixture(extension: "pdf")
+        defer { model.closePDFViewer(); model.pdfViewerDidDismiss(); try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        await finish(model) { model.handleSelectedFile(url) }
+        XCTAssertNotNil(model.presentedPDF)
+        XCTAssertNil(model.presentedPDFInfo)
+        let calls = await converter.calls
+        XCTAssertEqual(calls, 1)
+    }
+    @MainActor func testDroppedPDFOpensInformation() async throws {
+        let converter = RoutingConverter()
+        let model = model(converter: converter)
+        let url = try fixture(extension: "pdf")
+        defer { model.presentedPDFInfo?.cancel(); try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        await finish(model) { model.handleDroppedFile(url) }
+        XCTAssertNotNil(model.presentedPDFInfo)
+        let calls = await converter.calls
+        XCTAssertEqual(calls, 0)
+    }
+    @MainActor func testInformationPresentationAndLayout() async throws {
+        try await checkInformationLayout(missingFont: false)
+    }
+    @MainActor func testClosingViewerThenImmediatelyOpeningInformationKeepsTheNewFile() async throws {
+        let model = model()
+        let url = try fixture(extension: "pdf")
+        defer { model.presentedPDFInfo?.cancel(); try? FileManager.default.removeItem(at: url.deletingLastPathComponent()) }
+        await finish(model) { model.handleSelectedFile(url) }
+        XCTAssertNotNil(model.presentedPDF)
+        model.closePDFViewer()
+        model.pdfViewerDidDismiss()
+        await finish(model) { model.handleOpenURL(url) }
+        XCTAssertNil(model.alert)
+        XCTAssertNotNil(model.presentedPDFInfo)
+    }
+    @MainActor func testMissingFontInformationPresentationAndLayout() async throws {
+        try await checkInformationLayout(missingFont: true)
+    }
+    @MainActor private func checkInformationLayout(missingFont: Bool) async throws {
+        let model = model()
+        let url = try fixture(extension: "pdf", missingFont: missingFont)
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = try XCTUnwrap(scene.windows.first { $0.isKeyWindow })
+        let previous = window.rootViewController
+        let host = UIHostingController(rootView: ContentView(viewModel: model))
+        window.rootViewController = host
+        defer {
+            host.dismiss(animated: false)
+            window.rootViewController = previous
+            model.presentedPDFInfo?.cancel()
+            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
+        }
+        await finish(model) { model.handleOpenURL(url) }
+        let session = try XCTUnwrap(model.presentedPDFInfo)
+        let read = expectation(description: "PDF properties read")
+        let observation = session.$isReading.filter { !$0 }.prefix(1).sink { _ in read.fulfill() }
+        await fulfillment(of: [read], timeout: 10)
+        observation.cancel()
+        try await Task.sleep(for: .milliseconds(500))
+        XCTAssertNotNil(host.presentedViewController, "The real ContentView must present the information sheet")
+        XCTAssertTrue(session.report.isComplete, session.report.notices.joined(separator: "\n"))
+        XCTAssertEqual(session.report.fontWarnings.count, missingFont ? 1 : 0)
+        let image = UIGraphicsImageRenderer(bounds: window.bounds).image { _ in window.drawHierarchy(in: window.bounds, afterScreenUpdates: true) }
+        let attachment = XCTAttachment(image: image)
+        attachment.name = missingFont ? "PDF information — visible font warning" : "PDF information — iOS sheet"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+    }
+}

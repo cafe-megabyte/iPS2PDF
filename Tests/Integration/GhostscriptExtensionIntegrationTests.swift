@@ -1,4 +1,5 @@
 import PDFKit
+import UIKit
 import XCTest
 @testable import iPS2PDF
 
@@ -213,6 +214,56 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         XCTAssertEqual(try documentInfoName("Trapped", in: output), "True")
     }
 
+    func testEncryptedInputPasswordReachesGhostscriptAndInformationReader() async throws {
+        let protected = try await convert(
+            joboptions: "<< /Encrypt true /EncryptionR 3 /CompatibilityLevel 1.4 /OwnerPassword (owner-test) /UserPassword (user-test) /Permissions -44 >> setdistillerparams",
+            standard: .none
+        )
+        // Reopening pdfwrite must replace its earlier output, retaining correct offsets.
+        XCTAssertEqual(String(decoding: protected, as: UTF8.self).components(separatedBy: "%PDF-").count - 1, 1)
+        for password in ["user-test", "owner-test"] {
+            let result = try await convert(input: protected, inputFileName: "Protected.pdf", allowTransparency: true, inputPassword: password)
+            XCTAssertEqual(try XCTUnwrap(PDFDocument(data: result)).pageCount, 1)
+        }
+        for password: String? in [nil, "wrong"] {
+            do {
+                _ = try await convert(input: protected, inputFileName: "Protected.pdf", allowTransparency: true, inputPassword: password)
+                XCTFail("Missing or wrong passwords must be reported to the app")
+            } catch ConversionFailure.inputPasswordRequired { }
+        }
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pdf")
+        defer { try? FileManager.default.removeItem(at: url) }
+        try protected.write(to: url)
+        XCTAssertTrue(try PDFInspectionService.inspect(url: url, fileName: "Protected.pdf", password: nil).isLocked)
+        let report = try PDFInspectionService.inspect(url: url, fileName: "Protected.pdf", password: "user-test")
+        XCTAssertTrue(report.isComplete, report.notices.joined(separator: "\n") + "\n" + (report.sections.first { $0.id == "xmp" }?.fields.first?.value ?? ""))
+        XCTAssertFalse(report.isLocked)
+    }
+
+    func testEmptyOpeningPasswordNeedsNoInputPasswordArgument() async throws {
+        let protected = try await convert(
+            joboptions: "<< /Encrypt true /EncryptionR 3 /CompatibilityLevel 1.4 /OwnerPassword (owner-test) /UserPassword () /Permissions -44 >> setdistillerparams",
+            standard: .none
+        )
+        let result = try await convert(input: protected, inputFileName: "Restricted.pdf", allowTransparency: true)
+        XCTAssertEqual(try XCTUnwrap(PDFDocument(data: result)).pageCount, 1)
+    }
+
+    @MainActor func testReportClipboardContainsEquivalentRTFAndPlainText() throws {
+        var report = PDFInspectionReport(fileName: "Ä report.pdf")
+        report.isComplete = true
+        report.sections = [PDFInfoSection(id: "font", category: .fonts, title: "Missing font", fields: [PDFInfoField("Embedding", "Not embedded")], warning: "Not embedded")]
+        try PDFReportSharing.copy(report)
+        XCTAssertEqual(UIPasteboard.general.numberOfItems, 1)
+        XCTAssertEqual(UIPasteboard.general.string, report.plainText)
+        let data = try XCTUnwrap(UIPasteboard.general.data(forPasteboardType: "public.rtf"))
+        let rich = try NSAttributedString(data: data, options: [.documentType: NSAttributedString.DocumentType.rtf], documentAttributes: nil)
+        XCTAssertEqual(rich.string, report.plainText)
+        var highlighted = false
+        rich.enumerateAttribute(.backgroundColor, in: NSRange(location: 0, length: rich.length)) { value, _, _ in if value != nil { highlighted = true } }
+        XCTAssertTrue(highlighted)
+    }
+
     private func convert(allowTransparency: Bool) async throws -> Data {
         try await convert(
             input: Data(Self.transparencyPostScript.utf8),
@@ -226,7 +277,8 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         inputFileName: String,
         allowTransparency: Bool,
         autoPositionEPSFiles: Bool = false,
-        embedSubstituteFonts: Bool? = nil
+        embedSubstituteFonts: Bool? = nil,
+        inputPassword: String? = nil
     ) async throws -> Data {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("iPS2PDF-Transparency-\(UUID().uuidString)", isDirectory: true)
@@ -253,7 +305,8 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
             joboptionsURL: joboptionsURL,
             standard: .none,
             limitsEnabled: true,
-            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed,
+            inputPassword: inputPassword
         )
 
         return try Data(contentsOf: outputURL)

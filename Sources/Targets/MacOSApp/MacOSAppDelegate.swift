@@ -1,5 +1,6 @@
 import AppKit
 import Darwin
+import SwiftUI
 
 @MainActor
 @main
@@ -12,6 +13,7 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
 
     private var waitsForConversionBeforeTermination = false
     private var settingsWindowController: NSWindowController?
+    private var pdfLicensesWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         try? MacOSDocumentWorkspace.clearStaleDirectories()
@@ -28,6 +30,32 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         true
+    }
+
+    @IBAction func openFile(_ sender: Any?) {
+        MacOSApplicationModel.shared.presentOpenPanel()
+    }
+
+    @IBAction func openConversionDocument(_ sender: Any?) {
+        MacOSApplicationModel.shared.presentOpenPanel(purpose: .conversion)
+    }
+
+    @IBAction func openPDFInformation(_ sender: Any?) {
+        MacOSPDFInfoWindowController.openPanel()
+    }
+    @IBAction func compressPDF(_ sender: Any?) {
+        MacOSPDFCompressionWindowController.openPanel()
+    }
+    @IBAction func showPDFProcessingLicenses(_ sender: Any?) {
+        if let window = pdfLicensesWindowController?.window { window.makeKeyAndOrderFront(nil); return }
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 700, height: 620),
+                              styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        window.title = String(localized: "PDF processing licenses")
+        window.contentViewController = NSHostingController(rootView: PDFProcessingLicensesView(closeAction: { [weak window] in window?.close() }))
+        window.isReleasedWhenClosed = false
+        pdfLicensesWindowController = NSWindowController(window: window)
+        window.center()
+        pdfLicensesWindowController?.showWindow(nil)
     }
 
     @IBAction func showSettings(_ sender: Any?) {

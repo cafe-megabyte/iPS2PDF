@@ -9,7 +9,8 @@ actor MacOSConversionCoordinator {
         inputURL: URL,
         outputURL: URL,
         joboptionsURL: URL,
-        settings: ConversionSettingsSnapshot
+        settings: ConversionSettingsSnapshot,
+        inputPassword: String? = nil
     ) async throws {
         await acquireWorkspace()
         defer { releaseWorkspace() }
@@ -19,7 +20,8 @@ actor MacOSConversionCoordinator {
             joboptionsURL: joboptionsURL,
             standard: settings.standard,
             limitsEnabled: settings.securityLimitsEnabled,
-            postScriptRandomSeed: settings.postScriptRandomSeed
+            postScriptRandomSeed: settings.postScriptRandomSeed,
+            inputPassword: inputPassword
         )
     }
 

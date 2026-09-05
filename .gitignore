@@ -1,6 +1,9 @@
 # Object files
 *.o
 
+# Local Xcode and native dependency build products
+build/
+
 # Backups
 *~
 

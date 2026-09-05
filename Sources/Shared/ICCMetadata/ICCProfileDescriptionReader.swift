@@ -2,7 +2,10 @@ import Foundation
 
 enum ICCProfileDescriptionReader {
     static func descriptions(at url: URL) throws -> [String] {
-        let data = try Data(contentsOf: url, options: [.mappedIfSafe])
+        try descriptions(in: Data(contentsOf: url, options: [.mappedIfSafe]))
+    }
+
+    static func descriptions(in data: Data) throws -> [String] {
         guard data.count >= 132,
               let declaredSize = unsignedInteger(in: data, at: 0),
               declaredSize >= 132,

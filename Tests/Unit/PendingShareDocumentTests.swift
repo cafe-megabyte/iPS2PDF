@@ -43,6 +43,45 @@ final class PendingShareDocumentTests: XCTestCase {
         ))
     }
 
+    func testSharedFileKeepsItsNameAndIsClaimedExactlyOnce() throws {
+        let fileManager = FileManager.default
+        let testRootURL = fileManager.temporaryDirectory
+            .appendingPathComponent("PendingShareDocumentTests", isDirectory: true)
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        let sourceURL = testRootURL.appendingPathComponent("Source.pdf")
+        let containerURL = testRootURL.appendingPathComponent("App Group", isDirectory: true)
+        let stagingRootURL = testRootURL.appendingPathComponent("Incoming shares", isDirectory: true)
+        defer { try? fileManager.removeItem(at: testRootURL) }
+
+        try fileManager.createDirectory(at: testRootURL, withIntermediateDirectories: true)
+        let contents = Data("%PDF-1.7\nshared PDF".utf8)
+        try contents.write(to: sourceURL)
+
+        let pendingURL = try PendingShareDocument.writeFile(
+            from: sourceURL,
+            preferredFileName: "Shared.pdf",
+            fileManager: fileManager,
+            containerURL: containerURL
+        )
+        XCTAssertEqual(pendingURL.lastPathComponent, "Shared.pdf")
+        XCTAssertEqual(try Data(contentsOf: pendingURL), contents)
+
+        let claimedURL = try XCTUnwrap(PendingShareDocument.claimPendingSourceURL(
+            fileManager: fileManager,
+            containerURL: containerURL,
+            stagingRootURL: stagingRootURL
+        ))
+        XCTAssertEqual(claimedURL.lastPathComponent, "Shared.pdf")
+        XCTAssertEqual(try Data(contentsOf: claimedURL), contents)
+        guard case .pdfInformation = try IncomingDocumentRouter().classify(claimedURL) else {
+            return XCTFail("A shared PDF must route to PDF information")
+        }
+        XCTAssertNil(try PendingShareDocument.pendingSourceURL(
+            fileManager: fileManager,
+            containerURL: containerURL
+        ))
+    }
+
     func testStartupCleanupPreservesOnlyShareInbox() throws {
         let fileManager = FileManager.default
         let containerURL = fileManager.temporaryDirectory

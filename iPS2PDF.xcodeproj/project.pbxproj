@@ -61,6 +61,14 @@
 		R10000000000000000000001 /* GhostscriptRuntime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = R20000000000000000000001 /* GhostscriptRuntime.framework */; };
 		R10000000000000000000002 /* GhostscriptRuntime.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = R20000000000000000000001 /* GhostscriptRuntime.framework */; };
 		R10000000000000000000003 /* GhostscriptRuntime.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = R20000000000000000000001 /* GhostscriptRuntime.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		W10000000000000000000001 /* PDFProcessingRuntime.framework in Frameworks */ = {
+			isa = PBXBuildFile;
+			fileRef = W20000000000000000000001 /* PDFProcessingRuntime.framework */;
+		};
+		W10000000000000000000002 /* PDFProcessingRuntime.framework in Embed Frameworks */ = {
+			isa = PBXBuildFile;
+			fileRef = W20000000000000000000001 /* PDFProcessingRuntime.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); };
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -197,6 +205,10 @@
 			remoteGlobalIDString = A50000000000000000000001;
 			remoteInfo = "iPS2PDF iOS";
 		};
+		W30000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A40000000000000000000001 /* Project object */; proxyType = 1; remoteGlobalIDString = W50000000000000000000001; remoteInfo = PDFProcessingRuntime;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -240,6 +252,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				W10000000000000000000002 /* PDFProcessingRuntime.framework in Embed Frameworks */,
 				R10000000000000000000003 /* GhostscriptRuntime.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
@@ -263,6 +276,10 @@
 		R20000000000000000000001 /* GhostscriptRuntime.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = GhostscriptRuntime.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		T20000000000000000000002 /* iPS2PDFTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iPS2PDFTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		V20000000000000000000001 /* iPS2PDFIntegrationTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iPS2PDFIntegrationTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		W20000000000000000000001 /* PDFProcessingRuntime.framework */ = {
+			isa = PBXFileReference;
+			explicitFileType = wrapper.framework; includeInIndex = 0; path = PDFProcessingRuntime.framework; sourceTree = BUILT_PRODUCTS_DIR;
+		};
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -296,6 +313,19 @@
 		U20000000000000000000019 /* Unit */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Unit; sourceTree = "<group>"; };
 		U2000000000000000000001A /* Integration */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Integration; sourceTree = "<group>"; };
 		U2000000000000000000001B /* Storage */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Storage; sourceTree = "<group>"; };
+		U2000000000000000000001C /* PDFInspection */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PDFInspection; sourceTree = "<group>"; };
+		U2000000000000000000001D /* ICCMetadata */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = ICCMetadata; sourceTree = "<group>"; };
+		U2000000000000000000001E /* PDFProcessing */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PDFProcessing; sourceTree = "<group>"; };
+		U2000000000000000000001F /* PDFProcessing IPC */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PDFProcessing; sourceTree = "<group>"; };
+		U20000000000000000000020 /* MacOSPDFProcessingRuntime */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {}; explicitFolders = (); path = MacOSPDFProcessingRuntime; sourceTree = "<group>";
+		};
+		U20000000000000000000021 /* PDFProcessing RequestHandling */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			explicitFileTypes = {}; explicitFolders = (); path = RequestHandling; sourceTree = "<group>";
+		};
+		U20000000000000000000022 /* PDFProcessingClient */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PDFProcessingClient; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -337,6 +367,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				W10000000000000000000001 /* PDFProcessingRuntime.framework in Frameworks */,
 				R10000000000000000000002 /* GhostscriptRuntime.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -380,6 +411,10 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		W60000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -412,6 +447,7 @@
 		A70000000000000000000012 /* Products */ = {
 			isa = PBXGroup;
 			children = (
+				W20000000000000000000001 /* PDFProcessingRuntime.framework */,
 				A20000000000000000000022 /* iPS2PDF.app */,
 				M20000000000000000000001 /* iPS2PDF.app */,
 				B20000000000000000000006 /* iPS2PDFShare.appex */,
@@ -438,8 +474,11 @@
 		S70000000000000000000001 /* Shared */ = {
 			isa = PBXGroup;
 			children = (
+				W70000000000000000000001 /* PDFProcessingRuntime */,
 				S70000000000000000000003 /* AppCore */,
+				U2000000000000000000001D /* ICCMetadata */,
 				U2000000000000000000000C /* GhostscriptClient */,
+				U20000000000000000000022 /* PDFProcessingClient */,
 				S70000000000000000000004 /* GhostscriptRuntime */,
 				S70000000000000000000005 /* IPC */,
 				U20000000000000000000016 /* MacOSGhostscriptRuntime */,
@@ -451,6 +490,7 @@
 		S70000000000000000000002 /* Targets */ = {
 			isa = PBXGroup;
 			children = (
+				U20000000000000000000020 /* MacOSPDFProcessingRuntime */,
 				U20000000000000000000001 /* iOSApp */,
 				U20000000000000000000002 /* iOSShareExtension */,
 				U20000000000000000000003 /* iOSGhostscriptExtension */,
@@ -466,6 +506,8 @@
 		S70000000000000000000003 /* AppCore */ = {
 			isa = PBXGroup;
 			children = (
+				U2000000000000000000001C /* PDFInspection */,
+				U2000000000000000000001E /* PDFProcessing */,
 				U20000000000000000000009 /* Conversion */,
 				U20000000000000000000018 /* Incoming */,
 				U2000000000000000000000A /* Joboptions */,
@@ -491,6 +533,7 @@
 			children = (
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
+				U2000000000000000000001F /* PDFProcessing IPC */,
 				U20000000000000000000014 /* iOSShare */,
 				U20000000000000000000015 /* MacOSXPC */,
 			);
@@ -513,6 +556,10 @@
 			);
 			path = Tests;
 			sourceTree = "<group>";
+		};
+		W70000000000000000000001 /* PDFProcessingRuntime */ = {
+			isa = PBXGroup;
+			children = (U20000000000000000000021 /* PDFProcessing RequestHandling */, ); path = PDFProcessingRuntime; sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
@@ -537,14 +584,19 @@
 				F90000000000000000000001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				U2000000000000000000001C /* PDFInspection */,
+				U2000000000000000000001E /* PDFProcessing */,
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000001 /* iOSApp */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000C /* GhostscriptClient */,
+				U20000000000000000000022 /* PDFProcessingClient */,
 				U2000000000000000000000D /* Models */,
 				U20000000000000000000010 /* Resources */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
+				U2000000000000000000001F /* PDFProcessing IPC */,
 				U20000000000000000000014 /* iOSShare */,
 				U20000000000000000000017 /* App */,
 				U20000000000000000000018 /* Incoming */,
@@ -582,11 +634,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = F80000000000000000000001 /* Build configuration list for PBXNativeTarget "iPS2PDFSecurity" */;
 			buildPhases = (
+				W60000000000000000000005 /* Build Native PDF Runtime iOS */,
 				F60000000000000000000004 /* Sources */,
 				F60000000000000000000002 /* Frameworks */,
 				F60000000000000000000006 /* Resources */,
 				F60000000000000000000008 /* Install Profiles */,
 				F6000000000000000000000A /* Install Ghostscript Resources */,
+				W60000000000000000000007 /* Install Native PDF Resources iOS */,
 			);
 			buildRules = (
 			);
@@ -595,6 +649,8 @@
 				C90000000000000000000003 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				U20000000000000000000021 /* PDFProcessing RequestHandling */,
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000003 /* iOSGhostscriptExtension */,
 				U2000000000000000000000E /* Profiles */,
 				U2000000000000000000000F /* RequestHandling */,
@@ -602,6 +658,7 @@
 				U20000000000000000000011 /* GhostscriptBridge */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
+				U2000000000000000000001F /* PDFProcessing IPC */,
 			);
 			name = iPS2PDFSecurity;
 			productName = iPS2PDFSecurity;
@@ -623,6 +680,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				W90000000000000000000002 /* PBXTargetDependency */,
 				M90000000000000000000001 /* PBXTargetDependency */,
 				M90000000000000000000002 /* PBXTargetDependency */,
 				R90000000000000000000004 /* PBXTargetDependency */,
@@ -630,14 +688,19 @@
 				N90000000000000000000003 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				U2000000000000000000001C /* PDFInspection */,
+				U2000000000000000000001E /* PDFProcessing */,
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000004 /* MacOSApp */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000C /* GhostscriptClient */,
+				U20000000000000000000022 /* PDFProcessingClient */,
 				U2000000000000000000000D /* Models */,
 				U20000000000000000000010 /* Resources */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
+				U2000000000000000000001F /* PDFProcessing IPC */,
 				U20000000000000000000015 /* MacOSXPC */,
 				U20000000000000000000017 /* App */,
 				U20000000000000000000018 /* Incoming */,
@@ -660,16 +723,20 @@
 			buildRules = (
 			);
 			dependencies = (
+				W90000000000000000000001 /* PBXTargetDependency */,
 				M90000000000000000000004 /* PBXTargetDependency */,
 				R90000000000000000000002 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				U20000000000000000000021 /* PDFProcessing RequestHandling */,
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000006 /* MacOSGhostscriptXPC */,
 				U2000000000000000000000E /* Profiles */,
 				U2000000000000000000000F /* RequestHandling */,
 				U20000000000000000000010 /* Resources */,
 				U20000000000000000000012 /* AppGroup */,
 				U20000000000000000000013 /* GhostscriptControl */,
+				U2000000000000000000001F /* PDFProcessing IPC */,
 				U20000000000000000000015 /* MacOSXPC */,
 			);
 			name = iPS2PDFMacOSGhostscript;
@@ -692,6 +759,7 @@
 				N90000000000000000000002 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000008 /* MacOSThumbnailExtension */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000E /* Profiles */,
@@ -718,6 +786,7 @@
 				Q90000000000000000000002 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000007 /* MacOSQuickLookPreview */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000E /* Profiles */,
@@ -767,10 +836,14 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
+				U2000000000000000000001C /* PDFInspection */,
+				U2000000000000000000001E /* PDFProcessing */,
+				U2000000000000000000001D /* ICCMetadata */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000D /* Models */,
 				U20000000000000000000012 /* AppGroup */,
+				U2000000000000000000001F /* PDFProcessing IPC */,
 				U20000000000000000000014 /* iOSShare */,
 				U20000000000000000000018 /* Incoming */,
 				U20000000000000000000019 /* Unit */,
@@ -799,6 +872,22 @@
 			productName = iPS2PDFIntegrationTests;
 			productReference = V20000000000000000000001 /* iPS2PDFIntegrationTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		W50000000000000000000001 /* PDFProcessingRuntime */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = W80000000000000000000001 /* Build configuration list for PBXNativeTarget "PDFProcessingRuntime" */;
+			buildPhases = (
+				W60000000000000000000004 /* Build Native PDF Runtime */,
+				W60000000000000000000006 /* Install Native PDF Resources */,
+				W60000000000000000000001 /* Sources */,
+				W60000000000000000000002 /* Frameworks */,
+				W60000000000000000000003 /* Resources */,
+			);
+			buildRules = (); dependencies = ();
+			fileSystemSynchronizedGroups = (U20000000000000000000020 /* MacOSPDFProcessingRuntime */, );
+			name = PDFProcessingRuntime; productName = PDFProcessingRuntime;
+			productReference = W20000000000000000000001 /* PDFProcessingRuntime.framework */;
+			productType = "com.apple.product-type.framework";
 		};
 /* End PBXNativeTarget section */
 
@@ -891,6 +980,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				W50000000000000000000001 /* PDFProcessingRuntime */,
 				A50000000000000000000001 /* iPS2PDF iOS */,
 				M50000000000000000000001 /* iPS2PDF MacOS */,
 				B50000000000000000000001 /* iPS2PDFShare */,
@@ -964,6 +1054,10 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W60000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
@@ -1280,7 +1374,55 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n/usr/bin/ditto \"$SRCROOT/Tests/Unit/Fixtures\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Fixtures\"\n";
+		};
+		W60000000000000000000004 /* Build Native PDF Runtime */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ("$(SRCROOT)/Scripts/build_pdf_for_xcode.sh", "$(SRCROOT)/Scripts/PDFProcessing", "$(SRCROOT)/Sources/Shared/PDFProcessingRuntime/Native", "$(SRCROOT)/Vendor/PDFProcessing", );
+			name = "Build Native PDF Runtime";
+			outputPaths = ("$(PDF_PROCESSING_ARTIFACT_DIR)/libPDFProcessingNative.a", "$(PDF_PROCESSING_ARTIFACT_DIR)/include/PDFProcessingBridge.h", "$(PDF_PROCESSING_ARTIFACT_DIR)/include/module.modulemap", );
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"$SRCROOT/Scripts/build_pdf_for_xcode.sh\"\n";
+		};
+		W60000000000000000000005 /* Build Native PDF Runtime iOS */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ("$(SRCROOT)/Scripts/build_pdf_for_xcode.sh", "$(SRCROOT)/Scripts/PDFProcessing", "$(SRCROOT)/Sources/Shared/PDFProcessingRuntime/Native", "$(SRCROOT)/Vendor/PDFProcessing", );
+			name = "Build Native PDF Runtime iOS";
+			outputPaths = ("$(PDF_PROCESSING_ARTIFACT_DIR)/libPDFProcessingNative.a", "$(PDF_PROCESSING_ARTIFACT_DIR)/include/PDFProcessingBridge.h", "$(PDF_PROCESSING_ARTIFACT_DIR)/include/module.modulemap", );
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"$SRCROOT/Scripts/build_pdf_for_xcode.sh\"\n";
+		};
+		W60000000000000000000006 /* Install Native PDF Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ();
+			name = "Install Native PDF Resources";
+			outputPaths = ("$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/PDFProcessingLicenses/components.json", "$(TARGET_BUILD_DIR)/$(PUBLIC_HEADERS_FOLDER_PATH)/PDFProcessingRuntime.h", "$(TARGET_BUILD_DIR)/$(PUBLIC_HEADERS_FOLDER_PATH)/PDFProcessingBridge.h", );
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "/bin/bash \"$SRCROOT/Scripts/install_pdf_runtime_resources.sh\"\n";
+		};
+		W60000000000000000000007 /* Install Native PDF Resources iOS */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ();
+			name = "Install Native PDF Resources iOS";
+			outputPaths = ("$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/PDFProcessingLicenses/components.json", );
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "/bin/bash \"$SRCROOT/Scripts/install_pdf_runtime_resources.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -1354,6 +1496,10 @@
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W60000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
@@ -1453,6 +1599,14 @@
 			target = A50000000000000000000001 /* iPS2PDF iOS */;
 			targetProxy = V30000000000000000000001 /* PBXContainerItemProxy */;
 		};
+		W90000000000000000000001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = W50000000000000000000001 /* PDFProcessingRuntime */; targetProxy = W30000000000000000000001 /* PBXContainerItemProxy */;
+		};
+		W90000000000000000000002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = W50000000000000000000001 /* PDFProcessingRuntime */; targetProxy = W30000000000000000000001 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
@@ -1485,6 +1639,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -1497,6 +1652,7 @@
 				GHOSTSCRIPT_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/$(SDK_NAME)-$(ARCHS)-ios$(IPHONEOS_DEPLOYMENT_TARGET)";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LM_SKIP_METADATA_EXTRACTION = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -1533,6 +1689,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = x86_64;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -1543,6 +1700,7 @@
 				GHOSTSCRIPT_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/$(SDK_NAME)-$(ARCHS)-ios$(IPHONEOS_DEPLOYMENT_TARGET)";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				LM_SKIP_METADATA_EXTRACTION = YES;
 				SDKROOT = iphoneos;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -1717,6 +1875,8 @@
 		FA00000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				PDF_PROCESSING_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/PDFProcessingArtifacts/$(PLATFORM_NAME)";
+				SWIFT_INCLUDE_PATHS = "$(PDF_PROCESSING_ARTIFACT_DIR)/include";
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = BuildSupport/Targets/iOSGhostscriptExtension/GhostscriptExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -1733,6 +1893,13 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lgs",
+					"$(PDF_PROCESSING_ARTIFACT_DIR)/libPDFProcessingNative.a",
+					"-lz",
+					"-lxml2",
+					"-framework",
+					CoreGraphics,
+					"-framework",
+					Accelerate,
 					"-lc++",
 					"-liconv",
 				);
@@ -1748,6 +1915,8 @@
 		FA00000000000000000000002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				PDF_PROCESSING_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/PDFProcessingArtifacts/$(PLATFORM_NAME)";
+				SWIFT_INCLUDE_PATHS = "$(PDF_PROCESSING_ARTIFACT_DIR)/include";
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = BuildSupport/Targets/iOSGhostscriptExtension/GhostscriptExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -1764,6 +1933,13 @@
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-lgs",
+					"$(PDF_PROCESSING_ARTIFACT_DIR)/libPDFProcessingNative.a",
+					"-lz",
+					"-lxml2",
+					"-framework",
+					CoreGraphics,
+					"-framework",
+					Accelerate,
 					"-lc++",
 					"-liconv",
 				);
@@ -2149,6 +2325,68 @@
 			};
 			name = Release;
 		};
+		WA00000000000000000000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PDF_PROCESSING_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/PDFProcessingArtifacts/$(PLATFORM_NAME)";
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0;
+				DEAD_CODE_STRIPPING = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PDF_PROCESSING_ARTIFACT_DIR)/include";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MODULEMAP_FILE = Sources/Targets/MacOSPDFProcessingRuntime/module.modulemap;
+				OTHER_LDFLAGS = ("$(inherited)", "-force_load", "$(PDF_PROCESSING_ARTIFACT_DIR)/libPDFProcessingNative.a", "-lc++", "-lz", "-lxml2", "-framework", CoreGraphics, "-framework", CoreFoundation, "-framework", Accelerate, );
+				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF.MacOS.PDFProcessingRuntime";
+				PRODUCT_MODULE_NAME = PDFProcessingRuntime;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Debug;
+		};
+		WA00000000000000000000002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PDF_PROCESSING_ARTIFACT_DIR = "$(PROJECT_TEMP_DIR)/PDFProcessingArtifacts/$(PLATFORM_NAME)";
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 1.0;
+				DEAD_CODE_STRIPPING = YES;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(PDF_PROCESSING_ARTIFACT_DIR)/include";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MODULEMAP_FILE = Sources/Targets/MacOSPDFProcessingRuntime/module.modulemap;
+				OTHER_LDFLAGS = ("$(inherited)", "-force_load", "$(PDF_PROCESSING_ARTIFACT_DIR)/libPDFProcessingNative.a", "-lc++", "-lz", "-lxml2", "-framework", CoreGraphics, "-framework", CoreFoundation, "-framework", Accelerate, );
+				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.iPS2PDF.MacOS.PDFProcessingRuntime";
+				PRODUCT_MODULE_NAME = PDFProcessingRuntime;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = macosx;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -2277,6 +2515,10 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		W80000000000000000000001 /* Build configuration list for PBXNativeTarget "PDFProcessingRuntime" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (WA00000000000000000000001 /* Debug */, WA00000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

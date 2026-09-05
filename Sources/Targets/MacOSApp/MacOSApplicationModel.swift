@@ -14,21 +14,25 @@ final class MacOSApplicationModel: ObservableObject {
 
     private init() {}
 
-    func presentOpenPanel() {
+    func presentOpenPanel(purpose: IncomingDocumentPurpose = .automatic) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.data]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.begin { [weak self] response in
             guard response == .OK else { return }
-            self?.openDocuments(at: panel.urls)
+            self?.openDocuments(at: panel.urls, purpose: purpose)
         }
     }
 
-    func openDocuments(at urls: [URL]) {
+    func openDocuments(at urls: [URL], purpose: IncomingDocumentPurpose = .automatic) {
         Task { @MainActor in
             for url in urls {
                 do {
+                    if purpose == .automatic, try await Task.detached(priority: .userInitiated, operation: { try IncomingDocumentRouter.isPDF(url) }).value {
+                        MacOSPDFInfoWindowController.present(url: url)
+                        continue
+                    }
                     _ = try await NSDocumentController.shared.openDocument(
                         withContentsOf: url,
                         display: true

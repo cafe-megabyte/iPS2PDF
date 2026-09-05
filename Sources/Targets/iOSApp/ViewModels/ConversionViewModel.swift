@@ -16,6 +16,9 @@ final class ConversionViewModel: ObservableObject {
     @Published var diagnosticDetails: DiagnosticPresentation?
     @Published private(set) var settingsPresentationToken = UUID()
 
+    let passwordController = PDFPasswordController()
+    @Published var presentedPDFInfo: PDFInspectionSession?
+
     let joboptionsRepository: JoboptionsRepository
 
     private let workingDirectoryService: WorkingDirectoryService
@@ -25,6 +28,7 @@ final class ConversionViewModel: ObservableObject {
     private var repositoryObservation: AnyCancellable?
 
     private var progressTask: Task<Void, Never>?
+    private var viewerCleanupTask: Task<Void, Never>?
     private var deferredNotice: AppAlert?
     private var viewerDismissalPending = false
     private var clearAfterViewerDismissal = true
@@ -60,7 +64,7 @@ final class ConversionViewModel: ObservableObject {
     }
 
     var controlsAreDisabled: Bool {
-        isProcessing || isShareSheetPresented || alert != nil
+        isProcessing || isShareSheetPresented || presentedPDFInfo != nil || alert != nil
     }
 
     var controlsAppearDisabled: Bool {
@@ -105,7 +109,7 @@ final class ConversionViewModel: ObservableObject {
     }
 
     func handleSelectedFile(_ url: URL) {
-        acceptFiles([url], preservesSelectionAppearance: true)
+        acceptFiles([url], preservesSelectionAppearance: true, purpose: .conversion)
     }
 
     func handleIncomingFiles(_ urls: [URL]) {
@@ -147,6 +151,8 @@ final class ConversionViewModel: ObservableObject {
         self.alert = nil
         diagnosticDetails = DiagnosticPresentation(title: alert.title, text: details)
     }
+
+    func pdfInfoDidDismiss() { presentDeferredNoticeIfPossible() }
 
     func diagnosticDetailsDidDismiss() {
         presentDeferredNoticeIfPossible()
@@ -198,7 +204,7 @@ final class ConversionViewModel: ObservableObject {
         preservesFileImporterSelectionAppearance = false
 
         if shouldClear {
-            Task.detached(priority: .utility) { [workingDirectoryService] in
+            viewerCleanupTask = Task.detached(priority: .utility) { [workingDirectoryService] in
                 try? await workingDirectoryService.clearWorkingDirectory()
             }
         }
@@ -208,7 +214,8 @@ final class ConversionViewModel: ObservableObject {
     private func acceptFiles(
         _ urls: [URL],
         cleanupDirectory: URL? = nil,
-        preservesSelectionAppearance: Bool = false
+        preservesSelectionAppearance: Bool = false,
+        purpose: IncomingDocumentPurpose = .automatic
     ) -> Bool {
         guard urls.count == 1, let url = urls.first else {
             presentNotice(
@@ -233,7 +240,7 @@ final class ConversionViewModel: ObservableObject {
 
         Task { [weak self, workingDirectoryService] in
             await self?.runConversion(
-                sourceURL: url
+                sourceURL: url, purpose: purpose
             )
             if let cleanupDirectory {
                 await workingDirectoryService.removeStagingDirectory(cleanupDirectory)
@@ -242,9 +249,13 @@ final class ConversionViewModel: ObservableObject {
         return true
     }
 
-    private func runConversion(sourceURL: URL) async {
+    private func runConversion(sourceURL: URL, purpose: IncomingDocumentPurpose) async {
         do {
             await dismissViewerForReplacementIfNeeded()
+            // Closing a viewer must finish clearing its old files before a new
+            // incoming PDF is staged in the same working directory.
+            await viewerCleanupTask?.value
+            viewerCleanupTask = nil
 
             do {
                 try await startupCleanupTask.value
@@ -256,7 +267,12 @@ final class ConversionViewModel: ObservableObject {
             let localSourceURL = try await workingDirectoryService.copySourceFile(from: sourceURL)
             await joboptionsRepository.waitUntilReady()
 
-            switch try documentRouter.classify(localSourceURL) {
+            switch try documentRouter.classify(localSourceURL, purpose: purpose) {
+            case let .pdfInformation(url):
+                let input = try await Task.detached(priority: .userInitiated) { try PDFInspectionInput(sourceURL: url) }.value
+                presentedPDFInfo = PDFInspectionSession(input: input)
+                try? await workingDirectoryService.clearWorkingDirectory()
+                finishProcessing()
             case let .joboptions(joboptionsURL, _):
                 try await converter.validateJoboptions(at: joboptionsURL)
                 _ = try joboptionsRepository.importJoboptions(from: joboptionsURL)
@@ -272,20 +288,34 @@ final class ConversionViewModel: ObservableObject {
                 let snapshotURL = try await workingDirectoryService.writeJoboptionsSnapshot(
                     settingsSnapshot.effectiveJoboptionsData
                 )
-                try await converter.convert(
-                    sourceURL: inputURL,
-                    outputURL: outputURL,
-                    joboptionsURL: snapshotURL,
-                    standard: settingsSnapshot.standard,
-                    securityLimitsEnabled: settingsSnapshot.securityLimitsEnabled,
-                    postScriptRandomSeed: settingsSnapshot.postScriptRandomSeed
-                )
+                var inputPassword = try await passwordController.password(for: inputURL)
+                while true {
+                    do {
+                        try await converter.convert(
+                            sourceURL: inputURL,
+                            outputURL: outputURL,
+                            joboptionsURL: snapshotURL,
+                            standard: settingsSnapshot.standard,
+                            securityLimitsEnabled: settingsSnapshot.securityLimitsEnabled,
+                            postScriptRandomSeed: settingsSnapshot.postScriptRandomSeed,
+                            inputPassword: inputPassword
+                        )
+                        break
+                    } catch ConversionFailure.inputPasswordRequired {
+                        inputPassword = try await passwordController.password(for: inputURL, force: true)
+                    }
+                }
+                inputPassword = nil
                 try await workingDirectoryService.validatePDF(at: outputURL)
 
                 try? AppGroupWorkspace.clearAll()
                 presentedPDF = PDFPresentation(url: outputURL)
                 finishProcessing(preservesSelectionAppearance: true)
             }
+        } catch is CancellationError {
+            try? await workingDirectoryService.clearWorkingDirectory()
+            try? AppGroupWorkspace.clearAll()
+            finishProcessing()
         } catch let failure as ConversionFailure {
             await finishWithFailure(failure)
         } catch {
@@ -340,7 +370,7 @@ final class ConversionViewModel: ObservableObject {
             message: message
         )
 
-        if alert != nil || isShareSheetPresented {
+        if alert != nil || isShareSheetPresented || presentedPDFInfo != nil {
             deferredNotice = notice
         } else {
             alert = notice
@@ -348,7 +378,7 @@ final class ConversionViewModel: ObservableObject {
     }
 
     private func presentDeferredNoticeIfPossible() {
-        guard alert == nil, !isShareSheetPresented, let deferredNotice else { return }
+        guard alert == nil, !isShareSheetPresented, presentedPDFInfo == nil, let deferredNotice else { return }
         self.deferredNotice = nil
         alert = deferredNotice
     }

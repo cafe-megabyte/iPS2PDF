@@ -32,6 +32,26 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
     }
 
 #if os(macOS)
+    private final class MacOSRequestCancellation: @unchecked Sendable {
+        private let lock = NSLock()
+        private var gate: MacOSReplyGate?
+        private var cancelled = false
+        func install(_ gate: MacOSReplyGate) {
+            lock.lock()
+            self.gate = gate
+            let shouldCancel = cancelled
+            lock.unlock()
+            if shouldCancel { gate.finish(.failure(CancellationError())) }
+        }
+        func cancel() {
+            lock.lock()
+            cancelled = true
+            let gate = gate
+            lock.unlock()
+            gate?.finish(.failure(CancellationError()))
+        }
+    }
+
     private final class MacOSReplyGate: @unchecked Sendable {
         private let lock = NSLock()
         private var continuation: CheckedContinuation<Data, Error>?
@@ -81,6 +101,12 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
     private let maximumOutputBytes: Int64 = 2_147_483_648
     private let timeout: TimeInterval = 15 * 60
 
+    // PDF processing uses a separate payload and private job directory. Reuse
+    // only this existing process transport and its per-host serialization.
+    func sendPDFProcessing(_ request: XPCDictionary) async throws -> XPCDictionary {
+        try await send(request)
+    }
+
     func profileMetadata() async throws -> [GhostscriptExtensionProfileMetadata] {
         if let cached = await Self.profileCatalog.value() {
             return cached
@@ -128,7 +154,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         joboptionsURL: URL,
         standard: PDFStandard,
         limitsEnabled: Bool,
-        postScriptRandomSeed: Int
+        postScriptRandomSeed: Int,
+        inputPassword: String? = nil
     ) async throws {
         if limitsEnabled {
             let inputSize = try inputURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
@@ -169,8 +196,17 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         )
         addProfiles(prepared, to: &request)
         addOutputIntent(prepared, to: &request)
+        if let inputPassword { request[GhostscriptExtensionEnvelope.inputPDFPassword] = inputPassword }
         let reply = try await sendRun(request, inputFileHandle: inputFileHandle)
-        try requireSuccess(reply, diagnostics: journalText())
+        var diagnostics = journalText()
+        let lower = (diagnostics ?? "").lowercased()
+        // Ghostscript can return success after skipping an encrypted input and
+        // emitting a blank output PDF. The password diagnostic takes precedence.
+        if ["requires a password for access", "password did not work", "incorrect password", "invalid password"].contains(where: lower.contains) {
+            throw ConversionFailure.inputPasswordRequired
+        }
+        if let inputPassword, !inputPassword.isEmpty { diagnostics = diagnostics?.replacingOccurrences(of: inputPassword, with: "[redacted]") }
+        try requireSuccess(reply, diagnostics: diagnostics)
         try copyOutput(to: outputURL)
 
         if limitsEnabled {
@@ -486,7 +522,9 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let serializer = GhostscriptExtensionRequestSerializer.shared
         await serializer.wait()
         do {
+            try Task.checkCancellation()
             let reply = try await sendUnlocked(request, inputFileHandle: inputFileHandle)
+            try Task.checkCancellation()
             await serializer.signal()
             return reply
         } catch {
@@ -510,9 +548,12 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         connection.remoteObjectInterface = interface
         connection.resume()
 
-        let replyData: Data = try await withCheckedThrowingContinuation {
+        let cancellation = MacOSRequestCancellation()
+        let replyData: Data = try await withTaskCancellationHandler {
+          try await withCheckedThrowingContinuation {
             (continuation: CheckedContinuation<Data, Error>) in
             let gate = MacOSReplyGate(continuation: continuation, connection: connection)
+            cancellation.install(gate)
             gate.installTimeoutTask(Task { [timeout] in
                 try? await Task.sleep(for: .seconds(timeout))
                 guard !Task.isCancelled else { return }
@@ -534,6 +575,9 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
                     gate.finish(.failure(MacOSConnectionError.invalidReply))
                 }
             }
+          }
+        } onCancel: {
+            cancellation.cancel()
         }
         return try MacOSXPCMessageCodec.decode(replyData)
 #else
@@ -552,7 +596,14 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let session = try process.makeXPCSession()
         let processHandle = AppExtensionProcessHandle(process: process)
         try session.activate()
+        let timeoutTask = Task { [timeout] in
+            try? await Task.sleep(for: .seconds(timeout))
+            guard !Task.isCancelled else { return }
+            session.cancel(reason: "Request deadline exceeded")
+            processHandle.invalidate()
+        }
         defer {
+            timeoutTask.cancel()
             session.cancel(reason: "Request completed")
             processHandle.invalidate()
         }

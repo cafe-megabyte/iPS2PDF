@@ -25,6 +25,10 @@
                                     <action selector="orderFrontStandardAboutPanel:" target="-1" id="Exp-CZ-Vem"/>
                                 </connections>
                             </menuItem>
+                            <menuItem title="PDF processing licenses…" id="PDF-Lic-Open">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="showPDFProcessingLicenses:" target="-1" id="PDF-Lic-Act"/></connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                             <menuItem title="Preferences…" keyEquivalent="," id="BOF-NM-1cW">
                                 <connections>
@@ -75,7 +79,7 @@
                         <items>
                             <menuItem title="Open…" keyEquivalent="o" id="IAo-SY-fd9">
                                 <connections>
-                                    <action selector="openDocument:" target="-1" id="bVn-NM-KNZ"/>
+                                    <action selector="openFile:" target="-1" id="bVn-NM-KNZ"/>
                                 </connections>
                             </menuItem>
                             <menuItem title="Open Recent" id="tXI-mr-wws">
@@ -90,6 +94,23 @@
                                         </menuItem>
                                     </items>
                                 </menu>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="PDF-Open-Separator"/>
+                            <menuItem title="Open for PDF Information…" keyEquivalent="i" id="PDF-Inf-Open">
+                                <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                <connections><action selector="openPDFInformation:" target="-1" id="PDF-Inf-Act"/></connections>
+                            </menuItem>
+                            <menuItem title="Open for Conversion…" id="PDF-Cnv-Open">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="openConversionDocument:" target="-1" id="PDF-Cnv-Act"/></connections>
+                            </menuItem>
+                            <menuItem title="Compress PDF…" id="PDF-Cmp-Open">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="compressPDF:" target="-1" id="PDF-Cmp-Act"/></connections>
+                            </menuItem>
+                            <menuItem isSeparatorItem="YES" id="PDF-Current-Separator-Before"/>
+                            <menuItem title="Information for This PDF" keyEquivalent="i" id="PDF-Inf-This">
+                                <connections><action selector="showPDFInformation:" target="-1" id="PDF-Inf-Now"/></connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
                             <menuItem title="Close" keyEquivalent="w" id="DVo-aG-piG">

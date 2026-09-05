@@ -16,8 +16,13 @@ final class ShareConversionModel {
     ) {
         self.extensionContext = extensionContext
         self.activateContainingApplication = activateContainingApplication
-        let providers = textProviders()
-        guard let provider = providers.first else {
+
+        if let (provider, typeIdentifier) = sharedFileProvider() {
+            loadFile(from: provider, typeIdentifier: typeIdentifier)
+            return
+        }
+
+        guard let provider = textProviders().first else {
             cancelRequest()
             return
         }
@@ -51,16 +56,65 @@ final class ShareConversionModel {
         }
     }
 
+    private func loadFile(from provider: NSItemProvider, typeIdentifier: String) {
+        let preferredFileName = Self.fileName(
+            suggestedName: provider.suggestedName,
+            typeIdentifier: typeIdentifier
+        )
+        provider.loadFileRepresentation(forTypeIdentifier: typeIdentifier) { [weak self] url, error in
+            let result: Result<Void, Error>
+            do {
+                if let error { throw error }
+                guard let url else { throw CocoaError(.fileReadUnknown) }
+                _ = try PendingShareDocument.writeFile(
+                    from: url,
+                    preferredFileName: preferredFileName
+                )
+                result = .success(())
+            } catch {
+                result = .failure(error)
+            }
+
+            Task { @MainActor [weak self] in
+                self?.completeHandoffPreparation(with: result)
+            }
+        }
+    }
+
     func extensionDidAppear() {
         extensionIsVisible = true
         scheduleApplicationOpeningIfPossible()
     }
 
     private func textProviders() -> [NSItemProvider] {
-        let items = extensionContext?.inputItems.compactMap { $0 as? NSExtensionItem } ?? []
-        return items
-            .flatMap { $0.attachments ?? [] }
+        attachmentProviders()
             .filter { $0.hasItemConformingToTypeIdentifier(UTType.text.identifier) }
+    }
+
+    private func sharedFileProvider() -> (NSItemProvider, String)? {
+        for provider in attachmentProviders() {
+            if let typeIdentifier = provider.registeredTypeIdentifiers.first(where: {
+                UTType($0)?.conforms(to: .pdf) == true
+            }) {
+                return (provider, typeIdentifier)
+            }
+        }
+        for provider in attachmentProviders() {
+            if let typeIdentifier = provider.registeredTypeIdentifiers.first(where: {
+                guard let type = UTType($0) else { return false }
+                return type.conforms(to: .data)
+                    && !type.conforms(to: .text)
+                    && !type.conforms(to: .url)
+            }) {
+                return (provider, typeIdentifier)
+            }
+        }
+        return nil
+    }
+
+    private func attachmentProviders() -> [NSItemProvider] {
+        let items = extensionContext?.inputItems.compactMap { $0 as? NSExtensionItem } ?? []
+        return items.flatMap { $0.attachments ?? [] }
     }
 
     private nonisolated static func text(from item: NSSecureCoding?) -> String? {
@@ -70,6 +124,28 @@ final class ShareConversionModel {
         case let data as Data: return String(data: data, encoding: .utf8)
         case let url as URL: return try? String(contentsOf: url, encoding: .utf8)
         default: return nil
+        }
+    }
+
+    private nonisolated static func fileName(
+        suggestedName: String?,
+        typeIdentifier: String
+    ) -> String? {
+        guard var suggestedName, !suggestedName.isEmpty else { return nil }
+        if URL(fileURLWithPath: suggestedName).pathExtension.isEmpty,
+           let fileExtension = UTType(typeIdentifier)?.preferredFilenameExtension {
+            suggestedName += "." + fileExtension
+        }
+        return suggestedName
+    }
+
+    private func completeHandoffPreparation(with result: Result<Void, Error>) {
+        switch result {
+        case .success:
+            handoffIsReady = true
+            scheduleApplicationOpeningIfPossible()
+        case let .failure(error):
+            cancelRequest(error)
         }
     }
 

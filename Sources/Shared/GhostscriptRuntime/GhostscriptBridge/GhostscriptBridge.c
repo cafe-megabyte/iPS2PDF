@@ -2,6 +2,7 @@
 
 /* C boundary between the Swift extension and the embedded Ghostscript library. */
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -229,6 +230,15 @@ static int descriptor_make_output_file(
     } else {
         int duplicate = dup(capture->output_fd);
         if (duplicate >= 0) {
+            /* fdopen does not apply fopen's truncation/append semantics. Ghostscript
+             * can reopen pdfwrite after processing device parameters. Without this,
+             * a second PDF is appended with cross-reference offsets starting at zero. */
+            if ((strchr(mode, 'w') != NULL &&
+                 (ftruncate(duplicate, 0) != 0 || lseek(duplicate, 0, SEEK_SET) < 0)) ||
+                (strchr(mode, 'a') != NULL && lseek(duplicate, 0, SEEK_END) < 0)) {
+                close(duplicate);
+                return -1;
+            }
             stream = fdopen(duplicate, mode);
             if (stream == NULL) close(duplicate);
         }
@@ -316,6 +326,7 @@ int gs_run_joboptions_with_fds(
     const char *profile_overrides,
     const char *profile_override_directory,
     const char *blend_conversion_strategy,
+    const char *pdf_password,
     int postscript_random_seed,
     int limits_enabled,
     long long deadline_epoch_seconds,
@@ -331,6 +342,7 @@ int gs_run_joboptions_with_fds(
     int current_stage = GS_BRIDGE_STAGE_NEW_INSTANCE;
     int standard_definition_fd = -1;
     int original_directory_fd = -1;
+    char *password_option = NULL;
     char compatibility_option[32];
     char standard_option[32];
     char blend_conversion_option[40];
@@ -499,7 +511,13 @@ int gs_run_joboptions_with_fds(
         );
     }
 
-    const char *arguments[56];
+    if (!validation_only && pdf_password != NULL) {
+        size_t length = strlen(pdf_password) + sizeof("-sPDFPassword=");
+        password_option = malloc(length);
+        if (password_option == NULL) { return_code = -25; goto descriptor_finished; }
+        snprintf(password_option, length, "-sPDFPassword=%s", pdf_password);
+    }
+    const char *arguments[57];
     int argument_count = 0;
     arguments[argument_count++] = "iPS2PDF";
     arguments[argument_count++] = "-P-";
@@ -551,6 +569,7 @@ int gs_run_joboptions_with_fds(
             arguments[argument_count++] = "-dWriteObjStms=false";
         }
     }
+    if (password_option != NULL) arguments[argument_count++] = password_option;
     arguments[argument_count++] = "-q";
     arguments[argument_count++] = "-dNOPAUSE";
     arguments[argument_count++] = "-sDEVICE=pdfwrite";
@@ -617,6 +636,12 @@ descriptor_finished:
         gsapi_remove_fs(instance, &descriptor_file_system, &capture);
     }
     if (instance != NULL) gsapi_delete_instance(instance);
+    if (password_option != NULL) {
+        size_t length = strlen(password_option);
+        volatile char *bytes = password_option;
+        while (length--) *bytes++ = 0;
+        free(password_option);
+    }
     if (original_directory_fd >= 0) {
         fchdir(original_directory_fd);
         close(original_directory_fd);

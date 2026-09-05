@@ -6,24 +6,49 @@ struct PDFViewer: View {
     let onClose: () -> Void
     let onShareStarted: () -> Void
     let onShareFinished: () -> Void
+    @StateObject private var editing: PDFEditingSession
 
     @State private var isShowingShareSheet = false
+    @State private var infoSession: PDFInspectionSession?
+    @State private var sharedRevision: PDFEditingRevision?
+
+    init(url: URL, onClose: @escaping () -> Void, onShareStarted: @escaping () -> Void,
+         onShareFinished: @escaping () -> Void) {
+        self.url = url
+        self.onClose = onClose
+        self.onShareStarted = onShareStarted
+        self.onShareFinished = onShareFinished
+        _editing = StateObject(wrappedValue: PDFEditingSession(url: url))
+    }
 
     var body: some View {
         NavigationStack {
-            PDFKitView(url: url)
+            Group {
+                if let current = editing.current {
+                    PDFKitView(url: current.input.url, password: editing.passwordForProcessing)
+                } else if let error = editing.errorMessage {
+                    ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
+                } else { ProgressView() }
+            }
                 .ignoresSafeArea(edges: .bottom)
                 .navigationTitle(url.lastPathComponent)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
                         Button {
+                            sharedRevision = editing.current
                             onShareStarted()
                             isShowingShareSheet = true
                         } label: {
                             Image(systemName: "square.and.arrow.up")
                         }
                         .accessibilityLabel(String(localized: "share"))
+                        .disabled(editing.current == nil)
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { infoSession = editing.inspection } label: { Image(systemName: "info") }
+                            .accessibilityLabel("PDF information")
+                            .disabled(editing.inspection == nil)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -35,9 +60,12 @@ struct PDFViewer: View {
                     }
                 }
         }
-        .sheet(isPresented: $isShowingShareSheet, onDismiss: onShareFinished) {
-            ActivityView(activityItems: [url]) {
-                isShowingShareSheet = false
+        .sheet(item: $infoSession) { session in PDFInfoView(session: session, editing: editing) }
+        .sheet(isPresented: $isShowingShareSheet, onDismiss: { sharedRevision = nil; onShareFinished() }) {
+            if let sharedRevision {
+                ActivityView(activityItems: [sharedRevision.input.url]) {
+                    isShowingShareSheet = false
+                }
             }
         }
     }

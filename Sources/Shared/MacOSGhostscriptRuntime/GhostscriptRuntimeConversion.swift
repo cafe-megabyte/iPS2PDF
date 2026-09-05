@@ -129,6 +129,7 @@ enum GhostscriptRuntimeConversion {
                                     profileOverridesPointer,
                                     nil,
                                     blendPointer,
+                                    nil,
                                     1,
                                     1,
                                     Int64(Date().addingTimeInterval(timeout).timeIntervalSince1970),

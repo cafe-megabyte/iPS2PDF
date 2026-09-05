@@ -1,0 +1,8 @@
+Native PDF processing in iPS2PDF
+
+Portions of this software are copyright © The FreeType Project (www.freetype.org). All rights reserved.
+This software is based in part on the work of the Independent JPEG Group.
+
+Component copyright and license notices are supplied in this directory.
+The inventory conservatively includes dependencies in the native static-library build; dead stripping may omit unused implementation code from a particular executable.
+Hyper Compress's original NOTICE also describes its web and command-line products; those products and the DM Sans web font are not bundled by this native build.

@@ -27,12 +27,39 @@
         }
       }
     },
+    "%+.1f%% compared with the original" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%+.1f%% gegenüber dem Original"
+          }
+        }
+      }
+    },
     "%lld" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "%lld"
+          }
+        }
+      }
+    },
+    "%lld fonts not embedded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld Schriften nicht eingebettet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fonts not embedded"
           }
         }
       }
@@ -53,6 +80,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "×"
+          }
+        }
+      }
+    },
+    "1 font not embedded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 Schrift nicht eingebettet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1 font not embedded"
           }
         }
       }
@@ -87,6 +131,50 @@
         }
       }
     },
+    "A shared form needs incompatible inherited color conversions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein mehrfach verwendetes PDF-Formular benötigt widersprüchliche Farbumrechnungen."
+          }
+        }
+      }
+    },
+    "A shared PDF form has conflicting inherited resources" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein mehrfach verwendetes PDF-Formular erbt widersprüchliche Ressourcen."
+          }
+        }
+      }
+    },
+    "A shared PDF image has conflicting color interpretations" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein mehrfach verwendetes PDF-Bild hat widersprüchliche Farbraumzuordnungen."
+          }
+        }
+      }
+    },
+    "A technical mask has an unsupported color interpretation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Farbraum einer technischen Maske wird nicht unterstützt."
+          }
+        }
+      }
+    },
     "Abort nonconforming PDF/A or PDF/X jobs" : {
       "localizations" : {
         "de" : {
@@ -113,6 +201,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Absolut farbmetrisch"
+          }
+        }
+      }
+    },
+    "Accessibility extraction" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Extraktion für Barrierefreiheit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Accessibility extraction"
           }
         }
       }
@@ -159,6 +264,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zusätzlich"
+          }
+        }
+      }
+    },
+    "Additional document properties" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Dokumenteigenschaften"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Additional document properties"
           }
         }
       }
@@ -239,12 +361,131 @@
         }
       }
     },
+    "An external output profile is unavailable for color conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein externes Ausgabeprofil ist für die Farbumrechnung nicht verfügbar."
+          }
+        }
+      }
+    },
+    "An ICC pattern base requires a dedicated conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ICC-Grundfarbe dieses Musters benötigt eine gesonderte Umwandlung."
+          }
+        }
+      }
+    },
+    "An ICC-dependent PDF object was not converted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ein vom ICC-Profil abhängiges PDF-Objekt konnte nicht umgewandelt werden."
+          }
+        }
+      }
+    },
     "An output intent profile cannot be embedded when no output profile is selected." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ein Output-Intent-Profil kann nicht eingebettet werden, wenn kein Ausgabeprofil ausgewählt ist."
+          }
+        }
+      }
+    },
+    "An unknown conformity identification property cannot be preserved safely" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine unbekannte Eigenschaft der Konformitätskennung kann nicht sicher erhalten werden."
+          }
+        }
+      }
+    },
+    "An XMP title alternative has no language" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Für eine XMP-Titelalternative fehlt die Sprachangabe."
+          }
+        }
+      }
+    },
+    "Analysis details" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details zur Auswertung"
+          }
+        }
+      }
+    },
+    "Analysis incomplete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswertung unvollständig"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Analysis incomplete"
+          }
+        }
+      }
+    },
+    "Analysis incomplete — %lld notices" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Auswertung unvollständig – %lld Hinweise"
+          }
+        }
+      }
+    },
+    "Annotation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anmerkung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annotation"
+          }
+        }
+      }
+    },
+    "Another PDF operation is already running. Try again when it finishes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es läuft bereits eine PDF-Verarbeitung. Versuche es erneut, sobald sie beendet ist."
           }
         }
       }
@@ -291,6 +532,57 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seitenströme mit ASCII85 codieren"
+          }
+        }
+      }
+    },
+    "Attachment" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anhang"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attachment"
+          }
+        }
+      }
+    },
+    "Attributes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attribute"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attributes"
+          }
+        }
+      }
+    },
+    "Author" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autor"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Author"
           }
         }
       }
@@ -381,6 +673,16 @@
         }
       }
     },
+    "Balanced" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ausgewogen"
+          }
+        }
+      }
+    },
     "Bicubic" : {
       "localizations" : {
         "de" : {
@@ -397,6 +699,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bindung"
+          }
+        }
+      }
+    },
+    "Black & White" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "S/W"
+          }
+        }
+      }
+    },
+    "Black and white threshold" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellwert für Schwarzweiß"
           }
         }
       }
@@ -427,6 +749,33 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Strategie zur Verlaufskonvertierung"
+          }
+        }
+      }
+    },
+    "Bookmarks" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bookmarks"
+          }
+        }
+      }
+    },
+    "Bookmarks or page labels could not be read completely." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lesezeichen oder Seitenlabels konnten nicht vollständig gelesen werden."
           }
         }
       }
@@ -467,12 +816,49 @@
         }
       }
     },
+    "Calculating file size…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateigröße wird berechnet …"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Abbrechen"
+          }
+        }
+      }
+    },
+    "Catalog version" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Katalogversion"
+          }
+        }
+      }
+    },
+    "Category" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kategorie"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Category"
           }
         }
       }
@@ -529,6 +915,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Close"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schließen"
           }
         }
       }
@@ -643,6 +1039,105 @@
         }
       }
     },
+    "Color space" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbraum"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Color space"
+          }
+        }
+      }
+    },
+    "Color space used in content" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im Inhalt verwendeter Farbraum"
+          }
+        }
+      }
+    },
+    "Color-key image masks require a separate alpha conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbschlüsselmasken benötigen eine gesonderte Alphaumwandlung."
+          }
+        }
+      }
+    },
+    "Colors" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colors"
+          }
+        }
+      }
+    },
+    "Colors and output intents" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farben und Output-Intents"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Colors and output intents"
+          }
+        }
+      }
+    },
+    "Commenting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kommentieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Commenting"
+          }
+        }
+      }
+    },
+    "Comparison" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vergleich"
+          }
+        }
+      }
+    },
     "Compress color images" : {
       "localizations" : {
         "de" : {
@@ -693,6 +1188,36 @@
         }
       }
     },
+    "Compress PDF" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF komprimieren"
+          }
+        }
+      }
+    },
+    "Compress PDF…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF komprimieren…"
+          }
+        }
+      }
+    },
+    "Compressing complete PDF…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollständiges PDF wird komprimiert …"
+          }
+        }
+      }
+    },
     "Compression" : {
       "localizations" : {
         "de" : {
@@ -713,12 +1238,43 @@
         }
       }
     },
+    "Compression removes metadata, PDF conformity declarations, embedded files and color profiles. Embedded fonts are retained." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Kompression entfernt Metadaten, PDF-Konformitätsangaben, eingebettete Dateien und Farbprofile. Eingebettete Schriften bleiben erhalten."
+          }
+        }
+      }
+    },
     "Configure..." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konfigurieren..."
+          }
+        }
+      }
+    },
+    "Conflicting PDF output profiles require a selected output condition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widersprüchliche Ausgabeprofile erfordern die Auswahl einer Ausgabebedingung."
+          }
+        }
+      }
+    },
+    "Conflicting standard metadata" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Widersprüchliche Standardangaben in den Metadaten"
           }
         }
       }
@@ -739,12 +1295,104 @@
         }
       }
     },
+    "Connection space" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verbindungsfarbraum"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Connection space"
+          }
+        }
+      }
+    },
+    "Content copying" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inhalte kopieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Content copying"
+          }
+        }
+      }
+    },
+    "Content usage could not be fully determined." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Verwendung der Inhalte konnte nicht vollständig ermittelt werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Content usage could not be fully determined."
+          }
+        }
+      }
+    },
+    "Contents" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inhalte"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Contents"
+          }
+        }
+      }
+    },
     "Conversion" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Konvertierung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversion"
+          }
+        }
+      }
+    },
+    "Conversion cancelled" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konvertierung abgebrochen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conversion cancelled"
           }
         }
       }
@@ -787,6 +1435,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CMYK-Bilder in RGB konvertieren"
+          }
+        }
+      }
+    },
+    "Convert file…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei konvertieren…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convert file…"
           }
         }
       }
@@ -837,6 +1502,68 @@
         }
       }
     },
+    "Copy complete report" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollständigen Bericht kopieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy complete report"
+          }
+        }
+      }
+    },
+    "Copy report" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bericht kopieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy report"
+          }
+        }
+      }
+    },
+    "Core Graphics document permissions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentberechtigungen laut Core Graphics"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core Graphics document permissions"
+          }
+        }
+      }
+    },
+    "Could not generate required PDF/X dates" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erforderlichen PDF/X-Zeitangaben konnten nicht erzeugt werden."
+          }
+        }
+      }
+    },
     "Could not open %@" : {
       "localizations" : {
         "de" : {
@@ -853,12 +1580,74 @@
         }
       }
     },
+    "Could not write minimal conformity metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die erforderlichen Konformitätsmetadaten konnten nicht geschrieben werden."
+          }
+        }
+      }
+    },
     "Create job ticket" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Job-Ticket erstellen"
+          }
+        }
+      }
+    },
+    "Created" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Created"
+          }
+        }
+      }
+    },
+    "Creation application" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erstellungsprogramm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creation application"
+          }
+        }
+      }
+    },
+    "Creator" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ersteller"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Creator"
           }
         }
       }
@@ -889,6 +1678,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schwarzweißbilder auf Rahmen beschneiden"
+          }
+        }
+      }
+    },
+    "Crypt filter" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselungsfilter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crypt filter"
           }
         }
       }
@@ -929,12 +1735,53 @@
         }
       }
     },
-    "Default" : {
+    "Declared permission" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Standard"
+            "value" : "Deklarierte Berechtigung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Declared permission"
+          }
+        }
+      }
+    },
+    "Declared restriction" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deklarierte Berechtigung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Declared restriction"
+          }
+        }
+      }
+    },
+    "Default" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standardwert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Default"
           }
         }
       }
@@ -959,6 +1806,23 @@
         }
       }
     },
+    "Definition" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definition"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Definition"
+          }
+        }
+      }
+    },
     "Delete" : {
       "localizations" : {
         "de" : {
@@ -970,11 +1834,18 @@
       }
     },
     "Description" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Beschreibung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Description"
           }
         }
       }
@@ -1059,6 +1930,26 @@
         }
       }
     },
+    "Digital signatures were removed. Review the result before saving." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Digitale Signaturen wurden entfernt. Prüfe das Ergebnis, bevor du speicherst."
+          }
+        }
+      }
+    },
+    "Discard conformity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konformität verwerfen"
+          }
+        }
+      }
+    },
     "dismiss" : {
       "localizations" : {
         "de" : {
@@ -1075,12 +1966,114 @@
         }
       }
     },
+    "Document" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokument"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document"
+          }
+        }
+      }
+    },
+    "Document action" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentaktion"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document action"
+          }
+        }
+      }
+    },
+    "Document assembly" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentzusammenstellung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document assembly"
+          }
+        }
+      }
+    },
+    "Document catalog" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentkatalog"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document catalog"
+          }
+        }
+      }
+    },
+    "Document changes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentänderungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document changes"
+          }
+        }
+      }
+    },
     "Document permissions" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dokumentberechtigungen"
+          }
+        }
+      }
+    },
+    "Document structure (not validated)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentstruktur (ungeprüft)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Document structure (not validated)"
           }
         }
       }
@@ -1097,6 +2090,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Done"
+          }
+        }
+      }
+    },
+    "Double-click a value to show its full text." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Doppelklicken Sie auf einen Wert, um den vollständigen Text anzuzeigen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Double-click a value to show its full text."
           }
         }
       }
@@ -1157,6 +2167,23 @@
         }
       }
     },
+    "Effective resolution" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effektive Auflösung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Effective resolution"
+          }
+        }
+      }
+    },
     "Embed all fonts" : {
       "localizations" : {
         "de" : {
@@ -1203,6 +2230,94 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ersatzschriften einbetten"
+          }
+        }
+      }
+    },
+    "Embedded (Type 3 glyph descriptions)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingebettet (Type-3-Zeichenbeschreibungen)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embedded (Type 3 glyph descriptions)"
+          }
+        }
+      }
+    },
+    "Embedded file properties" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigenschaften eingebetteter Dateien"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embedded file properties"
+          }
+        }
+      }
+    },
+    "Embedded files were removed. This also removes embedded invoice data such as ZUGFeRD." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eingebettete Dateien wurden entfernt. Das betrifft auch eingebettete Rechnungsdaten wie ZUGFeRD."
+          }
+        }
+      }
+    },
+    "Embedded JPEG 2000 alpha requires a separate alpha conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der eingebettete Alphakanal des JPEG-2000-Bildes benötigt eine gesonderte Umwandlung."
+          }
+        }
+      }
+    },
+    "Embedded subset" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als Untergruppe eingebettet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embedded subset"
+          }
+        }
+      }
+    },
+    "Embedding" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einbettung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Embedding"
           }
         }
       }
@@ -1257,6 +2372,74 @@
         }
       }
     },
+    "Encrypted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encrypted"
+          }
+        }
+      }
+    },
+    "Encryption algorithm / key length" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselungsverfahren / Schlüssellänge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encryption algorithm / key length"
+          }
+        }
+      }
+    },
+    "Encryption details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselungsdetails"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encryption details"
+          }
+        }
+      }
+    },
+    "Encryption dictionary and declared permissions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsselung und deklarierte Berechtigungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Encryption dictionary and declared permissions"
+          }
+        }
+      }
+    },
     "Encryption requires an owner or user password." : {
       "localizations" : {
         "de" : {
@@ -1283,6 +2466,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Geben Sie einen Namen für die neuen Benutzer-Joboptions ein."
+          }
+        }
+      }
+    },
+    "Enter the PDF opening password." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie das Kennwort zum Öffnen des PDFs ein."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the PDF opening password."
+          }
+        }
+      }
+    },
+    "Entries" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einträge"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entries"
           }
         }
       }
@@ -1547,6 +2764,50 @@
         }
       }
     },
+    "Export complete report" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollständigen Bericht exportieren"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export complete report"
+          }
+        }
+      }
+    },
+    "Export edited PDF…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bearbeitetes PDF exportieren …"
+          }
+        }
+      }
+    },
+    "Export report…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bericht exportieren…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Export report…"
+          }
+        }
+      }
+    },
     "Export with Save Dialog…" : {
       "localizations" : {
         "de" : {
@@ -1599,6 +2860,40 @@
         }
       }
     },
+    "File" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datei"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File"
+          }
+        }
+      }
+    },
+    "File name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateiname"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File name"
+          }
+        }
+      }
+    },
     "File options" : {
       "localizations" : {
         "de" : {
@@ -1609,12 +2904,62 @@
         }
       }
     },
+    "File size" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateigröße"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File size"
+          }
+        }
+      }
+    },
+    "File system dates" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dateisystem-Zeitangaben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "File system dates"
+          }
+        }
+      }
+    },
     "Finder will open and select the three iPS2PDF container folders. Move them to the Trash to reset the app and both extensions. iPS2PDF will quit before you delete them." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Finder wird geöffnet und markiert die drei Container-Ordner von iPS2PDF. Verschieben Sie sie in den Papierkorb, um die App und beide Erweiterungen zurückzusetzen. iPS2PDF wird beendet, bevor Sie die Ordner löschen."
+          }
+        }
+      }
+    },
+    "Flags" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flags"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Flags"
           }
         }
       }
@@ -1665,12 +3010,70 @@
         }
       }
     },
+    "Font program" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schriftprogramm"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font program"
+          }
+        }
+      }
+    },
+    "Font type" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrifttyp"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font type"
+          }
+        }
+      }
+    },
+    "Font usage could not be determined." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Verwendung der Schrift konnte nicht ermittelt werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Font usage could not be determined."
+          }
+        }
+      }
+    },
     "Fonts" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schriften"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fonts"
           }
         }
       }
@@ -1695,6 +3098,57 @@
         }
       }
     },
+    "Form field" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formularfeld"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Form field"
+          }
+        }
+      }
+    },
+    "Form filling" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formulare ausfüllen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Form filling"
+          }
+        }
+      }
+    },
+    "Formatted text (.rtf)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formatierter Text (.rtf)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Formatted text (.rtf)"
+          }
+        }
+      }
+    },
     "From" : {
       "localizations" : {
         "de" : {
@@ -1705,12 +3159,39 @@
         }
       }
     },
+    "Fully embedded (PDF declaration)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vollständig eingebettet (laut PDF)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fully embedded (PDF declaration)"
+          }
+        }
+      }
+    },
     "General" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Allgemein"
+          }
+        }
+      }
+    },
+    "Gentle" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schonend"
           }
         }
       }
@@ -1791,6 +3272,23 @@
         }
       }
     },
+    "Header version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version im Dateikopf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Header version"
+          }
+        }
+      }
+    },
     "Height" : {
       "localizations" : {
         "de" : {
@@ -1821,12 +3319,56 @@
         }
       }
     },
+    "Hyper Compress source code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quellcode von Hyper Compress"
+          }
+        }
+      }
+    },
+    "ICC header unreadable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Dateikopf nicht lesbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC header unreadable"
+          }
+        }
+      }
+    },
     "ICC profiles" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ICC-Profile"
+          }
+        }
+      }
+    },
+    "ICC version" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Version"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC version"
           }
         }
       }
@@ -1857,6 +3399,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ignorieren"
+          }
+        }
+      }
+    },
+    "Illuminant XYZ" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beleuchtung XYZ"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Illuminant XYZ"
+          }
+        }
+      }
+    },
+    "Image" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Image"
           }
         }
       }
@@ -1957,12 +3533,66 @@
         }
       }
     },
+    "Inherited" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geerbt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inherited"
+          }
+        }
+      }
+    },
     "iPS2PDF" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iPS2PDF"
+          }
+        }
+      }
+    },
+    "iPS2PDF source code" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quellcode von iPS2PDF"
+          }
+        }
+      }
+    },
+    "JavaScript (not executed)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript (nicht ausgeführt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JavaScript (not executed)"
+          }
+        }
+      }
+    },
+    "JBIG2 segments with an indefinite length require decoder-assisted metadata cleanup." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JBIG2-Segmente mit unbestimmter Länge benötigen eine Metadatenbereinigung mit zusätzlicher Decoder-Unterstützung."
           }
         }
       }
@@ -2019,6 +3649,17 @@
         }
       }
     },
+    "JPEG 2000 masks require a lossless alpha conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "JPEG-2000-Masken benötigen eine verlustfreie Alphaumwandlung."
+          }
+        }
+      }
+    },
     "JPXEncode" : {
       "localizations" : {
         "de" : {
@@ -2035,12 +3676,46 @@
         }
       }
     },
+    "Keywords" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stichwörter"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keywords"
+          }
+        }
+      }
+    },
     "Known additional settings" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bekannte zusätzliche Einstellungen"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sprache"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Language"
           }
         }
       }
@@ -2071,6 +3746,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Links"
+          }
+        }
+      }
+    },
+    "Licenses" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lizenzen"
+          }
+        }
+      }
+    },
+    "Location" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fundstelle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Location"
+          }
+        }
+      }
+    },
+    "Locked" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesperrt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Locked"
           }
         }
       }
@@ -2163,6 +3882,23 @@
         }
       }
     },
+    "Manufacturer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hersteller"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manufacturer"
+          }
+        }
+      }
+    },
     "Map device gray to black" : {
       "localizations" : {
         "de" : {
@@ -2189,6 +3925,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Mittel"
+          }
+        }
+      }
+    },
+    "Metadata encrypted" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadaten verschlüsselt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadata encrypted"
           }
         }
       }
@@ -2273,6 +4026,40 @@
         }
       }
     },
+    "Model" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modell"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Model"
+          }
+        }
+      }
+    },
+    "Modified" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geändert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modified"
+          }
+        }
+      }
+    },
     "Monochrome downsample threshold" : {
       "localizations" : {
         "de" : {
@@ -2343,6 +4130,108 @@
         }
       }
     },
+    "Nested data (depth limit)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschachtelte Daten (Tiefenlimit)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nested data (depth limit)"
+          }
+        }
+      }
+    },
+    "Nested reference" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschachtelter Verweis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nested reference"
+          }
+        }
+      }
+    },
+    "No" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nein"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No"
+          }
+        }
+      }
+    },
+    "No entries found" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Einträge gefunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No entries found"
+          }
+        }
+      }
+    },
+    "No standard specified" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Standard angegeben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No standard specified"
+          }
+        }
+      }
+    },
+    "No use detected" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keine Verwendung gefunden"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No use detected"
+          }
+        }
+      }
+    },
     "None" : {
       "localizations" : {
         "de" : {
@@ -2353,12 +4242,73 @@
         }
       }
     },
+    "Not determinable" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht ermittelbar"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not determinable"
+          }
+        }
+      }
+    },
+    "Not embedded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht eingebettet"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not embedded"
+          }
+        }
+      }
+    },
     "Not set" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht festgelegt"
+          }
+        }
+      }
+    },
+    "Not specified" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht angegeben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not specified"
+          }
+        }
+      }
+    },
+    "Notice" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hinweis"
           }
         }
       }
@@ -2437,6 +4387,23 @@
         }
       }
     },
+    "Object metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Objektmetadaten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Object metadata"
+          }
+        }
+      }
+    },
     "Off" : {
       "localizations" : {
         "de" : {
@@ -2463,7 +4430,25 @@
         }
       }
     },
+    "Open" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Öffnen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Open"
+          }
+        }
+      }
+    },
     "open_file" : {
+      "extractionState" : "stale",
       "localizations" : {
         "de" : {
           "stringUnit" : {
@@ -2499,12 +4484,32 @@
         }
       }
     },
+    "Original" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original"
+          }
+        }
+      }
+    },
     "Original source" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Originalquelle"
+          }
+        }
+      }
+    },
+    "Original: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Original: %@"
           }
         }
       }
@@ -2520,11 +4525,18 @@
       }
     },
     "Output intent" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Ausgabebedingung"
+            "value" : "Output-Intent"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Output intent"
           }
         }
       }
@@ -2539,6 +4551,34 @@
         }
       }
     },
+    "Overprinting requires a dedicated color conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überdruckende Farben benötigen eine gesonderte Farbumrechnung."
+          }
+        }
+      }
+    },
+    "Overview" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übersicht"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Overview"
+          }
+        }
+      }
+    },
     "Owner password" : {
       "localizations" : {
         "de" : {
@@ -2549,12 +4589,79 @@
         }
       }
     },
+    "Page" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seite"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page"
+          }
+        }
+      }
+    },
     "Page boxes" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seitenrahmen"
+          }
+        }
+      }
+    },
+    "Page count" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenzahl"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page count"
+          }
+        }
+      }
+    },
+    "Page formats (CropBox, including rotation)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenformate (CropBox, mit Drehung)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page formats (CropBox, including rotation)"
+          }
+        }
+      }
+    },
+    "Page label" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenbezeichnung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Page label"
           }
         }
       }
@@ -2580,11 +4687,18 @@
       }
     },
     "Pages" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pages"
           }
         }
       }
@@ -2609,6 +4723,57 @@
         }
       }
     },
+    "Password" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kennwort"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password"
+          }
+        }
+      }
+    },
+    "Password required" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kennwort erforderlich"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password required"
+          }
+        }
+      }
+    },
+    "Password required. Protected properties are not yet readable." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kennwort erforderlich. Geschützte Eigenschaften sind noch nicht lesbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Password required. Protected properties are not yet readable."
+          }
+        }
+      }
+    },
     "Passwords must not be passed to Ghostscript while encryption is disabled." : {
       "localizations" : {
         "de" : {
@@ -2625,6 +4790,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF-Kompatibilität"
+          }
+        }
+      }
+    },
+    "PDF information" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Informationen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF information"
+          }
+        }
+      }
+    },
+    "PDF processing exceeded its time or file-size limit." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF-Verarbeitung hat das Zeitlimit oder die zulässige Dateigröße überschritten."
+          }
+        }
+      }
+    },
+    "PDF processing exceeded its time or resource limit." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF-Verarbeitung hat ihre Zeit- oder Ressourcengrenze überschritten."
+          }
+        }
+      }
+    },
+    "PDF processing licenses" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lizenzen der PDF-Verarbeitung"
+          }
+        }
+      }
+    },
+    "PDF producer" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Erzeuger"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF producer"
           }
         }
       }
@@ -2656,11 +4886,18 @@
       }
     },
     "PDF version" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF-Version"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF version"
           }
         }
       }
@@ -2971,6 +5208,17 @@
         }
       }
     },
+    "PDF/UA requires a meaningful document title; none could be preserved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/UA erfordert einen aussagekräftigen Dokumenttitel; keiner konnte erhalten werden."
+          }
+        }
+      }
+    },
     "PDF/X condition identifier" : {
       "localizations" : {
         "de" : {
@@ -3018,6 +5266,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF/X-Registrierung"
+          }
+        }
+      }
+    },
+    "PDF/X requires an unambiguous trapped state; none could be preserved" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF/X erfordert einen eindeutigen Überfüllungsstatus; keiner konnte erhalten werden."
           }
         }
       }
@@ -3190,6 +5449,57 @@
         }
       }
     },
+    "Permission source" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Quelle der Berechtigungen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permission source"
+          }
+        }
+      }
+    },
+    "Plain text (.txt)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unformatierter Text (.txt)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plain text (.txt)"
+          }
+        }
+      }
+    },
+    "Platform" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Plattform"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platform"
+          }
+        }
+      }
+    },
     "Points" : {
       "localizations" : {
         "de" : {
@@ -3240,6 +5550,27 @@
         }
       }
     },
+    "Preblended image masks require a dedicated matte conversion." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bereits mit einer Hintergrundfarbe verrechnete Bildmasken benötigen eine gesonderte Umwandlung."
+          }
+        }
+      }
+    },
+    "Preparing preview…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vorschau wird erstellt …"
+          }
+        }
+      }
+    },
     "Preserve" : {
       "localizations" : {
         "de" : {
@@ -3266,6 +5597,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CMYK-Werte für kalibrierte CMYK-Farbräume beibehalten"
+          }
+        }
+      }
+    },
+    "Preserve conformity" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Konformität erhalten"
           }
         }
       }
@@ -3340,6 +5681,16 @@
         }
       }
     },
+    "Preserve PDF conformity?" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Konformität erhalten?"
+          }
+        }
+      }
+    },
     "Preserve separations" : {
       "localizations" : {
         "de" : {
@@ -3390,6 +5741,67 @@
         }
       }
     },
+    "Preserving conformity retains only the metadata required by the declared PDF standard. The original file remains unchanged until you explicitly save or export." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beim Erhalten der Konformität bleiben nur die vom angegebenen PDF-Standard benötigten Metadaten bestehen. Die Originaldatei bleibt unverändert, bis du ausdrücklich speicherst oder exportierst."
+          }
+        }
+      }
+    },
+    "Printing (high quality)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drucken (hohe Qualität)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Printing (high quality)"
+          }
+        }
+      }
+    },
+    "Printing (low quality)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drucken (geringe Qualität)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Printing (low quality)"
+          }
+        }
+      }
+    },
+    "Problems" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Probleme"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Problems"
+          }
+        }
+      }
+    },
     "Process color model" : {
       "localizations" : {
         "de" : {
@@ -3426,6 +5838,91 @@
         }
       }
     },
+    "Profile class" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilklasse"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile class"
+          }
+        }
+      }
+    },
+    "Profile ID" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profil-ID"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile ID"
+          }
+        }
+      }
+    },
+    "Profile size" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilgröße"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile size"
+          }
+        }
+      }
+    },
+    "Profile status" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profilstatus"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile status"
+          }
+        }
+      }
+    },
+    "Property" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eigenschaft"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Property"
+          }
+        }
+      }
+    },
     "Random numbers" : {
       "localizations" : {
         "de" : {
@@ -3438,6 +5935,89 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Random numbers"
+          }
+        }
+      }
+    },
+    "Reading page %lld of %lld" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seite %lld von %lld wird gelesen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading page %lld of %lld"
+          }
+        }
+      }
+    },
+    "Reading PDF information…" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Informationen werden gelesen…"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reading PDF information…"
+          }
+        }
+      }
+    },
+    "Redo PDF edit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Bearbeitung wiederholen"
+          }
+        }
+      }
+    },
+    "Reference" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verweis"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reference"
+          }
+        }
+      }
+    },
+    "Registration or non-painting colorants require a dedicated conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passermarken- oder nicht druckende Farbauszüge benötigen eine gesonderte Umwandlung."
+          }
+        }
+      }
+    },
+    "Registration or non-painting image colorants require a dedicated conversion." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passermarken- oder nicht druckende Bildfarbauszüge benötigen eine gesonderte Umwandlung."
           }
         }
       }
@@ -3458,6 +6038,43 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Entfernen"
+          }
+        }
+      }
+    },
+    "Remove metadata" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadaten entfernen"
+          }
+        }
+      }
+    },
+    "Removing metadata…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Metadaten werden entfernt …"
+          }
+        }
+      }
+    },
+    "Rendering intent" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendering-Intent"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rendering intent"
           }
         }
       }
@@ -3512,6 +6129,43 @@
         }
       }
     },
+    "Resource on pages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als Ressource auf Seiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Resource on pages"
+          }
+        }
+      }
+    },
+    "Result" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergebnis"
+          }
+        }
+      }
+    },
+    "Result: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergebnis: %@"
+          }
+        }
+      }
+    },
     "RGB" : {
       "localizations" : {
         "de" : {
@@ -3528,6 +6182,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Rechts"
+          }
+        }
+      }
+    },
+    "Rotation" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Drehung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotation"
           }
         }
       }
@@ -3572,6 +6243,40 @@
         }
       }
     },
+    "Save .rtf" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern .rtf"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save .rtf"
+          }
+        }
+      }
+    },
+    "Save .txt" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichern .txt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Save .txt"
+          }
+        }
+      }
+    },
     "Save As..." : {
       "localizations" : {
         "de" : {
@@ -3598,6 +6303,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Joboptions sichern unter"
+          }
+        }
+      }
+    },
+    "Security" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherheit"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Security"
+          }
+        }
+      }
+    },
+    "Security handler" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sicherheitshandler"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Security handler"
           }
         }
       }
@@ -3630,6 +6369,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seed"
+          }
+        }
+      }
+    },
+    "Select PDFs to display their information." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie PDFs aus, deren Informationen angezeigt werden sollen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select PDFs to display their information."
           }
         }
       }
@@ -3690,6 +6446,17 @@
         }
       }
     },
+    "Shading paints require a dedicated monochrome conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Farbverläufe benötigen eine gesonderte Schwarzweiß-Umwandlung."
+          }
+        }
+      }
+    },
     "share" : {
       "localizations" : {
         "de" : {
@@ -3702,6 +6469,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Share"
+          }
+        }
+      }
+    },
+    "Show fonts that are not embedded" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nicht eingebettete Schriften anzeigen"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Show fonts that are not embedded"
           }
         }
       }
@@ -3726,12 +6510,105 @@
         }
       }
     },
+    "Signature (not validated)" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signatur (ungeprüft)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signature (not validated)"
+          }
+        }
+      }
+    },
+    "Signature value present (not validated)" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signaturwert vorhanden (nicht geprüft)"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Signature value present (not validated)"
+          }
+        }
+      }
+    },
     "Smooth monochrome images" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Monochrombilder glätten"
+          }
+        }
+      }
+    },
+    "Some resources could not be read or reached the analysis limit." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einige Ressourcen konnten nicht gelesen werden oder haben das Auswertungslimit erreicht."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some resources could not be read or reached the analysis limit."
+          }
+        }
+      }
+    },
+    "Some signature appearances could not be preserved consistently across PDF readers." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Darstellung einiger Signaturen konnte nicht in allen PDF-Readern erhalten werden."
+          }
+        }
+      }
+    },
+    "Specified" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Explizit angegeben"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Specified"
+          }
+        }
+      }
+    },
+    "Specified / inherited" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Angegeben / geerbt"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Specified / inherited"
           }
         }
       }
@@ -3756,6 +6633,23 @@
         }
       }
     },
+    "Standard according to metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard laut Metadaten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard according to metadata"
+          }
+        }
+      }
+    },
     "Standards" : {
       "localizations" : {
         "de" : {
@@ -3772,6 +6666,67 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Standardkonformität"
+          }
+        }
+      }
+    },
+    "Stream" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datenstrom"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stream"
+          }
+        }
+      }
+    },
+    "Strong" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Stark"
+          }
+        }
+      }
+    },
+    "Structure" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Struktur"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Structure"
+          }
+        }
+      }
+    },
+    "Subject" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thema"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subject"
           }
         }
       }
@@ -3806,6 +6761,40 @@
         }
       }
     },
+    "Subset prefix" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Untergruppenpräfix"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subset prefix"
+          }
+        }
+      }
+    },
+    "Tag table" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag-Tabelle"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tag table"
+          }
+        }
+      }
+    },
     "Tags" : {
       "localizations" : {
         "de" : {
@@ -3826,12 +6815,75 @@
         }
       }
     },
+    "The bundled license notices could not be read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die enthaltenen Lizenzhinweise konnten nicht gelesen werden."
+          }
+        }
+      }
+    },
+    "The catalog PDF version could not be interpreted." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF-Version im Katalog konnte nicht interpretiert werden."
+          }
+        }
+      }
+    },
     "The catalogue targets Ghostscript %@. Missing settings are inserted into the active user Joboptions; unrelated source bytes stay unchanged." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der Katalog gilt für Ghostscript %@. Fehlende Einstellungen werden in die aktiven Benutzer-Joboptions eingefügt; nicht betroffene Quelldaten bleiben unverändert."
+          }
+        }
+      }
+    },
+    "The conformity metadata exceeds the processing limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konformitätsmetadaten überschreiten das Verarbeitungslimit."
+          }
+        }
+      }
+    },
+    "The conformity metadata is malformed or contains a DTD" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konformitätsmetadaten sind fehlerhaft oder enthalten eine DTD."
+          }
+        }
+      }
+    },
+    "The conformity metadata is not a readable XMP stream" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konformitätsmetadaten sind kein lesbarer XMP-Datenstrom."
+          }
+        }
+      }
+    },
+    "The declared PDF conformity cannot safely be preserved." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die angegebene PDF-Konformität kann nicht zuverlässig erhalten werden."
           }
         }
       }
@@ -3852,6 +6904,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die Geräteauflösung muss zwei positive Werte enthalten."
+          }
+        }
+      }
+    },
+    "The encryption dictionary could not be read completely." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Verschlüsselungsdictionary konnte nicht vollständig gelesen werden."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The encryption dictionary could not be read completely."
           }
         }
       }
@@ -3936,6 +7004,16 @@
         }
       }
     },
+    "The original protection could not be preserved and was removed. Review the result before saving." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der ursprüngliche Schutz konnte nicht erhalten werden und wurde entfernt. Prüfe das Ergebnis, bevor du speicherst."
+          }
+        }
+      }
+    },
     "The page range is incomplete or invalid." : {
       "localizations" : {
         "de" : {
@@ -3952,6 +7030,136 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Das Seitenformat muss zwei positive Werte enthalten."
+          }
+        }
+      }
+    },
+    "The password is incorrect. Please try again." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Kennwort ist falsch. Bitte versuchen Sie es erneut."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The password is incorrect. Please try again."
+          }
+        }
+      }
+    },
+    "The PDF changed while the preview was being prepared. Open compression again." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das PDF wurde während der Vorschauerstellung geändert. Öffne die Kompression erneut."
+          }
+        }
+      }
+    },
+    "The PDF conformity declaration is incomplete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konformitätskennung der PDF ist unvollständig."
+          }
+        }
+      }
+    },
+    "The PDF contains conflicting conformity metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF enthält widersprüchliche Konformitätsmetadaten."
+          }
+        }
+      }
+    },
+    "The PDF could not be processed. The original is unchanged." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das PDF konnte nicht verarbeitet werden. Das Original ist unverändert."
+          }
+        }
+      }
+    },
+    "The PDF helper returned an invalid result." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der PDF-Hilfsprozess hat ein ungültiges Ergebnis zurückgegeben."
+          }
+        }
+      }
+    },
+    "The PDF requires a valid opening password." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das PDF erfordert ein gültiges Kennwort zum Öffnen."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The PDF requires a valid opening password."
+          }
+        }
+      }
+    },
+    "The PDF/A and PDF/UA declarations conflict" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/A- und PDF/UA-Kennungen widersprechen einander."
+          }
+        }
+      }
+    },
+    "The PDF/A and PDF/X declarations require incompatible PDF versions" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/A- und PDF/X-Kennungen erfordern unvereinbare PDF-Versionen."
+          }
+        }
+      }
+    },
+    "The PDF/UA document title is empty or conflicting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der PDF/UA-Dokumenttitel fehlt oder ist widersprüchlich."
+          }
+        }
+      }
+    },
+    "The PDF/X Info declaration is not a text string" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Kennung im Info-Verzeichnis ist keine Textzeichenfolge."
           }
         }
       }
@@ -3976,12 +7184,66 @@
         }
       }
     },
+    "The PDF/X rendition class is conflicting" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Ausgabeklasse ist widersprüchlich."
+          }
+        }
+      }
+    },
+    "The PDF/X rendition class is empty" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Ausgabeklasse ist leer."
+          }
+        }
+      }
+    },
     "The PDF/X validation switches must match the selected standard." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Die PDF/X-Prüfschalter müssen dem ausgewählten Standard entsprechen."
+          }
+        }
+      }
+    },
+    "The PDF/X version and conformance declarations conflict" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PDF/X-Version und die Konformitätskennung widersprechen einander."
+          }
+        }
+      }
+    },
+    "The required default document title cannot be preserved consistently" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der erforderliche Standard-Dokumenttitel kann nicht widerspruchsfrei erhalten werden."
+          }
+        }
+      }
+    },
+    "The result no longer claims the original PDF conformity." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Ergebnis weist die ursprüngliche PDF-Konformität nicht mehr aus."
           }
         }
       }
@@ -4066,6 +7328,28 @@
         }
       }
     },
+    "The XMP contains a non-document RDF subject that cannot be classified safely" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die XMP-Metadaten enthalten ein RDF-Subjekt außerhalb des Dokuments, das nicht sicher zugeordnet werden kann."
+          }
+        }
+      }
+    },
+    "The XMP hierarchy exceeds the processing limit" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die XMP-Hierarchie überschreitet das Verarbeitungslimit."
+          }
+        }
+      }
+    },
     "These recognizable keys are preserved even though they have no dedicated Distiller control." : {
       "localizations" : {
         "de" : {
@@ -4076,12 +7360,160 @@
         }
       }
     },
+    "This conformity family cannot yet be preserved safely" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Konformitätsfamilie kann noch nicht sicher erhalten werden."
+          }
+        }
+      }
+    },
+    "This early PDF/X declaration is unsupported or incomplete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese ältere PDF/X-Kennung wird nicht unterstützt oder ist unvollständig."
+          }
+        }
+      }
+    },
+    "This Info-based conformity declaration cannot yet be preserved safely" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese Konformitätskennung im Info-Verzeichnis kann noch nicht sicher erhalten werden."
+          }
+        }
+      }
+    },
+    "This JPEG 2000 container has an unsupported box structure." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Containerstruktur dieses JPEG-2000-Bildes wird nicht unterstützt."
+          }
+        }
+      }
+    },
+    "This pattern requires a dedicated color conversion." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Muster benötigt eine gesonderte Farbumrechnung."
+          }
+        }
+      }
+    },
+    "This PDF contains a feature that cannot yet be processed safely. The original is unchanged." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese PDF enthält eine Funktion, die noch nicht sicher verarbeitet werden kann. Das Original bleibt unverändert."
+          }
+        }
+      }
+    },
+    "This PDF/A declaration is unsupported or incomplete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese PDF/A-Kennung wird nicht unterstützt oder ist unvollständig."
+          }
+        }
+      }
+    },
+    "This PDF/UA declaration is unsupported or incomplete" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese PDF/UA-Kennung wird nicht unterstützt oder ist unvollständig."
+          }
+        }
+      }
+    },
+    "This PDF/X variant requires additional conformity metadata support" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Konformitätsmetadaten dieser PDF/X-Variante werden noch nicht vollständig unterstützt."
+          }
+        }
+      }
+    },
     "This setting is not a supported Ghostscript value." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Diese Einstellung enthält keinen von Ghostscript unterstützten Wert."
+          }
+        }
+      }
+    },
+    "This shading requires a dedicated color conversion." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Farbverlauf benötigt eine gesonderte Farbumrechnung."
+          }
+        }
+      }
+    },
+    "This transparency blending space requires a dedicated color conversion." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieser Transparenzfarbraum benötigt eine gesonderte Farbumrechnung."
+          }
+        }
+      }
+    },
+    "Threshold" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellwert"
+          }
+        }
+      }
+    },
+    "Title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Titel"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Title"
           }
         }
       }
@@ -4116,12 +7548,40 @@
         }
       }
     },
+    "Transfer functions require a dedicated monochrome conversion" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Übertragungsfunktionen benötigen eine gesonderte Schwarzweiß-Umwandlung."
+          }
+        }
+      }
+    },
     "Transparency requires PDF 1.4 or newer." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Transparenz erfordert PDF 1.4 oder neuer."
+          }
+        }
+      }
+    },
+    "Trapped" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Überfüllung"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trapped"
           }
         }
       }
@@ -4162,12 +7622,43 @@
         }
       }
     },
+    "Try again" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Erneut versuchen"
+          }
+        }
+      }
+    },
+    "Type 3 glyph colors cannot be converted while preserving the font program unchanged." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Farben dieser Type-3-Schrift können nicht umgewandelt werden, ohne das Schriftprogramm zu verändern."
+          }
+        }
+      }
+    },
     "Unclassified PostScript fragments are read-only and are preserved byte-for-byte." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Nicht klassifizierte PostScript-Fragmente sind schreibgeschützt und bleiben bytegenau erhalten."
+          }
+        }
+      }
+    },
+    "Undo PDF edit" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Bearbeitung rückgängig machen"
           }
         }
       }
@@ -4188,6 +7679,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Unbekannt"
+          }
+        }
+      }
+    },
+    "Unknown — Type 3 text transformation not evaluated" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unbekannt – Texttransformation der Typ-3-Glyphe nicht ausgewertet"
+          }
+        }
+      }
+    },
+    "Unsupported JBIG2 extension metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Diese JBIG2-Erweiterungsmetadaten werden nicht unterstützt."
           }
         }
       }
@@ -4232,12 +7744,39 @@
         }
       }
     },
+    "Use result" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ergebnis übernehmen"
+          }
+        }
+      }
+    },
     "Use trim box with offsets" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Endformatrahmen mit Versatz verwenden"
+          }
+        }
+      }
+    },
+    "Used on pages" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwendet auf Seiten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Used on pages"
           }
         }
       }
@@ -4289,11 +7828,18 @@
       }
     },
     "Value" : {
+      "extractionState" : "manual",
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Wert"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Value"
           }
         }
       }
@@ -4398,12 +7944,90 @@
         }
       }
     },
+    "XMP could not be fully parsed. The original text is available below." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP konnte nicht vollständig ausgewertet werden. Der Originaltext ist weiter unten verfügbar."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP could not be fully parsed. The original text is available below."
+          }
+        }
+      }
+    },
+    "XMP metadata" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP-Metadaten"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP metadata"
+          }
+        }
+      }
+    },
+    "XMP metadata is present but could not be decoded." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP-Metadaten sind vorhanden, konnten aber nicht dekodiert werden."
+          }
+        }
+      }
+    },
+    "XMP properties" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP-Eigenschaften"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "XMP properties"
+          }
+        }
+      }
+    },
     "Y" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "Y"
+          }
+        }
+      }
+    },
+    "Yes" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ja"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yes"
           }
         }
       }
