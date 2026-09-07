@@ -15,7 +15,7 @@
 namespace {
 std::mutex processingMutex;
 int32_t process(const char* input, const char* output, const char* password,
-                int32_t preserve, const ips2pdf::PDFCompressionPolicy* compression,
+                int32_t preserve, const ips2pdf::PDFCompressionPlan* compression,
                 IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result, int previewPage = -1) {
     if (!result) return IPS2PDF_PROCESSING_INVALID_REQUEST;
     *result = {};
@@ -35,6 +35,7 @@ int32_t process(const char* input, const char* output, const char* password,
         if (finished.sanitization.signatureAppearancesMayDiffer) result->warnings |= IPS2PDF_WARNING_SIGNATURE_APPEARANCE;
         if (finished.compression.attachmentsRemoved) result->warnings |= IPS2PDF_WARNING_ATTACHMENTS_REMOVED;
         if (finished.compression.invoiceAttachmentRemoved) result->warnings |= IPS2PDF_WARNING_INVOICE_ATTACHMENT_REMOVED;
+        result->shared_resources_from_earlier_pages = finished.compression.sharedResourcesFromEarlierPages;
         result->status = IPS2PDF_PROCESSING_SUCCESS;
     } catch (const ips2pdf::PDFProcessingStopped& error) {
         result->status = error.cancelled ? IPS2PDF_PROCESSING_CANCELLED : IPS2PDF_PROCESSING_LIMIT_EXCEEDED;
@@ -60,19 +61,38 @@ int32_t ips2pdf_pdf_remove_metadata(const char* input, const char* output, const
     return process(input, output, password, preserve, nullptr, control, result);
 }
 int32_t ips2pdf_pdf_compress(const char* input, const char* output, const char* password,
-                            int32_t level, int32_t monochrome, int32_t threshold,
+                            int32_t level, int32_t monochrome, int32_t threshold, int32_t contrast,
+                            const IPS2PDFPageCompressionOverride* pageOverrides, uint32_t pageOverrideCount,
                             IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result) {
-    return ips2pdf_pdf_compress_preview(input, output, password, level, monochrome, threshold, -1, control, result);
+    return ips2pdf_pdf_compress_preview(input, output, password, level, monochrome, threshold, contrast,
+                                        pageOverrides, pageOverrideCount, -1, control, result);
 }
 int32_t ips2pdf_pdf_compress_preview(const char* input, const char* output, const char* password,
-                                    int32_t level, int32_t monochrome, int32_t threshold, int32_t pageIndex,
+                                    int32_t level, int32_t monochrome, int32_t threshold, int32_t contrast,
+                                    const IPS2PDFPageCompressionOverride* pageOverrides, uint32_t pageOverrideCount,
+                                    int32_t pageIndex,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result) {
-    if (level < 0 || level > 2 || monochrome < 0 || monochrome > 1 || threshold < 0 || threshold > 100 || pageIndex < -1) {
+    if (level < 0 || level > 2 || monochrome < 0 || monochrome > 1 || threshold < 0 || threshold > 100 ||
+        contrast < -50 || contrast > 50 || pageIndex < -1 || pageOverrideCount > 100000 ||
+        (pageOverrideCount > 0 && !pageOverrides)) {
         if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
         return IPS2PDF_PROCESSING_INVALID_REQUEST;
     }
-    ips2pdf::PDFCompressionPolicy policy{static_cast<ips2pdf::PDFCompressionLevel>(level), monochrome != 0, threshold};
-    return process(input, output, password, 0, &policy, control, result, pageIndex);
+    ips2pdf::PDFCompressionPlan plan{{static_cast<ips2pdf::PDFCompressionLevel>(level), monochrome != 0, threshold, contrast}, {}};
+    int32_t previousPage = -1;
+    for (uint32_t index = 0; index < pageOverrideCount; ++index) {
+        const auto& item = pageOverrides[index];
+        if (item.page_index <= previousPage || item.level < 0 || item.level > 2 || item.monochrome < 0 || item.monochrome > 1 ||
+            item.threshold < 0 || item.threshold > 100 || item.contrast < -50 || item.contrast > 50) {
+            if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
+            return IPS2PDF_PROCESSING_INVALID_REQUEST;
+        }
+        previousPage = item.page_index;
+        plan.pages.emplace(item.page_index, ips2pdf::PDFCompressionPolicy{
+            static_cast<ips2pdf::PDFCompressionLevel>(item.level), item.monochrome != 0,
+            item.threshold, item.contrast});
+    }
+    return process(input, output, password, 0, &plan, control, result, pageIndex);
 }
 
 int32_t ips2pdf_pdf_extract_resource(const char* input, const char* output, const char* password,

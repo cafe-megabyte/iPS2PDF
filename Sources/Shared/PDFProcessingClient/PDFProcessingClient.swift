@@ -45,6 +45,7 @@ struct PDFProcessingClient: Sendable {
 
     func process(_ revision: PDFEditingRevision, operation: PDFProcessingRequest.Operation,
                  preserveConformity: Bool, compression: PDFCompressionOptions = .init(),
+                 pageCompressionOverrides: [PDFPageCompressionOverride] = [],
                  password: String?, previewPage: Int? = nil) async throws -> PDFEditingRevision {
         guard revision.byteCount <= 1_073_741_824 else { throw PDFProcessingError.limitExceeded }
         try Task.checkCancellation()
@@ -60,7 +61,9 @@ struct PDFProcessingClient: Sendable {
         defer { withExtendedLifetime(job) {} }
         try Task.checkCancellation()
         let request = PDFProcessingRequest(jobID: job.id, operation: operation,
-                                           preserveConformity: preserveConformity, compression: compression, previewPage: previewPage)
+                                           preserveConformity: preserveConformity, compression: compression,
+                                           pageCompressionOverrides: pageCompressionOverrides,
+                                           previewPage: previewPage)
         guard request.isValid else { throw PDFProcessingError.failed }
         let reply = try await send(request, password: password)
         try Task.checkCancellation()
@@ -80,7 +83,8 @@ struct PDFProcessingClient: Sendable {
                   reply.outputBytes > 0, reply.outputBytes <= 2_147_483_648,
                   Int64(properties.fileSize ?? 0) == reply.outputBytes else { throw PDFProcessingError.invalidReply }
             let snapshot = try PDFInspectionInput(sourceURL: job.outputURL, displayFileName: revision.input.fileName)
-            return try PDFEditingRevision(input: snapshot, warnings: reply.warnings)
+            return try PDFEditingRevision(input: snapshot, warnings: reply.warnings,
+                                          sharedResourcesFromEarlierPages: reply.sharedResourcesFromEarlierPages)
         }.value
         try Task.checkCancellation()
         return candidate

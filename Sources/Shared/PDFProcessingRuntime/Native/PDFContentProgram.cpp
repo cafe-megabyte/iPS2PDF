@@ -68,8 +68,10 @@ private:
 class Census {
 public:
     explicit Census(QPDF& pdf) : pdf(pdf) {}
-    std::map<QPDFObjGen, PDFImagePlacement> run() {
-        for (auto page : QPDFPageDocumentHelper(pdf).getAllPages()) {
+    PDFContentCensus run() {
+        const auto pages = QPDFPageDocumentHelper(pdf).getAllPages();
+        for (currentPage = 0; currentPage < pages.size(); ++currentPage) {
+            auto page = pages[currentPage];
             auto userUnit = page.getObjectHandle().getKey("/UserUnit");
             const double unit = userUnit.isNull() ? 1 : userUnit.isNumber() ? userUnit.getNumericValue() : 0;
             if (!std::isfinite(unit) || unit <= 0) throw std::runtime_error("Invalid PDF UserUnit");
@@ -77,14 +79,15 @@ public:
             matrix.a = matrix.d = unit;
             visit(page.getObjectHandle(), page.getAttribute("/Resources", false), matrix, 0);
         }
-        return images;
+        return result;
     }
 private:
     QPDF& pdf;
-    std::map<QPDFObjGen, PDFImagePlacement> images;
+    PDFContentCensus result;
     std::map<QPDFObjGen, PDFContentProgram> programs;
     std::set<QPDFObjGen> active;
     uint64_t operations = 0;
+    size_t currentPage = 0;
 
     void visit(Object holder, Object resources, PDFPlacementMatrix matrix, unsigned depth) {
         checkPDFProcessing();
@@ -115,8 +118,12 @@ private:
                 if (!object.isStream()) throw std::runtime_error("Missing PDF XObject resource");
                 auto dictionary = object.getDict();
                 auto subtype = dictionary.getKey("/Subtype");
-                if (subtype.isNameAndEquals("/Image")) record(object, matrix);
+                if (subtype.isNameAndEquals("/Image")) {
+                    recordResource(object);
+                    record(object, matrix);
+                }
                 else if (subtype.isNameAndEquals("/Form")) {
+                    recordResource(object);
                     auto transform = dictionary.getKey("/Matrix");
                     const auto nested = transform.isNull() ? matrix : transform.isArray()
                         ? matrix.concatenated(PDFPlacementMatrix::fromOperands(transform.getArrayAsVector()))
@@ -130,14 +137,21 @@ private:
         if (!stack.empty()) throw std::runtime_error("Unbalanced PDF graphics state stack");
         active.erase(holder.getObjGen());
     }
+    void recordResource(Object object) {
+        const auto id = object.getObjGen();
+        result.firstResourcePages.try_emplace(id, currentPage);
+        result.resourcePages[id].insert(currentPage);
+    }
     void record(Object image, const PDFPlacementMatrix& matrix) {
         auto dictionary = image.getDict();
         auto width = dictionary.getKey("/Width"), height = dictionary.getKey("/Height");
         if (!width.isInteger() || !height.isInteger() || width.getIntValue() <= 0 || height.getIntValue() <= 0)
             throw std::runtime_error("Invalid PDF image dimensions");
-        auto& entry = images[image.getObjGen()];
+        auto& entry = result.images[image.getObjGen()];
         entry.image = image;
         ++entry.placements;
+        entry.firstPage = std::min(entry.firstPage, currentPage);
+        entry.pages.insert(currentPage);
         const double x = std::hypot(matrix.a, matrix.b), y = std::hypot(matrix.c, matrix.d);
         if (!std::isfinite(x) || !std::isfinite(y)) throw std::runtime_error("Invalid PDF image placement");
         if (x == 0 || y == 0) return;
@@ -175,7 +189,10 @@ PDFPlacementMatrix PDFPlacementMatrix::concatenated(const PDFPlacementMatrix& n)
     return {a*n.a + c*n.b, b*n.a + d*n.b, a*n.c + c*n.d, b*n.c + d*n.d,
             a*n.e + c*n.f + e, b*n.e + d*n.f + f};
 }
-std::map<QPDFObjGen, PDFImagePlacement> pdfImagePlacements(QPDF& pdf) { return Census(pdf).run(); }
+PDFContentCensus pdfContentCensus(QPDF& pdf) { return Census(pdf).run(); }
+std::map<QPDFObjGen, PDFImagePlacement> pdfImagePlacements(QPDF& pdf) {
+    return pdfContentCensus(pdf).images;
+}
 
 void externalizePDFInlineImages(QPDF& pdf) {
     struct Holder { Object object, resources; std::string context; };

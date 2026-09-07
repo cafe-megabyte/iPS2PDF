@@ -126,6 +126,7 @@ enum PDFInspectionService {
         }
         progress(report)
         var pageFormats: [String: Set<Int>] = [:]
+        var imagePlacementAnalysisComplete = true
         for index in 1...max(1, document.numberOfPages) {
             try Task.checkCancellation()
             guard let page = document.page(at: index) else { continue }
@@ -161,7 +162,18 @@ enum PDFInspectionService {
             inspector.markUsedFonts(scanner.usedFonts, page: index)
             inspector.addScannedImages(scanner, page: index)
             inspector.addScannedColors(scanner, page: index)
+            for image in scanner.images {
+                let identity = image.identity.hasPrefix("inline-") ? "page-\(index)-\(image.identity)" : image.identity
+                guard let horizontal = image.horizontalPPI, let vertical = image.verticalPPI,
+                      horizontal.isFinite, vertical.isFinite, horizontal > 0, vertical > 0 else {
+                    imagePlacementAnalysisComplete = false
+                    continue
+                }
+                let ppi = min(horizontal, vertical)
+                report.imageMinimumPlacementPPI[identity] = min(report.imageMinimumPlacementPPI[identity] ?? ppi, ppi)
+            }
             if scanner.incomplete {
+                imagePlacementAnalysisComplete = false
                 report.notices.append("\(location): " + String(localized: "Content usage could not be fully determined."))
             }
             report.pagesRead = index
@@ -176,6 +188,7 @@ enum PDFInspectionService {
             report.sections.insert(PDFInfoSection(id: "page-formats", category: .pages, title: String(localized: "Page formats (CropBox, including rotation)"), fields: fields), at: firstPage)
         }
         if inspector.limited { report.notices.append(String(localized: "Some resources could not be read or reached the analysis limit.")) }
+        report.imagePlacementAnalysisComplete = imagePlacementAnalysisComplete && report.pagesRead == document.numberOfPages
         report.isComplete = !inspector.limited && report.notices.isEmpty
         return report
     }

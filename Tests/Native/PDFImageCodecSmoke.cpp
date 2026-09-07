@@ -74,6 +74,13 @@ void runImageCodecSmoke(const std::filesystem::path& output) {
     }
     const auto resized = ips2pdf::resizePDFImage(decoded, 16, 8);
     require(resized.width == 16 && resized.height == 8 && decoded.width == 33, "Resampling changed its input");
+    auto contrasted = decoded;
+    ips2pdf::adjustPDFImageContrast(contrasted, 50);
+    require(contrasted.pixels[0] == 0 && contrasted.pixels[(16 * 4)] < decoded.pixels[(16 * 4)] &&
+            contrasted.pixels[(32 * 4)] == 255, "Positive scan contrast did not preserve endpoints and expand luminance");
+    ips2pdf::adjustPDFImageContrast(contrasted, -50);
+    require(contrasted.pixels[(16 * 4)] > 0 && contrasted.pixels[(16 * 4)] < 255,
+            "Negative scan contrast did not reduce luminance separation");
     auto jpeg = ips2pdf::encodePDFJPEG(resized, 94, false);
     QPDF result;
     result.emptyPDF();

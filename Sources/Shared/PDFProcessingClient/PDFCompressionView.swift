@@ -2,42 +2,18 @@ import SwiftUI
 
 @MainActor
 struct PDFCompressionView: View {
+    private enum EditingScope: Hashable { case document, page }
+
     @ObservedObject var session: PDFCompressionSession
     let close: () -> Void
     @State private var message: String?
     @State private var password = ""
     @State private var showsLicenses = false
+    @State private var editingScope: EditingScope = .document
 
     var body: some View {
         VStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(session.input.input.fileName).font(.headline).lineLimit(1)
-                ViewThatFits(in: .horizontal) {
-                    HStack { levelPicker; colorPicker }
-                    VStack { levelPicker; colorPicker }
-                }
-                if session.options.colorMode == .blackAndWhite {
-                    HStack {
-                        Text("Threshold")
-                        Slider(value: Binding(get: { Double(session.options.threshold) },
-                                              set: { session.options.threshold = Int($0.rounded()) }), in: 0...100, step: 1)
-                            .accessibilityLabel("Black and white threshold")
-                        Text(session.options.threshold.formatted()).monospacedDigit().frame(width: 32, alignment: .trailing)
-                    }
-                }
-                Text("Compression removes metadata, PDF conformity declarations, embedded files and color profiles. Embedded fonts are retained.")
-                    .font(.caption).foregroundStyle(.secondary)
-                HStack(alignment: .firstTextBaseline) {
-                    Text("Original: \(session.originalSize)")
-                    Spacer()
-                    if let size = session.resultSize {
-                        VStack(alignment: .trailing) {
-                            Text("Result: \(size)").bold()
-                            if let difference = session.sizeDifference { Text(difference).font(.caption) }
-                        }
-                    } else { Text("Calculating file size…").foregroundStyle(.secondary) }
-                }.font(.callout).monospacedDigit()
-            }.padding(.horizontal).padding(.top)
+            settings
             if let error = session.errorMessage {
                 VStack(spacing: 8) {
                     Text(error).foregroundStyle(.red).textSelection(.enabled)
@@ -51,9 +27,11 @@ struct PDFCompressionView: View {
                     Button("Open", action: unlock)
                 }.padding(.horizontal)
             }
-            PDFComparisonSurface(original: session.input, result: session.candidate ?? session.pagePreview,
-                                 previewPage: session.previewPageIndex, password: session.password,
-                                 currentPage: $session.currentPage)
+            PDFComparisonSurface(
+                original: session.input, result: session.candidate ?? session.pagePreview,
+                previewPage: session.previewPageIndex, password: session.password,
+                currentPage: $session.currentPage
+            )
             if let candidate = session.candidate, !candidate.warnings.isEmpty {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
@@ -63,20 +41,7 @@ struct PDFCompressionView: View {
                     }.frame(maxWidth: .infinity, alignment: .leading)
                 }.frame(maxHeight: 110).padding(.horizontal)
             }
-            HStack {
-                Button("Cancel") { session.cancel(); close() }.keyboardShortcut(.cancelAction)
-                Button("Licenses") { showsLicenses = true }.buttonStyle(.plain).font(.caption)
-                if session.isProcessing {
-                    ProgressView().controlSize(.small)
-                    Text(session.pagePreview == nil ? String(localized: "Preparing preview…") : String(localized: "Compressing complete PDF…"))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button("Use result") {
-                    if session.accept() { close() }
-                    else { message = String(localized: "The PDF changed while the preview was being prepared. Open compression again.") }
-                }.buttonStyle(.borderedProminent).disabled(!session.canAccept).keyboardShortcut(.defaultAction)
-            }.padding(.horizontal).padding(.bottom)
+            footer
         }
         .task { session.start() }
         .onDisappear { if !showsLicenses { session.cancel() } }
@@ -85,15 +50,264 @@ struct PDFCompressionView: View {
             Button("OK", role: .cancel) { message = nil }
         } message: { Text(message ?? "") }
     }
+
+    private var settings: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(session.input.input.fileName).font(.headline).lineLimit(1)
+#if os(macOS)
+            HStack(alignment: .top, spacing: 12) {
+                GroupBox("Document Standard") {
+                    CompressionOptionsEditor(
+                        options: $session.options,
+                        isLevelEnabled: { session.isLevelEnabled($0, for: session.options) }
+                    )
+                }
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                GroupBox(pageTitle) { pageSettings }
+                    .frame(maxWidth: .infinity, alignment: .topLeading)
+            }
+#else
+            Picker("Settings for", selection: $editingScope) {
+                Text("Document").tag(EditingScope.document)
+                Text(pageTitle).tag(EditingScope.page)
+            }
+            .pickerStyle(.segmented)
+            if editingScope == .document {
+                CompressionOptionsEditor(
+                    options: $session.options,
+                    isLevelEnabled: { session.isLevelEnabled($0, for: session.options) }
+                )
+            } else {
+                pageSettings
+            }
+#endif
+            Text("Compression removes metadata, PDF conformity declarations, embedded files and color profiles. Embedded fonts are retained.")
+                .font(.caption).foregroundStyle(.secondary)
+            documentSize
+        }
+        .padding(.horizontal)
+        .padding(.top)
+    }
+
+    private var pageTitle: String {
+        String.localizedStringWithFormat(
+            String(localized: "Page %lld of %lld"),
+            session.currentPageNumber, session.pageCount
+        )
+    }
+
+    private var pageSettings: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Picker(
+                "Page settings",
+                selection: Binding(
+                    get: { session.currentPageUsesIndividualSettings },
+                    set: { session.setCurrentPageUsesIndividualSettingsFromView($0) }
+                )
+            ) {
+                Text("Document Standard").tag(false)
+                Text("Individual").tag(true)
+            }
+            .pickerStyle(.segmented)
+
+            if session.currentPageUsesIndividualSettings {
+                CompressionOptionsEditor(
+                    options: Binding(
+                        get: { session.currentPageOptions },
+                        set: { session.updateCurrentPageOptionsFromView($0) }
+                    ),
+                    isLevelEnabled: { session.isLevelEnabled($0, for: session.currentPageOptions) }
+                )
+                pageSizeComparison
+            } else {
+                Label(settingsSummary(session.options), systemImage: "doc.text")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+
+            if session.sharedResourcesFromEarlierPages > 0 {
+                Label(
+                    String.localizedStringWithFormat(
+                        String(localized: "%lld shared resources use settings from earlier pages."),
+                        session.sharedResourcesFromEarlierPages
+                    ),
+                    systemImage: "link"
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            HStack {
+                Button("Reset Page") { session.resetCurrentPage() }
+                    .disabled(!session.currentPageUsesIndividualSettings)
+                Button("Reset All Pages") { session.resetAllPages() }
+                    .disabled(session.individualPageCount == 0)
+                Spacer()
+                Text(
+                    String.localizedStringWithFormat(
+                        String(localized: "Individual pages: %lld"),
+                        session.individualPageCount
+                    )
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var pageSizeComparison: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Complete PDF").font(.caption).bold()
+            HStack {
+                Text("With individual page settings")
+                Spacer()
+                Text(session.resultSize ?? String(localized: "Calculating…"))
+            }
+            HStack {
+                Text("With Document Standard on this page")
+                Spacer()
+                if let size = session.standardComparisonSize {
+                    Text(size)
+                } else {
+                    HStack(spacing: 5) {
+                        ProgressView().controlSize(.small)
+                        Text("Calculating…")
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+            if let impact = session.currentPageSizeImpact {
+                Text(impact).bold().frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+        .font(.caption)
+        .monospacedDigit()
+    }
+
+    private var documentSize: some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text("Original: \(session.originalSize)")
+            Spacer()
+            if let size = session.resultSize {
+                VStack(alignment: .trailing) {
+                    Text("Result: \(size)").bold()
+                    if let difference = session.sizeDifference { Text(difference).font(.caption) }
+                }
+            } else {
+                Text("Calculating file size…").foregroundStyle(.secondary)
+            }
+        }
+        .font(.callout)
+        .monospacedDigit()
+    }
+
+    private var footer: some View {
+        HStack {
+            Button("Cancel") { session.cancel(); close() }.keyboardShortcut(.cancelAction)
+            Button("Licenses") { showsLicenses = true }.buttonStyle(.plain).font(.caption)
+            if session.isProcessing || session.isCalculatingPageDifference {
+                ProgressView().controlSize(.small)
+                Text(progressText).font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Button("Use result") {
+                if session.accept() { close() }
+                else { message = String(localized: "The PDF changed while the preview was being prepared. Open compression again.") }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!session.canAccept)
+            .keyboardShortcut(.defaultAction)
+        }
+        .padding(.horizontal)
+        .padding(.bottom)
+    }
+
+    private var progressText: String {
+        if session.candidate != nil && session.currentPageUsesIndividualSettings {
+            return String(localized: "Calculating page comparison…")
+        }
+        return session.pagePreview == nil
+            ? String(localized: "Preparing preview…")
+            : String(localized: "Compressing complete PDF…")
+    }
+
+    private func settingsSummary(_ value: PDFCompressionOptions) -> String {
+        let adjustment = value.colorMode == .blackAndWhite
+            ? String.localizedStringWithFormat(String(localized: "Threshold: %lld"), value.threshold)
+            : String.localizedStringWithFormat(String(localized: "Contrast: %lld"), value.contrast)
+        return [value.level.title, value.colorMode.title, adjustment].joined(separator: " · ")
+    }
+
+    private func unlock() {
+        let value = password
+        password = ""
+        session.unlock(value)
+    }
+}
+
+private struct CompressionOptionsEditor: View {
+    @Binding var options: PDFCompressionOptions
+    let isLevelEnabled: (PDFCompressionOptions.Level) -> Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ViewThatFits(in: .horizontal) {
+                HStack { levelPicker; colorPicker }
+                VStack { levelPicker; colorPicker }
+            }
+            if options.colorMode == .blackAndWhite {
+                HStack {
+                    Text("Threshold")
+                    Slider(
+                        value: Binding(
+                            get: { Double(options.threshold) },
+                            set: { options.threshold = Int($0.rounded()) }
+                        ),
+                        in: 0...100, step: 1
+                    )
+                    .accessibilityLabel("Black and white threshold")
+                    Text(options.threshold.formatted())
+                        .monospacedDigit()
+                        .frame(width: 32, alignment: .trailing)
+                }
+            } else {
+                HStack {
+                    Text("Contrast")
+                    Slider(
+                        value: Binding(
+                            get: { Double(options.contrast) },
+                            set: { options.contrast = Int($0.rounded()) }
+                        ),
+                        in: -50...50, step: 1
+                    )
+                    .accessibilityLabel("Color image contrast")
+                    Text(options.contrast > 0 ? "+\(options.contrast.formatted())" : options.contrast.formatted())
+                        .monospacedDigit()
+                        .frame(width: 32, alignment: .trailing)
+                }
+            }
+        }
+    }
+
     private var levelPicker: some View {
-        Picker("Compression", selection: $session.options.level) {
-            ForEach(PDFCompressionOptions.Level.allCases, id: \.self) { Text($0.title).tag($0) }
-        }.pickerStyle(.segmented).frame(minWidth: 230)
+        Picker("Compression", selection: $options.level) {
+            ForEach(PDFCompressionOptions.Level.allCases, id: \.self) { level in
+                Text(level.title).tag(level).disabled(!isLevelEnabled(level))
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(minWidth: 230)
+        .disabled(options.colorMode == .blackAndWhite &&
+                  PDFCompressionOptions.Level.allCases.filter(isLevelEnabled).count == 1)
     }
+
     private var colorPicker: some View {
-        Picker("Color", selection: $session.options.colorMode) {
-            ForEach(PDFCompressionOptions.ColorMode.allCases, id: \.self) { Text($0.title).tag($0) }
-        }.pickerStyle(.segmented).frame(minWidth: 130)
+        Picker("Color", selection: $options.colorMode) {
+            ForEach(PDFCompressionOptions.ColorMode.allCases, id: \.self) {
+                Text($0.title).tag($0)
+            }
+        }
+        .pickerStyle(.segmented)
+        .frame(minWidth: 130)
     }
-    private func unlock() { let value = password; password = ""; session.unlock(value) }
 }

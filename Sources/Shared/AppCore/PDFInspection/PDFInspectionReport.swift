@@ -10,6 +10,8 @@ struct PDFInspectionReport: Equatable, Sendable {
     var isLocked = false
     var allowsResourceExporting = false
     var declaredStandards: [String] = []
+    var imageMinimumPlacementPPI: [String: Double] = [:]
+    var imagePlacementAnalysisComplete = false
 
     var hasConformityDeclaration: Bool { !declaredStandards.isEmpty }
 

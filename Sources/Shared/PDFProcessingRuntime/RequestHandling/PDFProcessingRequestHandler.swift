@@ -60,10 +60,23 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
                         ips2pdf_pdf_remove_metadata(job.inputURL.path, job.outputURL.path, password ?? "",
                                                     request.preserveConformity ? 1 : 0, native.pointer, &result)
                     case .compress:
-                        ips2pdf_pdf_compress_preview(job.inputURL.path, job.outputURL.path, password ?? "",
-                                             Int32(request.compression.level.rawValue),
-                                             request.compression.colorMode == .blackAndWhite ? 1 : 0,
-                                             Int32(request.compression.threshold), Int32(request.previewPage ?? -1), native.pointer, &result)
+                        let overrides = request.pageCompressionOverrides.map { item in
+                            var value = IPS2PDFPageCompressionOverride()
+                            value.page_index = Int32(item.pageIndex)
+                            value.level = Int32(item.options.level.rawValue)
+                            value.monochrome = item.options.colorMode == .blackAndWhite ? 1 : 0
+                            value.threshold = Int32(item.options.threshold)
+                            value.contrast = Int32(item.options.contrast)
+                            return value
+                        }
+                        _ = overrides.withUnsafeBufferPointer { buffer in
+                            ips2pdf_pdf_compress_preview(job.inputURL.path, job.outputURL.path, password ?? "",
+                                                         Int32(request.compression.level.rawValue),
+                                                         request.compression.colorMode == .blackAndWhite ? 1 : 0,
+                                                         Int32(request.compression.threshold), Int32(request.compression.contrast),
+                                                         buffer.baseAddress, UInt32(buffer.count),
+                                                         Int32(request.previewPage ?? -1), native.pointer, &result)
+                        }
                     case .extractResource:
                         ips2pdf_pdf_extract_resource(job.inputURL.path, job.outputURL.path, password ?? "",
                                                      request.resourceFormat ?? "", request.resourceFingerprint ?? "",
@@ -91,7 +104,9 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
                     }
                     return encode(PDFProcessingReply(jobID: request.jobID, status: status,
                                                       outputBytes: Int64(clamping: result.output_bytes),
-                                                      warnings: warnings, detail: detail))
+                                                      warnings: warnings,
+                                                      sharedResourcesFromEarlierPages: Int(result.shared_resources_from_earlier_pages),
+                                                      detail: detail))
                 }
             }
         } catch {

@@ -19,7 +19,10 @@ owns the document structure. PDFium decodes isolated image capsules and converts
 colors; jpegli encodes JPEG and PDFium's fax encoder produces CCITT Group 4.
 This does not redraw whole pages, use a web view/WASM, or pass PDFs through
 Ghostscript. Existing embedded font programs are retained, including Standard
-14 fonts; absent fonts are neither added nor reported as an error.
+14 fonts; absent fonts are neither added nor reported as an error. The one
+deliberate exception is the narrowly identified Pages CFF subset that stores a
+vector signature under Apple Garamond: metadata cleanup changes its external
+and internal names to Signature Font without changing the glyph program.
 
 Requests use a separate versioned protocol in the existing macOS XPC / iOS
 ExtensionKit helpers. Per-job private directories, leases, a shared engine gate,
@@ -42,8 +45,10 @@ fields, JPEG EXIF/XMP/comments, supported JP2 XML/UUID/JPEG 2000 comments, and
 JBIG2 comment/resolution metadata. Unreachable objects and incremental history
 are omitted. Functional names/references, comment contents/replies, hidden/OCR
 content, forms, tags, links, bookmarks and layers remain. Metadata-only editing
-retains the decoded bytes of embedded files, ICC profiles and font programs.
-Technical data needed to interpret those payloads is retained.
+retains the decoded bytes of embedded files and ICC profiles. Font programs are
+also retained except for the three equal-length names in the recognized Pages
+signature subset described above. Technical data needed to interpret those
+payloads is retained.
 
 Metadata removal asks whether to preserve the declared conformity. The policy
 retains/rebuilds only required identification fields for PDF/A-1–4, PDF/UA-1–2,
@@ -66,7 +71,8 @@ signature appearances are reused as vector content where possible.
 
 `PDFCompressionPolicy.cpp` is the central policy table with English comments.
 The UI exposes only Gentle / Balanced / Strong and Color / Black & White.
-Balanced and threshold 50 are defaults. There is no JPEG 2000 output, new Brotli,
+Fresh sessions default to Balanced, Color, contrast 25 and threshold 75. There is
+no JPEG 2000 output, new Brotli,
 lossy JBIG2, dithering, font subsetting or image upscaling.
 
 | Target | Gentle | Balanced | Strong |

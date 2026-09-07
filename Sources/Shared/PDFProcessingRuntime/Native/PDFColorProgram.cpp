@@ -60,11 +60,13 @@ struct State { Color fill, stroke; };
 
 class Rewriter {
 public:
-    Rewriter(QPDF& pdf, const PDFCompressionPolicy& policy) : pdf(pdf), policy(policy) {}
+    Rewriter(QPDF& pdf, const PDFCompressionPlan& plan,
+             const std::map<QPDFObjGen, std::size_t>& pageOwners) :
+        pdf(pdf), plan(plan), pageOwners(pageOwners) {}
     void run() {
         std::set<QPDFObjGen> profileObjects;
         discoverProfiles(pdf.getRoot(), profileObjects, 0);
-        collect(pdf.getRoot(), 0);
+        collect(pdf.getRoot(), plan.document, 0);
         for (auto page : QPDFPageDocumentHelper(pdf).getAllPages())
             process(page.getObjectHandle(), page.getAttribute("/Resources", false), {}, 0);
         // Appearance states and tiling patterns can be hidden until a form,
@@ -77,17 +79,18 @@ public:
             if (holder.isStream()) holder.replaceStreamData(bytes, Object::newNull(), Object::newNull());
             else holder.replaceKey("/Contents", pdf.newStream(bytes));
         }
-        for (auto dictionary : resourcesToClean) cleanResources(dictionary);
+        for (auto& [dictionary, policy] : resourcesToClean) cleanResources(dictionary, *policy);
     }
 private:
     QPDF& pdf;
-    const PDFCompressionPolicy& policy;
+    const PDFCompressionPlan& plan;
+    const std::map<QPDFObjGen, std::size_t>& pageOwners;
     std::map<std::string, std::unique_ptr<PDFColorConverter>> converters;
     std::map<QPDFObjGen, PDFContentProgram> programs;
     std::map<QPDFObjGen, Object> holders;
     std::map<QPDFObjGen, std::string> rewritten;
     std::set<QPDFObjGen> visited, active;
-    std::vector<Object> resourcesToClean;
+    std::vector<std::pair<Object, const PDFCompressionPolicy*>> resourcesToClean;
     uint64_t steps = 0;
     bool usesProfiles = false;
 
@@ -117,7 +120,13 @@ private:
         if (found == converters.end()) found = converters.emplace(key, std::make_unique<PDFColorConverter>(pdf, space)).first;
         return *found->second;
     }
-    std::string command(const RGB& rgb, bool stroke, bool text = false) const {
+    const PDFCompressionPolicy& policyFor(Object object, const PDFCompressionPolicy& inherited) const {
+        if (!object.isIndirect()) return inherited;
+        auto owner = pageOwners.find(object.getObjGen());
+        return owner == pageOwners.end() ? inherited : plan.policyForPage(owner->second);
+    }
+    std::string command(const RGB& rgb, bool stroke, const PDFCompressionPolicy& policy,
+                        bool text = false) const {
         if (!policy.monochrome) return number(rgb[0]) + " " + number(rgb[1]) + " " + number(rgb[2]) + (stroke ? " RG\n" : " rg\n");
         // Colored text and strokes become black; white knockouts stay white.
         // Filled vector areas follow the same threshold as image samples.
@@ -125,12 +134,13 @@ private:
         const bool isWhite = white(rgb) || (!stroke && !text && luminance >= policy.threshold / 100.0);
         return std::string(isWhite ? "1" : "0") + (stroke ? " G\n" : " g\n");
     }
-    void collect(Object object, unsigned depth) {
+    void collect(Object object, const PDFCompressionPolicy& inheritedPolicy, unsigned depth) {
         checkPDFProcessing();
         if (depth > 256) throw std::runtime_error("PDF resource hierarchy exceeds the processing limit");
         if (object.isIndirect() && !visited.insert(object.getObjGen()).second) return;
+        const auto& policy = policyFor(object, inheritedPolicy);
         if (object.isArray()) {
-            for (auto child : object.getArrayAsVector()) collect(child, depth + 1);
+            for (auto child : object.getArrayAsVector()) collect(child, policy, depth + 1);
             return;
         }
         auto dictionary = object.isStream() ? object.getDict() : object;
@@ -147,15 +157,15 @@ private:
         if (dictionary.hasKey("/ShadingType") && (usesProfiles || hasICC(dictionary.getKey("/ColorSpace"))))
             throw PDFProcessingUnsupported("This shading requires a dedicated color conversion.");
         auto resources = dictionary.getKey("/Resources");
-        if (resources.isDictionary()) resourcesToClean.push_back(resources);
+        if (resources.isDictionary()) resourcesToClean.emplace_back(resources, &policy);
         auto defaults = dictionary.getKey("/DR");
-        if (defaults.isDictionary()) resourcesToClean.push_back(defaults);
+        if (defaults.isDictionary()) resourcesToClean.emplace_back(defaults, &policy);
         auto appearance = dictionary.getKey("/DA");
         if (appearance.isString()) {
             auto acroForm = pdf.getRoot().getKey("/AcroForm");
             auto defaultResources = defaults.isDictionary() ? defaults : acroForm.isDictionary() ? acroForm.getKey("/DR") : Object::newNull();
             auto program = pdf.newStream(appearance.getStringValue());
-            process(program, defaultResources, {}, 0, true);
+            process(program, defaultResources, {}, 0, true, &policy);
             dictionary.replaceKey("/DA", Object::newString(rewritten.at(program.getObjGen())));
         }
         if (dictionary.getKey("/Type").isNameAndEquals("/Annot") || (dictionary.hasKey("/Rect") && subtype.isName())) {
@@ -167,7 +177,7 @@ private:
                 auto space = Object::newName(count == 1 ? "/DeviceGray" : count == 3 ? "/DeviceRGB" : "/DeviceCMYK");
                 const auto rgb = converter(space).rgb(numeric(color.getArrayAsVector()));
                 if (policy.monochrome) {
-                    const auto selected = command(rgb, stroke);
+                    const auto selected = command(rgb, stroke, policy);
                     container.replaceKey(key, Object::parse(selected.front() == '1' ? "[1]" : "[0]"));
                 } else container.replaceKey(key, Object::parse("[" + number(rgb[0]) + " " + number(rgb[1]) + " " + number(rgb[2]) + "]"));
             };
@@ -190,10 +200,10 @@ private:
                 if (policy.monochrome || usesProfiles) throw PDFProcessingUnsupported("Type 3 glyph colors cannot be converted while preserving the font program unchanged.");
                 continue;
             }
-            collect(dictionary.getKey(key), depth + 1);
+            collect(dictionary.getKey(key), policy, depth + 1);
         }
     }
-    void cleanResources(Object resources) {
+    void cleanResources(Object resources, const PDFCompressionPolicy& policy) {
         auto spaces = resources.getKey("/ColorSpace");
         if (!spaces.isDictionary()) return;
         for (const auto& key : spaces.getKeys()) {
@@ -207,10 +217,13 @@ private:
             }
         }
     }
-    void process(Object holder, Object resources, State state, unsigned depth, bool textDefaults = false) {
+    void process(Object holder, Object resources, State state, unsigned depth, bool textDefaults = false,
+                 const PDFCompressionPolicy* inheritedPolicy = nullptr) {
         checkPDFProcessing();
+        if (rewritten.contains(holder.getObjGen())) return;
         if (depth > 64 || !active.insert(holder.getObjGen()).second)
             throw std::runtime_error("Recursive PDF color content");
+        const auto& policy = policyFor(holder, inheritedPolicy ? *inheritedPolicy : plan.document);
         auto found = programs.find(holder.getObjGen());
         if (found == programs.end()) found = programs.emplace(holder.getObjGen(), readPDFContent(pdf, holder)).first;
         const auto& program = found->second;
@@ -250,12 +263,12 @@ private:
                 }
                 if (color.pattern) {
                     if (policy.monochrome || usesProfiles) throw PDFProcessingUnsupported("This pattern requires a dedicated color conversion.");
-                } else { replacement = command(color.rgb, stroke, textDefaults); replace = true; }
+                } else { replacement = command(color.rgb, stroke, policy, textDefaults); replace = true; }
             } else if (name == "Tj" || name == "TJ" || name == "'" || name == "\"") {
                 if (policy.monochrome) {
-                    replacement = command(state.fill.rgb, false, true) + command(state.stroke.rgb, true, true) +
+                    replacement = command(state.fill.rgb, false, policy, true) + command(state.stroke.rgb, true, policy, true) +
                         program.bytes.substr(operation.start, operation.end - operation.start) + "\n" +
-                        command(state.fill.rgb, false) + command(state.stroke.rgb, true);
+                        command(state.fill.rgb, false, policy) + command(state.stroke.rgb, true, policy);
                     replace = true;
                 }
             } else if (name == "sh" && policy.monochrome) {
@@ -266,7 +279,8 @@ private:
                 auto child = objects.isDictionary() ? objects.getKey(operation.operands.front().getName()) : Object::newNull();
                 if (child.isStream() && child.getDict().getKey("/Subtype").isNameAndEquals("/Form")) {
                     auto ownResources = child.getDict().getKey("/Resources");
-                    process(child, ownResources.isNull() ? resources : ownResources, state, depth + 1);
+                    process(child, ownResources.isNull() ? resources : ownResources, state, depth + 1,
+                            false, &policy);
                 }
             } else if (name == "gs") {
                 if (operation.operands.size() != 1 || !operation.operands.front().isName()) throw std::runtime_error("Invalid PDF graphics state selection");
@@ -291,9 +305,6 @@ private:
             }
         }
         output.append(program.bytes, copied, std::string::npos);
-        auto existing = rewritten.find(holder.getObjGen());
-        if (existing != rewritten.end() && existing->second != output)
-            throw PDFProcessingUnsupported("A shared form needs incompatible inherited color conversions");
         rewritten[holder.getObjGen()] = std::move(output);
         active.erase(holder.getObjGen());
     }
@@ -337,5 +348,9 @@ static Object resolvePDFColorSpaceImpl(Object space, Object resources, bool defa
 Object resolvePDFColorSpace(Object space, Object resources, bool defaults) {
     return resolvePDFColorSpaceImpl(space, resources, defaults, 0);
 }
-void rewritePDFColors(QPDF& pdf, const PDFCompressionPolicy& policy) { policy.validate(); Rewriter(pdf, policy).run(); }
+void rewritePDFColors(QPDF& pdf, const PDFCompressionPlan& plan,
+                      const std::map<QPDFObjGen, std::size_t>& pageOwners) {
+    plan.validate();
+    Rewriter(pdf, plan, pageOwners).run();
+}
 } // namespace ips2pdf

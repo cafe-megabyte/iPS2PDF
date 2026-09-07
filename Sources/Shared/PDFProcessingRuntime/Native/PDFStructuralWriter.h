@@ -31,6 +31,12 @@ PDFStructuralWriteResult removePDFMetadata(const std::filesystem::path& input,
 PDFStructuralWriteResult compressPDF(const std::filesystem::path& input,
                                     const std::filesystem::path& output,
                                     const std::string& password,
-                                    const PDFCompressionPolicy& policy, int previewPage = -1);
+                                    const PDFCompressionPlan& plan, int previewPage = -1);
+inline PDFStructuralWriteResult compressPDF(const std::filesystem::path& input,
+                                            const std::filesystem::path& output,
+                                            const std::string& password,
+                                            const PDFCompressionPolicy& policy, int previewPage = -1) {
+    return compressPDF(input, output, password, PDFCompressionPlan{policy, {}}, previewPage);
+}
 
 } // namespace ips2pdf

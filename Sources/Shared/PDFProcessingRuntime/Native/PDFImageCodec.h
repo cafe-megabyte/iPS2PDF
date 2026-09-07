@@ -17,6 +17,7 @@ struct PDFDecodedImage {
 
 PDFDecodedImage decodePDFImage(QPDFObjectHandle image, QPDFObjectHandle colorSpace, bool preserveAlpha = false);
 PDFDecodedImage resizePDFImage(const PDFDecodedImage& image, int width, int height);
+void adjustPDFImageContrast(PDFDecodedImage& image, int contrast);
 std::vector<uint8_t> encodePDFJPEG(const PDFDecodedImage& image, int quality, bool chromaSubsampling);
 std::vector<uint8_t> encodePDFGroup4(const PDFDecodedImage& image, const PDFCompressionPolicy& policy);
 

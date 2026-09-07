@@ -8,6 +8,7 @@ struct PDFProcessingRequest: Codable, Sendable {
     let operation: Operation
     let preserveConformity: Bool
     let compression: PDFCompressionOptions
+    var pageCompressionOverrides: [PDFPageCompressionOverride] = []
     var previewPage: Int? = nil
     var resourceFingerprint: String? = nil
     var resourceFormat: String? = nil
@@ -20,6 +21,10 @@ struct PDFProcessingRequest: Codable, Sendable {
               operation != .compress || !preserveConformity,
               previewPage == nil || operation == .compress && (0...Int(Int32.max)).contains(previewPage!)
         else { return false }
+        guard pageCompressionOverrides.allSatisfy(\.isValid),
+              pageCompressionOverrides.map(\.pageIndex) == pageCompressionOverrides.map(\.pageIndex).sorted(),
+              Set(pageCompressionOverrides.map(\.pageIndex)).count == pageCompressionOverrides.count,
+              operation == .compress || pageCompressionOverrides.isEmpty else { return false }
         if operation == .extractResource {
             let formats = ["embeddedFile", "jpeg", "jpeg2000", "png", "type1", "trueType",
                            "trueTypeCollection", "cff", "openType", "openTypeCollection", "icc", "xml"]

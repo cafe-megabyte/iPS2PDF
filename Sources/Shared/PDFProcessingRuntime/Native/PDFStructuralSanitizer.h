@@ -18,15 +18,17 @@ struct PDFMetadataRetention {
 struct PDFSanitizationResult {
     bool signaturesRemoved = false;
     bool signatureAppearancesMayDiffer = false;
+    unsigned signatureFontsAnonymized = 0;
     unsigned metadataEntriesRemoved = 0;
     unsigned jpegStreamsCleaned = 0;
 };
 
 // Mutates a private, authenticated working document. The caller must perform a
 // full rewrite and omit unreachable objects; incremental saving is forbidden.
-// Font programs, embedded-file payloads and ICC payloads are never decoded or
-// edited here. Descriptive metadata on their surrounding PDF dictionaries is
-// still removed. Content, semantic structure and functional identifiers remain.
+// Font programs remain unchanged except for the exact Pages signature-font
+// subset recognized by PDFSignatureFontAnonymizer. Embedded-file and ICC
+// payloads are never edited here. Content, semantic structure and functional
+// identifiers remain.
 PDFSanitizationResult sanitizePDFMetadata(QPDF& pdf, const PDFMetadataRetention& retention = {});
 
 } // namespace ips2pdf

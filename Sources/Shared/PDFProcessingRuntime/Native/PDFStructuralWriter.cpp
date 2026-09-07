@@ -105,7 +105,7 @@ static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
                                           const std::string& password,
                                           const PDFMetadataRetention& retention,
                                           bool preserveConformity,
-                                          const PDFCompressionPolicy* compression, int previewPage = -1) {
+                                          const PDFCompressionPlan* compression, int previewPage = -1) {
     if (input == output) throw std::runtime_error("PDF processing requires a separate output file");
     auto pdf = openPDFDocument(input, password);
     PDFStructuralWriteResult result;
@@ -159,8 +159,8 @@ PDFStructuralWriteResult removePDFMetadata(const std::filesystem::path& input,
 PDFStructuralWriteResult compressPDF(const std::filesystem::path& input,
                                     const std::filesystem::path& output,
                                     const std::string& password,
-                                    const PDFCompressionPolicy& policy, int previewPage) {
-    policy.validate();
-    return rewritePDF(input, output, password, {}, false, &policy, previewPage);
+                                    const PDFCompressionPlan& plan, int previewPage) {
+    plan.validate();
+    return rewritePDF(input, output, password, {}, false, &plan, previewPage);
 }
 } // namespace ips2pdf

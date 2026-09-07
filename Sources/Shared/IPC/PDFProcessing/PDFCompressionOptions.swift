@@ -26,7 +26,18 @@ struct PDFCompressionOptions: Codable, Equatable, Sendable {
 
     var level: Level = .balanced
     var colorMode: ColorMode = .color
-    var threshold: Int = 50
+    var threshold: Int = 75
+    // Color scans usually benefit from modest contrast expansion.
+    var contrast: Int = 25
 
-    var isValid: Bool { (0...100).contains(threshold) }
+    var isValid: Bool { (0...100).contains(threshold) && (-50...50).contains(contrast) }
+}
+
+struct PDFPageCompressionOverride: Codable, Equatable, Sendable {
+    let pageIndex: Int
+    let options: PDFCompressionOptions
+
+    var isValid: Bool {
+        (0...Int(Int32.max)).contains(pageIndex) && options.isValid
+    }
 }

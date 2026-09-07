@@ -1,4 +1,5 @@
 #include "PDFStructuralSanitizer.h"
+#include "PDFSignatureFontAnonymizer.h"
 #include "PDFStreamMetadata.h"
 #include "PDFProcessingControl.h"
 #include <qpdf/QPDFAnnotationObjectHelper.hh>
@@ -180,6 +181,7 @@ private:
         const bool stream = object.isStream();
         auto dictionary = stream ? object.getDict() : object;
         if (!dictionary.isDictionary()) return;
+        if (!stream && anonymizeSignatureFont(object)) ++result.signatureFontsAnonymized;
         for (const char* key : {"/Metadata", "/PieceInfo"}) remove(dictionary, key);
         auto type = dictionary.getKey("/Type");
         auto subtype = dictionary.getKey("/Subtype");

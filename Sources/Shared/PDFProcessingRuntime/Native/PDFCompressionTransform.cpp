@@ -185,6 +185,40 @@ PDFCompressionChanges removeAttachments(QPDF& pdf) {
 }
 
 struct Image { Object object, colorSpace; };
+
+struct PageOwnership {
+    std::map<QPDFObjGen, std::size_t> owners;
+};
+
+PageOwnership assignPageOwners(QPDF& pdf) {
+    const auto pages = QPDFPageDocumentHelper(pdf).getAllPages();
+    PageOwnership result;
+    for (std::size_t pageIndex = 0; pageIndex < pages.size(); ++pageIndex) {
+        std::set<QPDFObjGen> seen;
+        std::function<void(Object, unsigned)> walk = [&](Object object, unsigned depth) {
+            checkPDFProcessing();
+            if (depth > 256) throw std::runtime_error("PDF page resource hierarchy exceeds the processing limit");
+            auto dictionary = object.isStream() ? object.getDict() : object;
+            if (depth > 0 && dictionary.isDictionary() && dictionary.getKey("/Type").isNameAndEquals("/Page")) return;
+            if (object.isIndirect()) {
+                const auto id = object.getObjGen();
+                if (!seen.insert(id).second) return;
+                result.owners.try_emplace(id, pageIndex);
+            }
+            if (object.isArray()) for (auto child : object.getArrayAsVector()) walk(child, depth + 1);
+            if (!dictionary.isDictionary()) return;
+            for (const auto& key : dictionary.getKeys()) {
+                // Page-tree and annotation back-references must not make an
+                // earlier page claim resources that it does not display.
+                if (key == "/Parent" || key == "/P" || key == "/Pages") continue;
+                walk(dictionary.getKey(key), depth + 1);
+            }
+        };
+        walk(pages[pageIndex].getObjectHandle(), 0);
+    }
+    return result;
+}
+
 std::map<QPDFObjGen, Image> imageInventory(QPDF& pdf) {
     std::map<QPDFObjGen, Image> images;
     std::set<std::pair<QPDFObjGen, std::string>> seen;
@@ -218,23 +252,23 @@ std::map<QPDFObjGen, Image> imageInventory(QPDF& pdf) {
     return images;
 }
 
-bool documentLike(const PDFDecodedImage& image) {
-    // Prefer scan-safe settings whenever the image contains substantial paper
-    // or few colors. A photo misclassified as a scan costs bytes, not legibility.
-    size_t samples = 0, paper = 0;
-    std::set<uint32_t> colors;
+bool losslessCandidate(const PDFDecodedImage& image) {
+    // The expensive best-compression Flate comparison protects small graphics
+    // and genuinely low-color artwork. Multicolor scans go directly to jpegli.
     const size_t pixels = size_t(image.width) * image.height;
+    if (pixels <= 65536) return true;
+    std::set<uint32_t> colors;
     const size_t step = std::max<size_t>(1, pixels / 32768);
     for (size_t i = 0; i < pixels; i += step) {
         auto p = image.pixels.data() + i * 4;
-        ++samples;
-        if (std::min({p[0], p[1], p[2]}) >= 235) ++paper;
-        if (colors.size() <= 256) colors.insert((uint32_t(p[0]) << 16) | (uint32_t(p[1]) << 8) | p[2]);
+        colors.insert((uint32_t(p[0]) << 16) | (uint32_t(p[1]) << 8) | p[2]);
+        if (colors.size() > 256) return false;
     }
-    return paper * 4 >= samples || colors.size() <= 256;
+    return true;
 }
 
-void compressImages(QPDF& pdf, const PDFCompressionPolicy& policy,
+void compressImages(QPDF& pdf, const PDFCompressionPlan& plan,
+                    const std::map<QPDFObjGen, std::size_t>& pageOwners,
                     const std::map<QPDFObjGen, PDFImagePlacement>& placements) {
     auto images = imageInventory(pdf);
     std::set<QPDFObjGen> masks;
@@ -244,6 +278,12 @@ void compressImages(QPDF& pdf, const PDFCompressionPolicy& policy,
     }
     for (auto& [id, image] : images) {
         checkPDFProcessing();
+        const auto placement = placements.find(id);
+        const auto owner = pageOwners.find(id);
+        const auto& policy = placement != placements.end() &&
+            placement->second.firstPage != std::numeric_limits<size_t>::max()
+            ? plan.policyForPage(placement->second.firstPage)
+            : owner == pageOwners.end() ? plan.document : plan.policyForPage(owner->second);
         auto dictionary = image.object.getDict();
         auto stencil = dictionary.getKey("/ImageMask");
         if (masks.contains(id) || (stencil.isBool() && stencil.getBoolValue())) {
@@ -269,10 +309,10 @@ void compressImages(QPDF& pdf, const PDFCompressionPolicy& policy,
             }
         }
         auto decoded = decodePDFImage(image.object, image.colorSpace);
-        const bool scan = documentLike(decoded);
         const auto found = placements.find(id);
         double ppi = found == placements.end() ? 0 : found->second.minimumPPI;
-        auto scale = policy.resizeScale(ppi, scan);
+        auto scale = policy.resizeScale(ppi);
+        if (!policy.monochrome) adjustPDFImageContrast(decoded, policy.contrast);
         if (scale < 1) {
             const int width = std::max(1, static_cast<int>(std::ceil(decoded.width * scale)));
             const int height = std::max(1, static_cast<int>(std::ceil(decoded.height * scale)));
@@ -290,16 +330,21 @@ void compressImages(QPDF& pdf, const PDFCompressionPolicy& policy,
             parameters = Object::newDictionary({{"/K", Object::newInteger(-1)},
                 {"/Columns", Object::newInteger(decoded.width)}, {"/Rows", Object::newInteger(decoded.height)}});
         } else {
-            auto jpeg = encodePDFJPEG(decoded, policy.jpegQuality(ppi, scan), !scan);
-            // Flat illustrations and small graphics often compress better
-            // losslessly and should not acquire JPEG halos around their edges.
-            std::string rgb; rgb.reserve(size_t(decoded.width) * decoded.height * 3);
-            for (size_t i = 0; i < decoded.pixels.size(); i += 4) {
-                rgb.push_back(decoded.pixels[i + 2]); rgb.push_back(decoded.pixels[i + 1]); rgb.push_back(decoded.pixels[i]);
+            // Scan/document content retains full chroma resolution. The
+            // counter-running preset quality protects the smaller bitmap.
+            auto jpeg = encodePDFJPEG(decoded, policy.jpegQuality(), false);
+            if (losslessCandidate(decoded)) {
+                std::string rgb; rgb.reserve(size_t(decoded.width) * decoded.height * 3);
+                for (size_t i = 0; i < decoded.pixels.size(); i += 4) {
+                    rgb.push_back(decoded.pixels[i + 2]); rgb.push_back(decoded.pixels[i + 1]); rgb.push_back(decoded.pixels[i]);
+                }
+                auto lossless = flate(rgb);
+                if (lossless.size() <= jpeg.size()) { encoded = std::move(lossless); encoding = "/FlateDecode"; }
+                else { encoded.assign(jpeg.begin(), jpeg.end()); encoding = "/DCTDecode"; }
+            } else {
+                encoded.assign(jpeg.begin(), jpeg.end());
+                encoding = "/DCTDecode";
             }
-            auto lossless = flate(rgb);
-            if (lossless.size() <= jpeg.size()) { encoded = std::move(lossless); encoding = "/FlateDecode"; }
-            else { encoded.assign(jpeg.begin(), jpeg.end()); encoding = "/DCTDecode"; }
         }
         dictionary.replaceKey("/Width", Object::newInteger(decoded.width));
         dictionary.replaceKey("/Height", Object::newInteger(decoded.height));
@@ -312,16 +357,27 @@ void compressImages(QPDF& pdf, const PDFCompressionPolicy& policy,
 }
 } // namespace
 
-PDFCompressionChanges compressPDFObjects(QPDF& pdf, const PDFCompressionPolicy& policy, int previewPage) {
-    policy.validate();
+PDFCompressionChanges compressPDFObjects(QPDF& pdf, const PDFCompressionPlan& plan, int previewPage) {
+    plan.validate();
     const auto inputFonts = fontPrograms(pdf);
     auto changes = removeAttachments(pdf);
     externalizePDFInlineImages(pdf);
     applyOutputIntent(pdf);
-    const auto placements = pdfImagePlacements(pdf);
+    const auto pages = QPDFPageDocumentHelper(pdf).getAllPages();
+    plan.validatePageCount(pages.size());
+    const auto census = pdfContentCensus(pdf);
+    auto ownership = assignPageOwners(pdf);
+    // Content invocation is authoritative. A resource name that is present
+    // but unused on an earlier page must not claim the object.
+    for (const auto& [id, page] : census.firstResourcePages) ownership.owners[id] = page;
+    if (previewPage >= 0) for (const auto& [id, pagesUsingResource] : census.resourcePages) {
+        const auto first = census.firstResourcePages.find(id);
+        if (first != census.firstResourcePages.end() && first->second < static_cast<std::size_t>(previewPage) &&
+            pagesUsingResource.contains(static_cast<std::size_t>(previewPage)))
+            ++changes.sharedResourcesFromEarlierPages;
+    }
     if (previewPage >= 0) {
         QPDFPageDocumentHelper document(pdf);
-        const auto pages = document.getAllPages();
         if (static_cast<size_t>(previewPage) >= pages.size()) throw std::runtime_error("Invalid PDF preview page");
         for (size_t i = 0; i < pages.size(); ++i) if (i != static_cast<size_t>(previewPage)) document.removePage(pages[i]);
         // This private one-page result is never offered for adoption/export.
@@ -334,8 +390,8 @@ PDFCompressionChanges compressPDFObjects(QPDF& pdf, const PDFCompressionPolicy& 
     const auto fonts = previewPage < 0 ? inputFonts : fontPrograms(pdf);
     // Decode original image colors before the vector pass removes color-space
     // aliases. No page, text object or embedded font is regenerated.
-    compressImages(pdf, policy, placements);
-    rewritePDFColors(pdf, policy);
+    compressImages(pdf, plan, ownership.owners, census.images);
+    rewritePDFColors(pdf, plan, ownership.owners);
     visit(pdf.getRoot(), [](Object object) {
         auto dictionary = object.isStream() ? object.getDict() : object;
         if (!dictionary.isDictionary()) return;

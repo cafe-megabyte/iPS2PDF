@@ -7,10 +7,13 @@
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <qpdf/QPDFWriter.hh>
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
+#include <string_view>
 #include <vector>
+#include <zlib.h>
 
 namespace {
 using Object = QPDFObjectHandle;
@@ -23,6 +26,143 @@ void require(bool condition, const char* message) {
 std::string decoded(Object stream) {
     auto bytes = stream.getStreamData();
     return {reinterpret_cast<const char*>(bytes->getBuffer()), bytes->getSize()};
+}
+
+void append16(std::string& bytes, uint16_t value) {
+    bytes.push_back(static_cast<char>(value >> 8));
+    bytes.push_back(static_cast<char>(value));
+}
+
+void append32(std::string& bytes, uint32_t value) {
+    for (int shift : {24, 16, 8, 0}) bytes.push_back(static_cast<char>(value >> shift));
+}
+
+std::string cffIndex(const std::vector<std::string>& objects) {
+    std::string result;
+    append16(result, static_cast<uint16_t>(objects.size()));
+    if (objects.empty()) return result;
+    result.push_back(2);
+    uint16_t offset = 1;
+    append16(result, offset);
+    for (const auto& object : objects) {
+        offset = static_cast<uint16_t>(offset + object.size());
+        append16(result, offset);
+    }
+    for (const auto& object : objects) result += object;
+    return result;
+}
+
+void appendDictionaryInteger(std::string& dictionary, uint32_t value) {
+    dictionary.push_back(29);
+    append32(dictionary, value);
+}
+
+std::string signatureCFFDictionary(uint32_t charsetOffset, uint32_t charStringsOffset) {
+    std::string result;
+    for (const auto& [value, operation] : std::array<std::pair<uint32_t, uint8_t>, 5>{
+             std::pair{391u, uint8_t{0}}, std::pair{392u, uint8_t{2}}, std::pair{393u, uint8_t{3}},
+             std::pair{charsetOffset, uint8_t{15}}, std::pair{charStringsOffset, uint8_t{17}}}) {
+        appendDictionaryInteger(result, value);
+        result.push_back(static_cast<char>(operation));
+    }
+    return result;
+}
+
+std::string signatureCFF(const std::string& subsetPrefix) {
+    std::string signatureGlyph;
+    for (char byte : {char(139), char(139), char(21)}) signatureGlyph.push_back(byte);
+    for (int index = 0; index < 21; ++index)
+        for (char byte : {char(140), char(140), char(5)}) signatureGlyph.push_back(byte);
+    signatureGlyph.push_back(char(14));
+    const auto names = cffIndex({subsetPrefix + "+AppleGaramond-Book"});
+    const auto strings = cffIndex({"2.0-1.0", "Apple Garamond Book", "Apple Garamond"});
+    const auto subroutines = cffIndex({});
+    const auto charStrings = cffIndex({std::string(1, char(14)), std::string(1, char(14)), signatureGlyph});
+    const std::string header({char(1), char(0), char(4), char(2)});
+    auto dictionary = signatureCFFDictionary(0, 0);
+    auto dictionaries = cffIndex({dictionary});
+    const uint32_t charsetOffset = static_cast<uint32_t>(header.size() + names.size() + dictionaries.size() +
+                                                         strings.size() + subroutines.size());
+    const uint32_t charStringsOffset = charsetOffset + 5;
+    dictionary = signatureCFFDictionary(charsetOffset, charStringsOffset);
+    dictionaries = cffIndex({dictionary});
+    std::string charset(1, char(0));
+    append16(charset, 1);   // space
+    append16(charset, 117); // quotesinglbase, selected by MacRoman code E2
+    return header + names + dictionaries + strings + subroutines + charset + charStrings;
+}
+
+std::string deflated(std::string_view bytes) {
+    uLongf size = compressBound(bytes.size());
+    std::string result(size, '\0');
+    require(compress2(reinterpret_cast<Bytef*>(result.data()), &size,
+                      reinterpret_cast<const Bytef*>(bytes.data()), bytes.size(), Z_BEST_COMPRESSION) == Z_OK,
+            "Could not create the signature-font test stream");
+    result.resize(size);
+    return result;
+}
+
+Object signatureFont(QPDF& pdf, const std::string& prefix, bool signatureWidth, Object& program) {
+    const auto cff = signatureCFF(prefix);
+    program = pdf.newStream("");
+    program.replaceStreamData(deflated(cff), Object::newName("/FlateDecode"), Object::newNull());
+    program.getDict().replaceKey("/Subtype", Object::newName("/Type1C"));
+    auto descriptor = pdf.makeIndirectObject(Object::newDictionary());
+    descriptor.replaceKey("/Type", Object::newName("/FontDescriptor"));
+    descriptor.replaceKey("/FontName", Object::newName("/" + prefix + "+AppleGaramond-Book"));
+    descriptor.replaceKey("/FontFile3", program);
+    std::vector<Object> values(195, Object::newInteger(0));
+    values.front() = Object::newInteger(219);
+    values.back() = Object::newInteger(signatureWidth ? 3474 : 219);
+    auto font = pdf.makeIndirectObject(Object::newDictionary());
+    font.replaceKey("/Type", Object::newName("/Font"));
+    font.replaceKey("/Subtype", Object::newName("/Type1"));
+    font.replaceKey("/BaseFont", Object::newName("/" + prefix + "+AppleGaramond-Book"));
+    font.replaceKey("/Encoding", Object::newName("/MacRomanEncoding"));
+    font.replaceKey("/FirstChar", Object::newInteger(32));
+    font.replaceKey("/LastChar", Object::newInteger(226));
+    font.replaceKey("/Widths", Object::newArray(values));
+    font.replaceKey("/FontDescriptor", descriptor);
+    return font;
+}
+
+void replaceOnce(std::string& value, std::string_view from, std::string_view to) {
+    require(from.size() == to.size(), "Signature-font test replacement length changed");
+    const auto offset = value.find(from);
+    require(offset != std::string::npos, "Signature-font test name is missing");
+    value.replace(offset, from.size(), to);
+    require(value.find(from) == std::string::npos, "Signature-font test contains a duplicate name");
+}
+
+void signatureFontAnonymization() {
+    QPDF pdf;
+    pdf.emptyPDF();
+    Object targetProgram, ordinaryProgram;
+    auto target = signatureFont(pdf, "ABCDEF", true, targetProgram);
+    auto ordinary = signatureFont(pdf, "GHIJKL", false, ordinaryProgram);
+    auto fonts = Object::newDictionary({{"/Signature", target}, {"/OrdinaryQuote", ordinary}});
+    auto page = pdf.makeIndirectObject(Object::parse("<< /Type /Page /MediaBox [0 0 300 300] >>"));
+    page.replaceKey("/Resources", Object::newDictionary({{"/Font", fonts}}));
+    page.replaceKey("/Contents", pdf.newStream("BT /Signature 50 Tf <E220> Tj ET"));
+    QPDFPageDocumentHelper(pdf).addPage(QPDFPageObjectHelper(page), false);
+    const auto originalCFF = decoded(targetProgram);
+    const auto ordinaryCFF = decoded(ordinaryProgram);
+
+    const auto result = ips2pdf::sanitizePDFMetadata(pdf);
+    require(result.signatureFontsAnonymized == 1, "The Pages signature font was not uniquely recognized");
+    require(target.getKey("/BaseFont").isNameAndEquals("/ABCDEF+SignatureFont-Book") &&
+            target.getKey("/FontDescriptor").getKey("/FontName").isNameAndEquals("/ABCDEF+SignatureFont-Book"),
+            "The PDF signature-font names were not anonymized consistently");
+    auto expectedCFF = originalCFF;
+    replaceOnce(expectedCFF, "ABCDEF+AppleGaramond-Book", "ABCDEF+SignatureFont-Book");
+    replaceOnce(expectedCFF, "Apple Garamond Book", "Signature Font Book");
+    replaceOnce(expectedCFF, "Apple Garamond", "Signature Font");
+    require(decoded(targetProgram) == expectedCFF, "The signature CFF changed outside its three name strings");
+    require(ordinary.getKey("/BaseFont").isNameAndEquals("/GHIJKL+AppleGaramond-Book") &&
+            decoded(ordinaryProgram) == ordinaryCFF, "An ordinary Apple Garamond subset was anonymized");
+    require(ips2pdf::sanitizePDFMetadata(pdf).signatureFontsAnonymized == 0,
+            "Signature-font anonymization is not idempotent");
+    std::cout << "PASS metadata signature font: exact glyph subset anonymized without changing its outline\n";
 }
 
 std::vector<std::string> retainedPayloads(QPDF& pdf) {
@@ -124,6 +264,7 @@ void synthetic(const fs::path& fixtures, const fs::path& output) {
 } // namespace
 
 void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
+    signatureFontAnonymization();
     {
         QPDF pdf; pdf.emptyPDF();
         pdf.getTrailer().replaceKey("/Info", Object::parse("<< /GTS_PDFXVersion (PDF/X-4) /Trapped /False /Title (Private title) >>"));
@@ -194,12 +335,27 @@ void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
     }
     {
         ips2pdf::PDFCompressionPolicy policy;
+        require(policy.level == ips2pdf::PDFCompressionLevel::balanced && !policy.monochrome &&
+                    policy.threshold == 75 && policy.contrast == 25,
+                "Compression defaults are not Color, Balanced, threshold 75 and contrast 25");
         policy.level = ips2pdf::PDFCompressionLevel::strong;
-        require(policy.maximumPPI(true) == 300, "Strong compression downsamples document scans too far");
-        require(policy.jpegQuality(150, false) > policy.jpegQuality(300, false), "Low-resolution JPEG is compressed too aggressively");
-        require(policy.resizeScale(72, false) == 1, "Compression upscales low-resolution images");
+        require(policy.maximumPPI() == 110 && policy.jpegQuality() == 60,
+                "Strong color compression does not protect its smaller bitmap");
+        require(policy.resizeScale(72) == 1 && std::abs(policy.resizeScale(225) - 110.0 / 225.0) < 0.001,
+                "Color compression did not apply its strict scan resolution cap");
+        policy.level = ips2pdf::PDFCompressionLevel::gentle;
+        require(policy.maximumPPI() == 225 && policy.jpegQuality() == 10,
+                "Gentle color compression did not retain the high-resolution policy");
+        policy.level = ips2pdf::PDFCompressionLevel::balanced;
+        require(policy.maximumPPI() == 140 && policy.jpegQuality() == 35,
+                "Balanced color compression lost its selected policy");
+        policy.monochrome = true;
+        policy.level = ips2pdf::PDFCompressionLevel::strong;
+        require(policy.maximumPPI() == 300 && policy.resizeScale(360) == 1,
+                "Monochrome compression lost its scan-safe resampling margin");
+        require(policy.threshold == 75, "Monochrome compression lost its default threshold");
         require(policy.blackPixel(0, 0, 0) && !policy.blackPixel(255, 255, 255), "Monochrome threshold endpoints are wrong");
-        std::cout << "PASS compression policy: scan resolution, adaptive JPEG quality and monochrome threshold\n";
+        std::cout << "PASS compression policy: fresh defaults, scan-only color targets, counter-running JPEG quality and monochrome threshold\n";
     }
     synthetic(fixtures, output);
     for (const char* name : {"InfoEmbeddedFull.pdf", "InfoEmbeddedSubset.pdf", "InfoICC.pdf", "InfoType3.pdf",

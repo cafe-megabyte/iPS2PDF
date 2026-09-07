@@ -1,6 +1,8 @@
 #pragma once
 #include <qpdf/QPDF.hh>
+#include <limits>
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -30,8 +32,16 @@ struct PDFImagePlacement {
     QPDFObjectHandle image;
     double minimumPPI = 0;
     uint64_t placements = 0;
+    size_t firstPage = std::numeric_limits<size_t>::max();
+    std::set<size_t> pages;
+};
+struct PDFContentCensus {
+    std::map<QPDFObjGen, PDFImagePlacement> images;
+    std::map<QPDFObjGen, size_t> firstResourcePages;
+    std::map<QPDFObjGen, std::set<size_t>> resourcePages;
 };
 // Census before any image is changed: the largest display placement and both
 // axes constrain downsampling, including repeated/nested forms and UserUnit.
+PDFContentCensus pdfContentCensus(QPDF& pdf);
 std::map<QPDFObjGen, PDFImagePlacement> pdfImagePlacements(QPDF& pdf);
 } // namespace ips2pdf

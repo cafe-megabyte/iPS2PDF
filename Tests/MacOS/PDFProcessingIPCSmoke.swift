@@ -15,12 +15,14 @@ struct PDFProcessingIPCSmoke {
         defer { try? FileManager.default.removeItem(at: directory) }
 
         func send(_ job: PDFProcessingJobDirectory, password: String? = nil,
-                  version: Int = 1, operation: PDFProcessingRequest.Operation = .removeMetadata,
+                  version: Int = PDFProcessingEnvelope.version, operation: PDFProcessingRequest.Operation = .removeMetadata,
                   options: PDFCompressionOptions = .init(), previewPage: Int? = nil,
+                  pageOverrides: [PDFPageCompressionOverride] = [],
                   resource: PDFExtractableResource? = nil, handler: PDFProcessingRequestHandler? = nil) throws -> PDFProcessingReply {
             var envelope = XPCDictionary()
             let request = PDFProcessingRequest(version: version, jobID: job.id, operation: operation,
-                                                preserveConformity: false, compression: options, previewPage: previewPage,
+                                                preserveConformity: false, compression: options,
+                                                pageCompressionOverrides: pageOverrides, previewPage: previewPage,
                                                 resourceFingerprint: resource?.fingerprint,
                                                 resourceFormat: resource?.format.rawValue,
                                                 resourceWidth: resource?.pixelWidth,
@@ -36,7 +38,7 @@ struct PDFProcessingIPCSmoke {
             let decoded = try MacOSXPCMessageCodec.decode(MacOSXPCMessageCodec.encode(response))
             let payload: String = decoded[PDFProcessingEnvelope.response] ?? ""
             let reply = try JSONDecoder().decode(PDFProcessingReply.self, from: Data(payload.utf8))
-            try require(reply.jobID == job.id && reply.version == 1, "Reply identity changed")
+            try require(reply.jobID == job.id && reply.version == PDFProcessingEnvelope.version, "Reply identity changed")
             return reply
         }
         func staged(_ name: String) throws -> PDFProcessingJobDirectory {
@@ -73,11 +75,25 @@ struct PDFProcessingIPCSmoke {
         try require(!FileManager.default.fileExists(atPath: protected.outputURL.path), "Password failure created output")
         for page: Int? in [nil, 0] {
             let compression = try staged("InfoICC.pdf")
+            let options = page == nil
+                ? PDFCompressionOptions(level: .strong, colorMode: .blackAndWhite, threshold: 60)
+                : PDFCompressionOptions(level: .balanced, colorMode: .color, contrast: 20)
             let response = try send(compression, operation: .compress,
-                                    options: .init(level: .strong, colorMode: .blackAndWhite, threshold: 60), previewPage: page)
+                                    options: options, previewPage: page,
+                                    pageOverrides: [PDFPageCompressionOverride(pageIndex: 0, options: options)])
             try require(response.status == .success && response.outputBytes > 0, "Compression IPC did not return a candidate")
             try require(PDFDocument(url: compression.outputURL)?.pageCount == 1, "Compression IPC result did not reopen")
         }
+        let invalidOverrides = try staged("InfoPlain.pdf")
+        let repeated = PDFPageCompressionOverride(pageIndex: 0, options: .init())
+        try require(try send(invalidOverrides, operation: .compress,
+                             pageOverrides: [repeated, repeated]).status == .invalidRequest,
+                    "Duplicate page compression overrides were accepted")
+        try require(try send(invalidOverrides, operation: .compress,
+                             pageOverrides: [PDFPageCompressionOverride(pageIndex: 1, options: .init())]).status == .failed,
+                    "Out-of-range page compression override was accepted")
+        try require(!FileManager.default.fileExists(atPath: invalidOverrides.outputURL.path),
+                    "Invalid page compression override created output")
         let invalidPreview = try staged("InfoPlain.pdf")
         try require(try send(invalidPreview, previewPage: 0).status == .invalidRequest, "Metadata accepted a compression-only preview parameter")
 

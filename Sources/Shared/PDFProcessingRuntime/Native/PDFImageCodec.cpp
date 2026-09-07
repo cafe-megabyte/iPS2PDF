@@ -14,6 +14,7 @@
 #include <fpdfsdk/cpdfsdk_helpers.h>
 #include <Accelerate/Accelerate.h>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <memory>
 #include <stdexcept>
@@ -125,6 +126,26 @@ PDFDecodedImage resizePDFImage(const PDFDecodedImage& source, int width, int hei
         throw std::runtime_error("The PDF image could not be resampled");
     checkPDFProcessing();
     return target;
+}
+
+void adjustPDFImageContrast(PDFDecodedImage& image, int contrast) {
+    dimensions(image.width, image.height);
+    if (contrast < -50 || contrast > 50 || image.pixels.size() != size_t(image.width) * image.height * 4)
+        throw std::runtime_error("Invalid PDF image contrast");
+    if (contrast == 0) return;
+    // One stop across the complete slider range keeps the control useful
+    // without turning small movements into clipped scan highlights/shadows.
+    const double factor = std::exp2(double(contrast) / 50.0);
+    for (size_t i = 0; i < image.pixels.size(); i += 4) {
+        if ((i & 0xfffff) == 0) checkPDFProcessing();
+        const double blue = image.pixels[i], green = image.pixels[i + 1], red = image.pixels[i + 2];
+        const double luminance = 0.0722 * blue + 0.7152 * green + 0.2126 * red;
+        const double adjusted = (luminance - 127.5) * factor + 127.5;
+        const double offset = adjusted - luminance;
+        image.pixels[i] = static_cast<uint8_t>(std::clamp(std::round(blue + offset), 0.0, 255.0));
+        image.pixels[i + 1] = static_cast<uint8_t>(std::clamp(std::round(green + offset), 0.0, 255.0));
+        image.pixels[i + 2] = static_cast<uint8_t>(std::clamp(std::round(red + offset), 0.0, 255.0));
+    }
 }
 
 std::vector<uint8_t> encodePDFJPEG(const PDFDecodedImage& image, int quality, bool subsampling) {

@@ -1074,6 +1074,16 @@
         }
       }
     },
+    "Color image contrast" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrast der Farbbilder"
+          }
+        }
+      }
+    },
     "Color image resolution" : {
       "localizations" : {
         "de" : {
@@ -1444,6 +1454,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Contents"
+          }
+        }
+      }
+    },
+    "Contrast" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrast"
           }
         }
       }
@@ -8088,6 +8108,101 @@
             "value" : "XMP properties"
           }
         }
+      }
+    },
+    "%@%@ with individual page settings" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%@%@ mit individuellen Seiteneinstellungen" } }
+      }
+    },
+    "%lld shared resources use settings from earlier pages." : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Gemeinsam genutzte Ressourcen mit Einstellungen früherer Seiten: %lld" } }
+      }
+    },
+    "Calculating page comparison…" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seitenvergleich wird berechnet …" } }
+      }
+    },
+    "Calculating…" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Wird berechnet …" } }
+      }
+    },
+    "Complete PDF" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Gesamtes PDF" } }
+      }
+    },
+    "Contrast: %lld" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Kontrast: %lld" } }
+      }
+    },
+    "Document" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dokument" } }
+      }
+    },
+    "Document Standard" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dokumentstandard" } }
+      }
+    },
+    "Individual" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Individuell" } }
+      }
+    },
+    "Individual pages: %lld" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Individuelle Seiten: %lld" } }
+      }
+    },
+    "No file-size difference" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Kein Unterschied bei der Dateigröße" } }
+      }
+    },
+    "Page %lld of %lld" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seite %1$lld von %2$lld" } }
+      }
+    },
+    "Page settings" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seiteneinstellungen" } }
+      }
+    },
+    "Reset All Pages" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Seiten zurücksetzen" } }
+      }
+    },
+    "Reset Page" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seite zurücksetzen" } }
+      }
+    },
+    "Settings for" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Einstellungen für" } }
+      }
+    },
+    "Threshold: %lld" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Schwellwert: %lld" } }
+      }
+    },
+    "With Document Standard on this page" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mit Dokumentstandard auf dieser Seite" } }
+      }
+    },
+    "With individual page settings" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mit individuellen Seiteneinstellungen" } }
       }
     },
     "Y" : {

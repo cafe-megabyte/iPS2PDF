@@ -33,7 +33,16 @@ typedef struct {
     // Only fixed, non-document diagnostic text is returned through this ABI.
     // The caller localizes status/warnings and never logs input passwords.
     char detail[512];
+    uint32_t shared_resources_from_earlier_pages;
 } IPS2PDFProcessingResult;
+
+typedef struct {
+    int32_t page_index;
+    int32_t level;
+    int32_t monochrome;
+    int32_t threshold;
+    int32_t contrast;
+} IPS2PDFPageCompressionOverride;
 
 typedef struct IPS2PDFProcessingControl IPS2PDFProcessingControl;
 
@@ -58,17 +67,22 @@ int32_t ips2pdf_pdf_remove_metadata(const char* input_path, const char* output_p
                                    IPS2PDFProcessingResult* result);
 
 // level: 0 gentle, 1 balanced, 2 strong. monochrome: 0 color, 1 black/white.
-// threshold: 0...100. The same policy produces preview and accepted output.
+// threshold: 0...100. contrast: -50...50 and used only for color images.
+// The same policy produces preview and accepted output.
 __attribute__((visibility("default")))
 int32_t ips2pdf_pdf_compress(const char* input_path, const char* output_path,
                             const char* password, int32_t level, int32_t monochrome,
-                            int32_t threshold, IPS2PDFProcessingControl* control,
+                            int32_t threshold, int32_t contrast,
+                            const IPS2PDFPageCompressionOverride* page_overrides,
+                            uint32_t page_override_count, IPS2PDFProcessingControl* control,
                             IPS2PDFProcessingResult* result);
 
 __attribute__((visibility("default")))
 int32_t ips2pdf_pdf_compress_preview(const char* input_path, const char* output_path,
                                     const char* password, int32_t level, int32_t monochrome,
-                                    int32_t threshold, int32_t page_index,
+                                    int32_t threshold, int32_t contrast,
+                                    const IPS2PDFPageCompressionOverride* page_overrides,
+                                    uint32_t page_override_count, int32_t page_index,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result);
 
 __attribute__((visibility("default")))

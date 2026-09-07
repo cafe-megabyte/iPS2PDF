@@ -10,5 +10,6 @@ struct PDFProcessingReply: Codable, Sendable {
     let status: Status
     var outputBytes: Int64 = 0
     var warnings: [PDFProcessingWarning] = []
+    var sharedResourcesFromEarlierPages = 0
     var detail: String = ""
 }

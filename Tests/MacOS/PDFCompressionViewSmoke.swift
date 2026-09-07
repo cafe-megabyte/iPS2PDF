@@ -23,8 +23,11 @@ struct PDFCompressionViewSmoke {
         app.setActivationPolicy(.accessory)
         let editing = try PDFEditingSession(input: PDFInspectionInput(sourceURL: folder.appendingPathComponent("Compression-Shared-Source.pdf")))
         let full = try PDFEditingRevision(input: PDFInspectionInput(sourceURL: folder.appendingPathComponent("Compression-Shared-Full.pdf")))
-        let preview = try PDFEditingRevision(input: PDFInspectionInput(sourceURL: folder.appendingPathComponent("Compression-Shared-Preview.pdf")))
-        let model = try PDFCompressionSession(editing: editing) { _, _, _, page in page == nil ? full : preview }
+        let preview = try PDFEditingRevision(
+            input: PDFInspectionInput(sourceURL: folder.appendingPathComponent("Compression-Shared-Preview.pdf")),
+            sharedResourcesFromEarlierPages: 1
+        )
+        let model = try PDFCompressionSession(editing: editing) { _, _, _, _, page in page == nil ? full : preview }
         let host = NSHostingController(rootView: PDFCompressionView(session: model, close: {}))
         let window = NSWindow(contentViewController: host)
         window.setContentSize(NSSize(width: 1050, height: 760))
@@ -59,6 +62,39 @@ struct PDFCompressionViewSmoke {
         host.view.layoutSubtreeIfNeeded()
         try await Task.sleep(for: .milliseconds(100))
         try require(views.allSatisfy { $0.bounds.width > 250 && $0.bounds.height > 200 }, "Compact comparison lost its usable viewports")
-        print("PASS Mac compression view: page 1 initially fitted; actual original/result PDFs, side-by-side layout, synchronized page/zoom/scroll and usable compact viewports")
+        let retainedScale = left.scaleFactor / left.scaleFactorForSizeToFit
+        guard let retainedPoint = left.currentDestination?.point else { throw CocoaError(.fileReadUnknown) }
+        model.options.contrast = 20
+        try await wait { model.canAccept }
+        host.view.layoutSubtreeIfNeeded()
+        try await wait { descendants(PDFView.self, in: host.view).filter { $0.document?.pageCount == 2 }.count == 2 }
+        // PDFKit can run another auto-scale layout after the replacement has
+        // appeared. Wait long enough to catch that delayed reset.
+        try await Task.sleep(for: .milliseconds(750))
+        let refreshed = descendants(PDFView.self, in: host.view)
+        try require(refreshed.allSatisfy { view in
+            view.currentPage.map { view.document?.index(for: $0) == 1 } == true
+        }, "Changing compression options reset the current page")
+        let refreshedScales = refreshed.map { $0.scaleFactor / $0.scaleFactorForSizeToFit }
+        try require(refreshed.allSatisfy { view in
+            let fitted = view.scaleFactorForSizeToFit
+            return fitted > 0 && abs(view.scaleFactor / fitted - retainedScale) < 0.02
+        }, "Changing compression options reset the zoom: retained \(retainedScale), found \(refreshedScales)")
+        try require(refreshed.allSatisfy { view in
+            guard let point = view.currentDestination?.point else { return false }
+            return abs(point.x - retainedPoint.x) < 2 && abs(point.y - retainedPoint.y) < 2
+        }, "Changing compression options reset the visible area")
+        model.setCurrentPageUsesIndividualSettingsFromView(true)
+        try await wait { model.canAccept && model.standardComparisonBytes == full.byteCount }
+        host.view.layoutSubtreeIfNeeded()
+        try require(model.currentPageSizeImpact != nil && model.sharedResourcesFromEarlierPages == 1,
+                    "Current-page size comparison or shared-resource state is missing")
+        try await wait { editing.inspection?.report.imagePlacementAnalysisComplete == true }
+        model.options.colorMode = .blackAndWhite
+        try await wait { model.availableMonochromeLevels == [.strong] && model.options.level == .strong }
+        host.view.layoutSubtreeIfNeeded()
+        let levelPickers = descendants(NSSegmentedControl.self, in: host.view).filter { $0.segmentCount == 3 }
+        try require(levelPickers.contains { !$0.isEnabled }, "Ineffective monochrome compression levels remained enabled")
+        print("PASS Mac compression view: fitted synchronized comparison, retained viewport, page policy editor, exact size comparison, shared-resource note, resets and disabled ineffective S/W levels")
     }
 }
