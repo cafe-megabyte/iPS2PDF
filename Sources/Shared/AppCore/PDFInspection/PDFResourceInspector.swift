@@ -36,7 +36,7 @@ final class PDFResourceInspector {
                 let data = PDFObjectReader.data(stream)
                 let readable = data.map { PDFXMPReader(data: $0).isValid } ?? false
                 if !readable { limited = true }
-                store(PDFInfoSection(id: "metadata-\(identity)", category: .overview, title: String(localized: "Object metadata"), fields: [PDFInfoField("XMP", data.map(Self.xmlText) ?? PDFInspectionFormat.unknown)], initiallyExpanded: false, isComplete: readable), location: location)
+                store(PDFInfoSection(id: "metadata-\(identity)", category: .overview, title: String(localized: "Object metadata"), fields: [PDFInfoField("XMP", data.map(Self.xmlText) ?? PDFInspectionFormat.unknown)], resource: data.map { PDFResourceDescriptorFactory.xmp($0) }, initiallyExpanded: false, isComplete: readable), location: location)
             }
         }
         if PDFObjectReader.name(dictionary, "Type") == "OutputIntent" || PDFObjectReader.object(dictionary, "DestOutputProfile") != nil {
@@ -58,7 +58,7 @@ final class PDFResourceInspector {
             store(PDFInfoSection(id: "signature-\(identity)", category: .security, title: String(localized: "Signature (not validated)"), fields: PDFObjectReader.fields(dictionary, excluding: ["Contents", "Cert"])) , location: location)
         }
         if PDFObjectReader.name(dictionary, "Type") == "Filespec" || PDFObjectReader.object(dictionary, "EF") != nil {
-            store(PDFInfoSection(id: "attachment-\(identity)", category: .contents, title: String(localized: "Attachment") + " · " + (PDFObjectReader.text(dictionary, "UF") ?? PDFObjectReader.text(dictionary, "F") ?? "—"), fields: PDFObjectReader.fields(dictionary, excluding: ["EF"])), location: location)
+            store(PDFInfoSection(id: "attachment-\(identity)", category: .contents, title: String(localized: "Attachment") + " · " + (PDFObjectReader.text(dictionary, "UF") ?? PDFObjectReader.text(dictionary, "F") ?? "—"), fields: PDFObjectReader.fields(dictionary, excluding: ["EF"]), resource: PDFResourceDescriptorFactory.attachment(dictionary)), location: location)
         }
         if PDFObjectReader.name(dictionary, "Type") == "Annot" || PDFObjectReader.object(dictionary, "Rect") != nil && PDFObjectReader.object(dictionary, "Subtype") != nil {
             store(PDFInfoSection(id: "annotation-\(identity)", category: .contents, title: String(localized: "Annotation") + " · " + (PDFObjectReader.name(dictionary, "Subtype") ?? "—"), fields: PDFObjectReader.fields(dictionary, excluding: ["P", "Parent", "AP"]), initiallyExpanded: false), location: location)
@@ -73,7 +73,10 @@ final class PDFResourceInspector {
         }
         for (key, value) in PDFObjectReader.pairs(dictionary) {
             if ["Parent", "P", "Prev", "Pages", "Contents", "FontFile", "FontFile2", "FontFile3"].contains(key) { continue }
-            if key == "DestOutputProfile", let stream = PDFObjectReader.stream(value) { profile(stream, location: location + "/" + key) }
+            if key == "DestOutputProfile", let stream = PDFObjectReader.stream(value) {
+                let resource = profile(stream, location: location + "/" + key)
+                if let resource, sections["intent-\(identity)"]?.resource == nil { sections["intent-\(identity)"]?.resource = resource }
+            }
             if ["ColorSpace", "CS"].contains(key) {
                 store(PDFInfoSection(id: "colorspace-\(identity)", category: .colors, title: String(localized: "Color space"), fields: [PDFInfoField("Definition", PDFObjectReader.describe(value))]), location: location)
                 colorProfiles(value, location: location + "/" + key)
@@ -96,7 +99,7 @@ final class PDFResourceInspector {
     func addScannedImages(_ scanner: PDFContentScanner, page: Int) {
         for image in scanner.images {
             let key = image.identity.hasPrefix("inline-") ? "page-\(page)-" + image.identity : image.identity
-            store(PDFInfoSection(id: key, category: .contents, title: String(localized: "Image"), fields: image.fields, initiallyExpanded: false), location: "\(String(localized: "Page")) \(page)")
+            store(PDFInfoSection(id: key, category: .contents, title: String(localized: "Image"), fields: image.fields, resource: image.resource, initiallyExpanded: false), location: "\(String(localized: "Page")) \(page)")
             // Resource enumeration may have stored the image before content scanning.
             for field in image.fields where field.label == String(localized: "Effective resolution") {
                 if sections[key]?.fields.contains(where: { $0.value == field.value }) != true { sections[key]?.fields.append(field) }
@@ -125,6 +128,7 @@ final class PDFResourceInspector {
     }
     private func store(_ section: PDFInfoSection, location: String) {
         if sections[section.id] == nil { sections[section.id] = section }
+        else if sections[section.id]?.resource == nil, let resource = section.resource { sections[section.id]?.resource = resource }
         locations[section.id, default: []].insert(location)
     }
     private func font(_ dictionary: CGPDFDictionaryRef, location: String, page: Int) {
@@ -139,7 +143,9 @@ final class PDFResourceInspector {
         let descriptor = PDFObjectReader.dictionary(PDFObjectReader.object(effective, "FontDescriptor"))
         let name = PDFObjectReader.name(dictionary, "BaseFont") ?? PDFObjectReader.name(descriptor, "FontName") ?? PDFObjectReader.name(dictionary, "Name") ?? subtype
         let subset = name.range(of: "^[A-Z]{6}\\+", options: .regularExpression) != nil
-        let programs = ["FontFile", "FontFile2", "FontFile3"].compactMap { PDFObjectReader.stream(PDFObjectReader.object(descriptor, $0)) }
+        let programs = ["FontFile", "FontFile2", "FontFile3"].compactMap { key in
+            PDFObjectReader.stream(PDFObjectReader.object(descriptor, key)).map { (key, $0) }
+        }
         let hasProgram = !programs.isEmpty
         let status: String
         if subtype == "Type3" { status = String(localized: "Embedded (Type 3 glyph descriptions)") }
@@ -150,28 +156,38 @@ final class PDFResourceInspector {
         var fields = [PDFInfoField("Embedding", status), PDFInfoField("Font type", subtype), PDFInfoField("Subset prefix", PDFInspectionFormat.yesNo(subset))]
         fields += PDFObjectReader.fields(dictionary, excluding: ["FontDescriptor", "DescendantFonts", "Resources", "CharProcs", "Widths"])
         fields += PDFObjectReader.fields(descriptor, excluding: ["FontFile", "FontFile2", "FontFile3"])
-        for (index, program) in programs.enumerated() {
+        for (index, entry) in programs.enumerated() {
+            let program = entry.1
             fields.append(PDFInfoField("Font program", PDFObjectReader.describeDictionary(CGPDFStreamGetDictionary(program), depth: 0, ancestors: []), id: "program-\(index)"))
+        }
+        let resource = programs.lazy.compactMap {
+            PDFResourceDescriptorFactory.font(stream: $0.1, key: $0.0, fontName: name, subset: subset)
+        }.first
+        if subset, resource != nil {
+            fields.append(PDFInfoField("Export note", String(localized: "The exported font contains only the subset embedded in this PDF.")))
         }
         // Descriptor and font dictionaries can contain the same key; retain both with distinct stable field identities.
         fields = fields.enumerated().map { PDFInfoField($0.element.label, $0.element.value, id: "field-\($0.offset)") }
-        sections[key] = PDFInfoSection(id: key, category: .fonts, title: name, fields: fields)
+        sections[key] = PDFInfoSection(id: key, category: .fonts, title: name, fields: fields, resource: resource)
     }
     @discardableResult private func image(_ stream: CGPDFStreamRef, location: String) -> String {
         let dictionary = CGPDFStreamGetDictionary(stream)
         let key = "image-\(UInt(bitPattern: stream.rawValue))"
-        store(PDFInfoSection(id: key, category: .contents, title: String(localized: "Image"), fields: PDFObjectReader.fields(dictionary, excluding: ["SMask", "Mask", "Metadata"]), initiallyExpanded: false), location: location)
+        store(PDFInfoSection(id: key, category: .contents, title: String(localized: "Image"), fields: PDFObjectReader.fields(dictionary, excluding: ["SMask", "Mask", "Metadata"]), resource: PDFResourceDescriptorFactory.image(stream), initiallyExpanded: false), location: location)
         return key
     }
-    private func profile(_ stream: CGPDFStreamRef, location: String) {
+    @discardableResult private func profile(_ stream: CGPDFStreamRef, location: String) -> PDFExtractableResource? {
         guard let data = PDFObjectReader.data(stream) else {
             limited = true
             store(PDFInfoSection(id: "unreadable-icc-\(UInt(bitPattern: stream.rawValue))", category: .colors, title: "ICC", fields: [PDFInfoField("Profile status", PDFInspectionFormat.unknown)], isComplete: false), location: location)
-            return
+            return nil
         }
-        let profile = PDFICCReader.inspect(data, location: location)
+        var profile = PDFICCReader.inspect(data, location: location)
+        let resource = PDFResourceDescriptorFactory.icc(data, name: profile.title)
+        profile.resource = resource
         if !profile.isComplete { limited = true }
         store(profile, location: location)
+        return resource
     }
     private func colorProfiles(_ object: CGPDFObjectRef, location: String, depth: Int = 0) {
         guard depth < 32 else { limited = true; return }

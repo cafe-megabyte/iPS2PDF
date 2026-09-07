@@ -1,7 +1,7 @@
 import Foundation
 
 struct PDFProcessingRequest: Codable, Sendable {
-    enum Operation: String, Codable, Sendable { case removeMetadata, compress }
+    enum Operation: String, Codable, Sendable { case removeMetadata, compress, extractResource }
 
     var version = PDFProcessingEnvelope.version
     let jobID: UUID
@@ -9,10 +9,30 @@ struct PDFProcessingRequest: Codable, Sendable {
     let preserveConformity: Bool
     let compression: PDFCompressionOptions
     var previewPage: Int? = nil
+    var resourceFingerprint: String? = nil
+    var resourceFormat: String? = nil
+    var resourceWidth: Int? = nil
+    var resourceHeight: Int? = nil
+    var resourceBitsPerComponent: Int? = nil
 
     var isValid: Bool {
-        version == PDFProcessingEnvelope.version && compression.isValid &&
-            (operation != .compress || !preserveConformity) &&
-            (previewPage == nil || (operation == .compress && (0...Int(Int32.max)).contains(previewPage!)))
+        guard version == PDFProcessingEnvelope.version, compression.isValid,
+              operation != .compress || !preserveConformity,
+              previewPage == nil || operation == .compress && (0...Int(Int32.max)).contains(previewPage!)
+        else { return false }
+        if operation == .extractResource {
+            let formats = ["embeddedFile", "jpeg", "jpeg2000", "png", "type1", "trueType",
+                           "trueTypeCollection", "cff", "openType", "openTypeCollection", "icc", "xml"]
+            guard preserveConformity == false, previewPage == nil,
+                  let resourceFingerprint, resourceFingerprint.count == 64,
+                  resourceFingerprint.allSatisfy({ $0.isHexDigit && !$0.isUppercase }),
+                  let resourceFormat, formats.contains(resourceFormat)
+            else { return false }
+            for value in [resourceWidth, resourceHeight, resourceBitsPerComponent].compactMap({ $0 })
+                where value <= 0 || value > Int(Int32.max) { return false }
+        } else if resourceFingerprint != nil || resourceFormat != nil || resourceWidth != nil || resourceHeight != nil || resourceBitsPerComponent != nil {
+            return false
+        }
+        return true
     }
 }

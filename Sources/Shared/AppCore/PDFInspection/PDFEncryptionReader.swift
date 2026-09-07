@@ -9,6 +9,7 @@ enum PDFEncryptionReader {
     struct Details {
         let fields: [PDFInfoField]
         let isComplete: Bool
+        let allowsContentCopying: Bool?
     }
     private static let secretKeys: Set<String> = ["O", "U", "OE", "UE", "Perms", "Recipients"]
 
@@ -16,6 +17,7 @@ enum PDFEncryptionReader {
         read(url: url, password: password, encrypted: true) { document in
             guard let dictionary = PDFObjectReader.dictionary(PDFObjectReader.object(document.catalog, "InspectionEncryption")) else { return nil }
             var complete = true
+            var allowsContentCopying: Bool?
             var fields = PDFObjectReader.fields(dictionary, excluding: ["CF"], redacting: secretKeys)
             let handler = PDFObjectReader.name(dictionary, "Filter") ?? PDFInspectionFormat.unknown
             let version = PDFObjectReader.number(dictionary, "V") ?? 0
@@ -48,12 +50,17 @@ enum PDFEncryptionReader {
                     // requires printing; commenting includes filling existing fields.
                     if revision >= 3, bit == 12 { permitted = permitted && bits & (1 << 2) != 0 }
                     if revision >= 3, bit == 9 { permitted = permitted || bits & (1 << 5) != 0 }
+                    if bit == 5 { allowsContentCopying = permitted }
                     fields.append(PDFInfoField(String(localized: "Declared permission") + " · " + String(localized: String.LocalizationValue(label)), PDFInspectionFormat.yesNo(permitted)))
                 }
             }
             fields.append(PDFInfoField("Metadata encrypted", PDFInspectionFormat.yesNo(PDFObjectReader.boolean(dictionary, "EncryptMetadata") ?? true)))
             if handler == "Standard", PDFObjectReader.integer(dictionary, "P") == nil { complete = false }
-            return Details(fields: fields.enumerated().map { PDFInfoField($0.element.label, $0.element.value, id: "encryption-\($0.offset)") }, isComplete: complete)
+            return Details(
+                fields: fields.enumerated().map { PDFInfoField($0.element.label, $0.element.value, id: "encryption-\($0.offset)") },
+                isComplete: complete,
+                allowsContentCopying: allowsContentCopying
+            )
         }
     }
 

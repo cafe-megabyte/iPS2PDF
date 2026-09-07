@@ -112,6 +112,10 @@
                             <menuItem title="Information for This PDF" keyEquivalent="i" id="PDF-Inf-This">
                                 <connections><action selector="showPDFInformation:" target="-1" id="PDF-Inf-Now"/></connections>
                             </menuItem>
+                            <menuItem title="Export All Resources…" id="PDF-Res-Export">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="exportAllPDFResources:" target="-1" id="PDF-Res-Export-Act"/></connections>
+                            </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
                             <menuItem title="Close" keyEquivalent="w" id="DVo-aG-piG">
                                 <connections>

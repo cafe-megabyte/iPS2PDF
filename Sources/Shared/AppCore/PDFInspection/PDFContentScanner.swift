@@ -9,6 +9,7 @@ final class PDFContentScanner {
         let fields: [PDFInfoField]
         let horizontalPPI: Double?
         let verticalPPI: Double?
+        let resource: PDFExtractableResource?
     }
     private(set) var colorSpaces: Set<String> = []
     private var resources: CGPDFDictionaryRef?
@@ -209,7 +210,8 @@ final class PDFContentScanner {
         images.append(ImageUse(identity: inline ? "inline-\(images.count)" : "image-\(UInt(bitPattern: stream.rawValue))",
                                fields: fields,
                                horizontalPPI: width.flatMap { imageScaleKnown && horizontal > 0 ? $0 * 72 / horizontal : nil },
-                               verticalPPI: height.flatMap { imageScaleKnown && vertical > 0 ? $0 * 72 / vertical : nil }))
+                               verticalPPI: height.flatMap { imageScaleKnown && vertical > 0 ? $0 * 72 / vertical : nil },
+                               resource: PDFResourceDescriptorFactory.image(stream)))
     }
     private static func context(_ info: UnsafeMutableRawPointer?) -> PDFContentScanner {
         Unmanaged<PDFContentScanner>.fromOpaque(info!).takeUnretainedValue()

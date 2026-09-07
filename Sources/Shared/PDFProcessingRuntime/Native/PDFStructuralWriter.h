@@ -3,9 +3,14 @@
 #include "PDFStructuralSanitizer.h"
 #include "PDFCompressionTransform.h"
 #include <filesystem>
+#include <memory>
+#include <qpdf/QPDF.hh>
 #include <string>
 
 namespace ips2pdf {
+
+std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input,
+                                      const std::string& password);
 
 struct PDFStructuralWriteResult {
     PDFSanitizationResult sanitization;

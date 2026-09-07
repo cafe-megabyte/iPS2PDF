@@ -71,6 +71,13 @@ int32_t ips2pdf_pdf_compress_preview(const char* input_path, const char* output_
                                     int32_t threshold, int32_t page_index,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result);
 
+__attribute__((visibility("default")))
+int32_t ips2pdf_pdf_extract_resource(const char* input_path, const char* output_path,
+                                    const char* password, const char* format,
+                                    const char* fingerprint, int32_t width, int32_t height,
+                                    int32_t bits_per_component,
+                                    IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result);
+
 #ifdef __cplusplus
 }
 #endif

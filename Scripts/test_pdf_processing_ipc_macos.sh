@@ -6,6 +6,8 @@ project="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$scratch"
 xcrun swiftc -swift-version 6 -parse-as-library -target "$(uname -m)-apple-macos15" \
     -F "$frameworks" -framework PDFProcessingRuntime -Xlinker -rpath -Xlinker "$frameworks" \
+    "$project"/Sources/Shared/AppCore/PDFInspection/*.swift \
+    "$project"/Sources/Shared/ICCMetadata/*.swift \
     "$project"/Sources/Shared/IPC/PDFProcessing/*.swift \
     "$project"/Sources/Shared/IPC/MacOSXPC/*.swift \
     "$project/Sources/Shared/IPC/AppGroup/AppGroup.swift" \

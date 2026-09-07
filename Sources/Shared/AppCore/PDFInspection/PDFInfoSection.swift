@@ -6,6 +6,7 @@ struct PDFInfoSection: Identifiable, Equatable, Sendable {
     var title: String
     var fields: [PDFInfoField]
     var warning: String? = nil
+    var resource: PDFExtractableResource? = nil
     var initiallyExpanded = true
     var isComplete = true
 }

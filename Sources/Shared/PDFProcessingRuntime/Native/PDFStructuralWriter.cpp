@@ -74,7 +74,9 @@ bool canPreserveEncryption(QPDF& pdf) {
     return streams == expected && strings == expected && files == expected;
 }
 
-std::unique_ptr<QPDF> open(const std::filesystem::path& input, const std::string& password) {
+} // namespace
+
+std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input, const std::string& password) {
     auto read = [&](const std::string& encoded) {
         auto pdf = std::make_unique<QPDF>();
         pdf->setSuppressWarnings(true);
@@ -95,7 +97,8 @@ std::unique_ptr<QPDF> open(const std::filesystem::path& input, const std::string
         throw;
     }
 }
-} // namespace
+
+namespace {
 
 static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
                                           const std::filesystem::path& output,
@@ -104,7 +107,7 @@ static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
                                           bool preserveConformity,
                                           const PDFCompressionPolicy* compression, int previewPage = -1) {
     if (input == output) throw std::runtime_error("PDF processing requires a separate output file");
-    auto pdf = open(input, password);
+    auto pdf = openPDFDocument(input, password);
     PDFStructuralWriteResult result;
     result.protectionRemoved = !canPreserveEncryption(*pdf);
     const auto effectiveRetention = preserveConformity ? metadataPreservingConformity(*pdf) : retention;
@@ -144,6 +147,7 @@ static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
         throw;
     }
 }
+} // namespace
 
 PDFStructuralWriteResult removePDFMetadata(const std::filesystem::path& input,
                                           const std::filesystem::path& output,

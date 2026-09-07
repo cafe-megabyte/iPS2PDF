@@ -15,8 +15,14 @@ enum PDFInspectionService {
         if document.isEncrypted && !document.isUnlocked { _ = document.unlockWithPassword(password ?? "") }
         if pdf.isLocked, let password { _ = pdf.unlock(withPassword: password) }
         report.isLocked = !document.isUnlocked
+        let encryptionDetails = document.isEncrypted && document.isUnlocked
+            ? PDFEncryptionReader.inspect(url: url, password: password)
+            : nil
+        let contentCopyingAllowed = encryptionDetails?.allowsContentCopying
+            ?? document.accessPermissions.contains(.allowsContentCopying)
+        report.allowsResourceExporting = document.isUnlocked && (!document.isEncrypted || contentCopyingAllowed)
         report.sections.append(security(document))
-        if document.isEncrypted, document.isUnlocked, let details = PDFEncryptionReader.inspect(url: url, password: password) {
+        if let details = encryptionDetails {
             report.sections.append(PDFInfoSection(id: "encryption", category: .security, title: String(localized: "Encryption dictionary and declared permissions"), fields: details.fields, isComplete: details.isComplete))
             if !details.isComplete { report.notices.append(String(localized: "The encryption dictionary could not be read completely.")) }
         }
@@ -82,7 +88,7 @@ enum PDFInspectionService {
             declarations += xmp.declarations.map { $0 + " (XMP)" }
             if !xmp.isValid { standardMetadataReadable = false; report.notices.append(String(localized: "XMP could not be fully parsed. The original text is available below.")) }
             report.sections.append(PDFInfoSection(id: "xmp-properties", category: .overview, title: String(localized: "XMP properties"), fields: xmp.fields, initiallyExpanded: false))
-            report.sections.append(PDFInfoSection(id: "xmp", category: .overview, title: String(localized: "XMP metadata"), fields: [PDFInfoField("XMP", PDFResourceInspector.xmlText(metadataData))], initiallyExpanded: false))
+            report.sections.append(PDFInfoSection(id: "xmp", category: .overview, title: String(localized: "XMP metadata"), fields: [PDFInfoField("XMP", PDFResourceInspector.xmlText(metadataData))], resource: PDFResourceDescriptorFactory.xmp(metadataData), initiallyExpanded: false))
         }
         report.declaredStandards = Array(Set(declarations)).sorted()
         if !standardMetadataReadable { declarations.append(PDFInspectionFormat.unknown + " (XMP)") }

@@ -54,8 +54,12 @@ final class PDFInspectionTests: XCTestCase {
         let report = try inspect("InfoICC")
         let profiles = report.sections.filter { $0.id.hasPrefix("icc-") }
         XCTAssertEqual(profiles.count, 1)
+        XCTAssertEqual(profiles[0].resource?.format, .icc)
+        XCTAssertEqual(profiles[0].resource?.suggestedFilename.hasSuffix(".icc"), true)
         XCTAssertTrue(profiles[0].fields.contains { $0.value.contains("OutputIntents") && $0.value.contains("ColorSpace") })
-        XCTAssertTrue(report.sections(in: .colors).contains { $0.title == String(localized: "Output intent") })
+        let intent = try XCTUnwrap(report.sections(in: .colors).first { $0.title == String(localized: "Output intent") })
+        XCTAssertEqual(intent.resource?.id, profiles[0].resource?.id)
+        XCTAssertEqual(report.exportableResources.filter { $0.kind == .iccProfile }.count, 1)
         for section in report.sections { XCTAssertEqual(Set(section.fields.map(\.id)).count, section.fields.count, section.id) }
     }
     func testEncryptedPDFsRequireCorrectPasswordAndShowOriginalPermissions() throws {
@@ -66,6 +70,7 @@ final class PDFInspectionTests: XCTestCase {
             for password in ["user-test", "owner-test"] {
                 let report = try inspect(name, password: password)
                 XCTAssertFalse(report.isLocked, algorithm)
+                XCTAssertFalse(report.allowsResourceExporting, algorithm)
                 XCTAssertTrue(report.isComplete, algorithm)
                 XCTAssertEqual(report.pageCount, 1)
                 let encryption = try XCTUnwrap(report.sections.first { $0.id == "encryption" })
@@ -120,6 +125,10 @@ final class PDFInspectionTests: XCTestCase {
             XCTAssertTrue(report.isComplete, report.notices.joined(separator: "\n"))
             XCTAssertNil(report.warningSummary)
             XCTAssertTrue(report.sections(in: .fonts).contains { $0.fields.contains { $0.value == String(localized: String.LocalizationValue(status)) } })
+            let resource = try XCTUnwrap(report.sections(in: .fonts).compactMap(\.resource).first)
+            XCTAssertEqual(resource.kind, .font)
+            XCTAssertEqual(resource.suggestedFilename.localizedCaseInsensitiveContains("subset"), fixture == "InfoEmbeddedSubset")
+            XCTAssertEqual(resource.isFontSubset, fixture == "InfoEmbeddedSubset")
         }
     }
     func testType0ResolvesDescendantFontEmbedding() throws {
@@ -132,7 +141,24 @@ final class PDFInspectionTests: XCTestCase {
         XCTAssertTrue(report.isComplete, report.notices.joined(separator: "\n"))
         let image = try XCTUnwrap(report.sections.first { $0.id.contains("inline-") })
         XCTAssertTrue(image.fields.contains { $0.value.contains("ppi") })
+        XCTAssertEqual(image.resource?.format, .png)
+        XCTAssertEqual(image.resource?.suggestedFilename.hasSuffix(".png"), true)
         XCTAssertNil(report.warningSummary)
+    }
+    func testAttachmentGetsASafeExportName() throws {
+        let report = try inspect("InfoAttachment")
+        let attachment = try XCTUnwrap(report.exportableResources.first { $0.kind == .attachment })
+        XCTAssertEqual(attachment.format, .embeddedFile)
+        XCTAssertFalse(attachment.suggestedFilename.contains("/"))
+        XCTAssertFalse(attachment.suggestedFilename.contains("\\"))
+        XCTAssertTrue(attachment.suggestedFilename.hasSuffix("Dangerous.txt"))
+    }
+    func testXMPAndUnencryptedResourcePermissionsAreExportable() throws {
+        let report = try inspect("InfoXMPTitle")
+        XCTAssertTrue(report.allowsResourceExporting)
+        let resource = try XCTUnwrap(report.sections.first { $0.id == "xmp" }?.resource)
+        XCTAssertEqual(resource.kind, .xmpMetadata)
+        XCTAssertEqual(resource.format, .xml)
     }
     func testMultipleStandardDeclarationsAreKeptSeparate() {
         let data = Data("""

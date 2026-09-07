@@ -115,7 +115,12 @@ private final class PDFOutlineItem: NSObject {
 }
 
 @MainActor
-private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate {
+private final class PDFResourceExportButton: NSButton {
+    var resource: PDFExtractableResource?
+}
+
+@MainActor
+private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuItemValidation {
     private let session: PDFInspectionSession
     private let actions: PDFEditingActions
     private var actionsObservation: AnyCancellable?
@@ -144,6 +149,10 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
     private let copyButton = NSButton(title: String(localized: "Copy report"), target: nil, action: nil)
     private let saveRTFButton = NSButton(title: String(localized: "Save .rtf"), target: nil, action: nil)
     private let saveTXTButton = NSButton(title: String(localized: "Save .txt"), target: nil, action: nil)
+    private let exportResourcesButton = NSButton(title: String(localized: "Export All Resources…"), target: nil, action: nil)
+    private var resourceExportTask: Task<Void, Never>?
+    private var isExportingResources = false
+    private var resourceExportStatus = ""
     private var categoryButtons: [NSButton] = []
 
     init(session: PDFInspectionSession, editing: PDFEditingSession?) {
@@ -163,9 +172,13 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         copyButton.target = self; copyButton.action = #selector(copyReport)
         saveRTFButton.target = self; saveRTFButton.action = #selector(saveRTFReport)
         saveTXTButton.target = self; saveTXTButton.action = #selector(saveTXTReport)
+        exportResourcesButton.target = self; exportResourcesButton.action = #selector(exportAllPDFResources(_:))
+        exportResourcesButton.image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: nil)
+        exportResourcesButton.imagePosition = .imageLeading
         saveRTFButton.setAccessibilityIdentifier("pdf-save-rtf-report")
         saveTXTButton.setAccessibilityIdentifier("pdf-save-txt-report")
-        let header = NSStackView(views: [title, spacer, copyButton, saveRTFButton, saveTXTButton]); header.spacing = 12
+        title.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let header = NSStackView(views: [title, spacer, copyButton, saveRTFButton, saveTXTButton, exportResourcesButton]); header.spacing = 12
         root.addArrangedSubview(header); header.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true
         warning.target = self; warning.action = #selector(showMissingFonts); warning.bezelStyle = .inline
         warning.isBordered = false
@@ -269,13 +282,15 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         copyButton.isEnabled = !session.isReading && !report.isLocked && session.errorMessage == nil
         saveRTFButton.isEnabled = copyButton.isEnabled
         saveTXTButton.isEnabled = copyButton.isEnabled
-        metadataButton.isEnabled = copyButton.isEnabled && !actions.isProcessing
+        exportResourcesButton.isEnabled = copyButton.isEnabled && report.allowsResourceExporting && !report.exportableResources.isEmpty && !isExportingResources
+        exportResourcesButton.toolTip = report.allowsResourceExporting ? nil : String(localized: "The PDF does not permit content copying.")
+        metadataButton.isEnabled = copyButton.isEnabled && !actions.isProcessing && !isExportingResources
         undoPDFButton.isEnabled = actions.editing?.canUndo == true && !actions.isProcessing
         redoPDFButton.isEnabled = actions.editing?.canRedo == true && !actions.isProcessing
         savePDFButton.isEnabled = actions.editing?.isEdited == true && !actions.isProcessing
         compressionButton.isEnabled = metadataButton.isEnabled
-        cancelProcessingButton.isHidden = !actions.isProcessing
-        processingStatus.stringValue = actions.isProcessing ? String(localized: "Removing metadata…") : ""
+        cancelProcessingButton.isHidden = !actions.isProcessing && !isExportingResources
+        processingStatus.stringValue = isExportingResources ? resourceExportStatus : (actions.isProcessing ? String(localized: "Removing metadata…") : "")
         categoryButtons.enumerated().forEach { $0.element.state = PDFInfoCategory.allCases[$0.offset] == category ? .on : .off }
         let sections = report.sections(in: category)
         isReloading = true
@@ -288,8 +303,8 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         }
         isReloading = false
     }
-    func stopProcessing() { actions.cancel() }
-    @objc private func cancelProcessing() { actions.cancel() }
+    func stopProcessing() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil }
+    @objc private func cancelProcessing() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; isExportingResources = false; refresh() }
     @objc private func undoPDFEdit() { actions.editing?.undo() }
     @objc private func redoPDFEdit() { actions.editing?.redo() }
     @objc func compressPDF(_ sender: Any?) {
@@ -361,6 +376,72 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         guard let window = view.window else { return }
         MacOSPDFReportSharing.export(session.report, formatted: formatted, window: window)
     }
+    @objc func exportAllPDFResources(_ sender: Any?) {
+        let resources = session.report.exportableResources
+        guard !resources.isEmpty, session.report.allowsResourceExporting,
+              !session.isReading, !isExportingResources, let window = view.window else { return }
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.folder]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = PDFResourceExporter.defaultFolderName(for: session.report.fileName)
+        panel.message = String(localized: "Choose where to save all exportable PDF resources.")
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let destination = panel.url, let self else { return }
+            self.startResourceExport(resources, destination: destination)
+        }
+    }
+    private func startResourceExport(_ resources: [PDFExtractableResource], destination: URL) {
+        isExportingResources = true
+        resourceExportStatus = String(localized: "Preparing resource export…")
+        refresh()
+        resourceExportTask = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await PDFResourceExporter.exportAll(resources, from: self.session, to: destination,
+                                                        destinationAccess: .exactItem) { [weak self] update in
+                    await MainActor.run {
+                        guard let self else { return }
+                        self.resourceExportStatus = update.completed == update.total
+                            ? String(localized: "Finishing resource export…")
+                            : String.localizedStringWithFormat(String(localized: "Exporting resource %lld of %lld: %@"), Int64(update.completed + 1), Int64(update.total), update.filename)
+                        self.refresh()
+                    }
+                }
+            } catch {
+                if !(error is CancellationError) { self.actions.errorMessage = error.localizedDescription }
+            }
+            self.isExportingResources = false
+            self.resourceExportTask = nil
+            self.refresh()
+        }
+    }
+    @objc private func exportResource(_ sender: PDFResourceExportButton) {
+        guard let resource = sender.resource, session.report.allowsResourceExporting,
+              !isExportingResources, let window = view.window else { return }
+        let panel = NSSavePanel()
+        if let type = UTType(filenameExtension: resource.format.pathExtension), !resource.format.pathExtension.isEmpty {
+            panel.allowedContentTypes = [type]
+        }
+        panel.nameFieldStringValue = resource.suggestedFilename
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let destination = panel.url, let self else { return }
+            self.isExportingResources = true
+            self.resourceExportStatus = String.localizedStringWithFormat(String(localized: "Exporting resource: %@"), resource.suggestedFilename)
+            self.refresh()
+            self.resourceExportTask = Task { [weak self] in
+                guard let self else { return }
+                do {
+                    let artifact = try await PDFResourceExporter.extract(resource, from: session)
+                    try await Task.detached(priority: .userInitiated) { try PDFResourceExporter.copy(artifact, to: destination) }.value
+                } catch {
+                    if !(error is CancellationError) { actions.errorMessage = error.localizedDescription }
+                }
+                isExportingResources = false
+                resourceExportTask = nil
+                refresh()
+            }
+        }
+    }
     @objc private func showValue() {
         guard outline.clickedRow >= 0, let item = outline.item(atRow: outline.clickedRow) as? PDFOutlineItem, let field = item.field, let parent = view.window else { return }
         let text = NSTextView(); text.string = field.value; text.isEditable = false; text.isSelectable = true; text.font = .monospacedSystemFont(ofSize: 12, weight: .regular); text.textContainerInset = NSSize(width: 12, height: 12)
@@ -387,8 +468,28 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         label.textColor = isLabel && item.section == nil ? .secondaryLabelColor : .labelColor
         label.maximumNumberOfLines = 8; label.lineBreakMode = .byTruncatingTail; label.translatesAutoresizingMaskIntoConstraints = false
         let cell = NSTableCellView(); cell.addSubview(label)
-        NSLayoutConstraint.activate([label.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 5), label.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -5), label.topAnchor.constraint(equalTo: cell.topAnchor, constant: 6), label.bottomAnchor.constraint(lessThanOrEqualTo: cell.bottomAnchor, constant: -4)])
+        var trailing = label.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -5)
+        if !isLabel, let resource = item.section?.resource {
+            let button = PDFResourceExportButton(image: NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: nil) ?? NSImage(), target: self, action: #selector(exportResource(_:)))
+            button.resource = resource
+            button.bezelStyle = .accessoryBarAction
+            button.isEnabled = session.report.allowsResourceExporting && !isExportingResources
+            button.toolTip = session.report.allowsResourceExporting
+                ? String.localizedStringWithFormat(String(localized: "Export %@…"), resource.kind.accessibilityName)
+                : String(localized: "The PDF does not permit content copying.")
+            button.setAccessibilityLabel(String.localizedStringWithFormat(String(localized: "Export %@"), resource.kind.accessibilityName))
+            button.translatesAutoresizingMaskIntoConstraints = false
+            cell.addSubview(button)
+            trailing = label.trailingAnchor.constraint(lessThanOrEqualTo: button.leadingAnchor, constant: -6)
+            NSLayoutConstraint.activate([button.trailingAnchor.constraint(equalTo: cell.trailingAnchor, constant: -5), button.centerYAnchor.constraint(equalTo: cell.centerYAnchor)])
+        }
+        NSLayoutConstraint.activate([label.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 5), trailing, label.topAnchor.constraint(equalTo: cell.topAnchor, constant: 6), label.bottomAnchor.constraint(lessThanOrEqualTo: cell.bottomAnchor, constant: -4)])
         return cell
+    }
+
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(exportAllPDFResources(_:)) { return exportResourcesButton.isEnabled }
+        return true
     }
     func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
         let row = PDFInformationRowView()

@@ -41,6 +41,9 @@ cid=w._add_object(d(Type=N('/Font'),Subtype=N('/CIDFontType2'),BaseFont=N('/Unic
 font=w._add_object(d(Type=N('/Font'),Subtype=N('/Type0'),BaseFont=N('/UnicodeFont'),Encoding=N('/Identity-H'),DescendantFonts=A([cid])))
 p[N('/Resources')]=d(Font=d(F1=font));p[N('/Contents')]=stream(w,b'BT /F1 18 Tf 50 700 Td <0041> Tj ET');w.write(r/'InfoType0.pdf')
 w,p,f=base();p[N('/Contents')]=stream(w,b'q 72 0 0 72 50 50 cm BI /W 1 /H 1 /BPC 8 /CS /RGB /F /AHx ID ff0000> EI Q');w.write(r/'InfoInlineImage.pdf')
+w,p,f=base();w.add_attachment('../Folder\\Dangerous.txt', b'iPS2PDF embedded attachment\n')
+# Word-generated PDFs can omit the required /Type entry from an attachment stream.
+filespec=w._root_object['/Names']['/EmbeddedFiles']['/Names'][1].get_object();filespec['/EF']['/F'].get_object().pop(N('/Type'));w.write(r/'InfoAttachment.pdf')
 w,p,f=base();w._info.get_object().pop(N('/Title'));xmp=b'''<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:title><rdf:Alt><rdf:li xml:lang="x-default">XMP-only title</rdf:li></rdf:Alt></dc:title></rdf:Description></rdf:RDF></x:xmpmeta>''';w._root_object[N('/Metadata')]=stream(w,xmp,Type=N('/Metadata'),Subtype=N('/XML'));w.write(r/'InfoXMPTitle.pdf')
 
 from pathlib import Path

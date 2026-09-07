@@ -64,6 +64,11 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
                                              Int32(request.compression.level.rawValue),
                                              request.compression.colorMode == .blackAndWhite ? 1 : 0,
                                              Int32(request.compression.threshold), Int32(request.previewPage ?? -1), native.pointer, &result)
+                    case .extractResource:
+                        ips2pdf_pdf_extract_resource(job.inputURL.path, job.outputURL.path, password ?? "",
+                                                     request.resourceFormat ?? "", request.resourceFingerprint ?? "",
+                                                     Int32(request.resourceWidth ?? 0), Int32(request.resourceHeight ?? 0),
+                                                     Int32(request.resourceBitsPerComponent ?? 0), native.pointer, &result)
                     }
                     let status: PDFProcessingReply.Status = switch result.status {
                     case 0: .success

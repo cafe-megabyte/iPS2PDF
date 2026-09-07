@@ -160,7 +160,7 @@ $(HYPER_JPEGLI_OBJECT): sources/hyper/core/src/hyper_jpegli_wrap.cc
 NATIVE_SOURCES := $(sort $(wildcard $(NATIVE_SOURCE)/*.cpp))
 NATIVE_OBJECTS := $(patsubst $(NATIVE_SOURCE)/%.cpp,$(OBJECT_ROOT)/native/%.o,$(NATIVE_SOURCES))
 NATIVE_INCLUDES := '-I$(NATIVE_SOURCE)' \
-  -isystem '$(QPDF_SOURCE)/include' -isystem 'generated/qpdf' \
+  -isystem '$(QPDF_SOURCE)/include' -isystem '$(QPDF_SOURCE)/libqpdf' -isystem 'generated/qpdf' \
   -isystem 'generated/qpdf-jpeg' -isystem '$(PDFIUM_SOURCE)' \
   -isystem '$(JPEGLI_SOURCE)/lib/include' -isystem 'generated/jpegli' \
   -isystem '$(SDKROOT)/usr/include/libxml2'

@@ -46,7 +46,7 @@ void ensureLibrary() {
 }
 } // namespace
 
-PDFDecodedImage decodePDFImage(Object image, Object colorSpace) {
+PDFDecodedImage decodePDFImage(Object image, Object colorSpace, bool preserveAlpha) {
     if (!image.isStream()) throw std::runtime_error("Invalid PDF image");
     auto source = image.getDict();
     auto embeddedAlpha = source.getKey("/SMaskInData");
@@ -65,8 +65,10 @@ PDFDecodedImage decodePDFImage(Object image, Object colorSpace) {
         if (!colorSpace.isIndirect()) colorSpace = image.getOwningQPDF()->makeIndirectObject(colorSpace);
         copied.getDict().replaceKey("/ColorSpace", wrapper.copyForeignObject(colorSpace));
     }
-    copied.getDict().removeKey("/SMask");
-    copied.getDict().removeKey("/Mask");
+    if (!preserveAlpha) {
+        copied.getDict().removeKey("/SMask");
+        copied.getDict().removeKey("/Mask");
+    }
     auto page = wrapper.makeIndirectObject(Object::parse("<< /Type /Page /MediaBox [0 0 1 1] >>"));
     page.replaceKey("/Resources", Object::newDictionary({{"/XObject", Object::newDictionary({{"/Image", copied}})}}));
     page.replaceKey("/Contents", wrapper.newStream("/Image Do\n"));
@@ -103,7 +105,7 @@ PDFDecodedImage decodePDFImage(Object image, Object colorSpace) {
             target[0] = pixel[0];
             target[1] = pixel[channels == 1 ? 0 : 1];
             target[2] = pixel[channels == 1 ? 0 : 2];
-            target[3] = 255;
+            target[3] = preserveAlpha && format == FPDFBitmap_BGRA ? pixel[3] : 255;
         }
     }
     return result;

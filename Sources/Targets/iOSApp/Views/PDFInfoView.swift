@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PDFInfoView: View {
     @ObservedObject var session: PDFInspectionSession
@@ -16,6 +17,12 @@ struct PDFInfoView: View {
     @State private var asksConformity = false
     @State private var sharedRevision: PDFEditingRevision?
     @State private var compression: PDFCompressionSession?
+    @State private var resourceArtifact: PDFExportArtifact?
+    @State private var resourceExportTask: Task<Void, Never>?
+    @State private var selectsResourceFolder = false
+    @State private var resourceProgress: PDFResourceExporter.Progress?
+
+    private var isExportingResources: Bool { resourceExportTask != nil }
 
     init(session: PDFInspectionSession, editing: PDFEditingSession? = nil) {
         self.session = session
@@ -32,6 +39,17 @@ struct PDFInfoView: View {
                         Text("Removing metadata…")
                         Spacer()
                         Button("Cancel") { actions.cancel() }
+                    }.padding()
+                }
+                if let progress = resourceProgress {
+                    HStack {
+                        ProgressView()
+                        Text(progress.completed == progress.total
+                             ? String(localized: "Finishing resource export…")
+                             : String.localizedStringWithFormat(String(localized: "Exporting resource %lld of %lld: %@"), Int64(progress.completed + 1), Int64(progress.total), progress.filename))
+                            .font(.footnote)
+                        Spacer()
+                        Button("Cancel") { resourceExportTask?.cancel() }
                     }.padding()
                 }
                 if let summary = session.report.warningSummary {
@@ -94,7 +112,11 @@ struct PDFInfoView: View {
                                 if sections.isEmpty, !session.isReading {
                                     Text(session.report.isComplete ? String(localized: "No entries found") : PDFInspectionFormat.unknown).foregroundStyle(.secondary)
                                 }
-                                ForEach(sections) { section in PDFInfoSectionView(section: section, fontReveal: fontReveal, noticeReveal: noticeReveal) }
+                                ForEach(sections) { section in
+                                    PDFInfoSectionView(section: section, fontReveal: fontReveal, noticeReveal: noticeReveal,
+                                                       canExport: session.report.allowsResourceExporting && !isExportingResources,
+                                                       export: exportResource)
+                                }
                             }.padding(.horizontal).padding(.bottom)
                         }
                         .onChange(of: category) { _, _ in reader.scrollTo("top", anchor: .top) }
@@ -115,14 +137,17 @@ struct PDFInfoView: View {
                     .accessibilityLabel("Copy complete report")
                     .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil)
                     Menu {
-                        if let editing = actions.editing, editing.isEdited, let revision = editing.current {
-                            Button("Export edited PDF…") { sharedRevision = revision }
-                            Divider()
-                        }
                         Button("Formatted text (.rtf)") { share(formatted: true) }
                         Button("Plain text (.txt)") { share(formatted: false) }
+                        Divider()
+                        Button("Export All Resources…") { selectsResourceFolder = true }
+                            .disabled(!session.report.allowsResourceExporting || session.report.exportableResources.isEmpty || isExportingResources)
+                        if let editing = actions.editing, editing.isEdited, let revision = editing.current {
+                            Divider()
+                            Button("Export edited PDF…") { sharedRevision = revision }
+                        }
                     } label: { Image(systemName: "square.and.arrow.up") }
-                    .accessibilityLabel("Export complete report")
+                    .accessibilityLabel("Export")
                     .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
@@ -131,13 +156,13 @@ struct PDFInfoView: View {
                 ToolbarItemGroup(placement: .bottomBar) {
                     Button { removeMetadata() } label: { Image(systemName: "eraser") }
                         .accessibilityLabel("Remove metadata")
-                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing)
+                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
                     Button {
                         do { compression = try PDFCompressionSession(editing: actions.editingSession()) }
                         catch { message = error.localizedDescription }
                     } label: { Image(systemName: "arrow.down.right.and.arrow.up.left") }
                         .accessibilityLabel("Compress PDF")
-                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing)
+                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
                     Spacer()
                     Button { actions.editing?.undo() } label: { Image(systemName: "arrow.uturn.backward") }
                         .accessibilityLabel("Undo PDF edit")
@@ -158,6 +183,13 @@ struct PDFInfoView: View {
             PDFCompressionView(session: model) { compression = nil }
                 .presentationDetents([.large]).presentationDragIndicator(.visible)
         }
+        .fileImporter(isPresented: $selectsResourceFolder, allowedContentTypes: [.folder]) { result in
+            switch result {
+            case .success(let parent): exportAllResources(to: parent)
+            case .failure(let error):
+                if (error as NSError).code != CocoaError.userCancelled.rawValue { message = error.localizedDescription }
+            }
+        }
         .confirmationDialog("Preserve PDF conformity?", isPresented: $asksConformity, titleVisibility: .visible) {
             Button("Preserve conformity") { actions.removeMetadata(preserveConformity: true) }
             Button("Discard conformity") { actions.removeMetadata(preserveConformity: false) }
@@ -170,9 +202,9 @@ struct PDFInfoView: View {
         } message: { Text(message ?? "") }
         .onChange(of: actions.errorMessage) { _, value in if let value { message = value; actions.errorMessage = nil } }
         .onChange(of: actions.notice) { _, value in if let value { message = value; actions.notice = nil } }
-        .onDisappear { if !showsExport && sharedRevision == nil && compression == nil { close(); removeExport() } }
+        .onDisappear { if !showsExport && sharedRevision == nil && compression == nil && !selectsResourceFolder { close(); removeExport() } }
     }
-    private func close() { actions.cancel(); if ownsInspection { session.cancel() } }
+    private func close() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; if ownsInspection { session.cancel() } }
     private func unlock() { let value = password; password = ""; session.unlock(value) }
     private func removeMetadata() {
         if session.report.hasConformityDeclaration { asksConformity = true }
@@ -183,8 +215,46 @@ struct PDFInfoView: View {
         catch { message = error.localizedDescription }
     }
     private func removeExport() {
-        if let exportURL { try? FileManager.default.removeItem(at: exportURL.deletingLastPathComponent()) }
+        if resourceArtifact == nil, let exportURL { try? FileManager.default.removeItem(at: exportURL.deletingLastPathComponent()) }
+        resourceArtifact = nil
         exportURL = nil
+    }
+    private func exportResource(_ resource: PDFExtractableResource) {
+        guard resourceExportTask == nil else { return }
+        resourceProgress = PDFResourceExporter.Progress(completed: 0, total: 1, filename: resource.suggestedFilename)
+        resourceExportTask = Task {
+            do {
+                let artifact = try await PDFResourceExporter.extract(resource, from: session)
+                try Task.checkCancellation()
+                resourceArtifact = artifact
+                exportURL = artifact.url
+                showsExport = true
+            } catch {
+                if !(error is CancellationError) { message = error.localizedDescription }
+            }
+            resourceProgress = nil
+            resourceExportTask = nil
+        }
+    }
+    private func exportAllResources(to parent: URL) {
+        let resources = session.report.exportableResources
+        guard !resources.isEmpty, resourceExportTask == nil else { return }
+        resourceExportTask = Task {
+            let access = parent.startAccessingSecurityScopedResource()
+            defer { if access { parent.stopAccessingSecurityScopedResource() } }
+            do {
+                let name = PDFResourceExporter.defaultFolderName(for: session.report.fileName)
+                let destination = PDFResourceExporter.availableDirectory(named: name, in: parent)
+                try await PDFResourceExporter.exportAll(resources, from: session, to: destination) { update in
+                    await MainActor.run { resourceProgress = update }
+                }
+                message = String.localizedStringWithFormat(String(localized: "Exported all resources to %@."), destination.lastPathComponent)
+            } catch {
+                if !(error is CancellationError) { message = error.localizedDescription }
+            }
+            resourceProgress = nil
+            resourceExportTask = nil
+        }
     }
 }
 
@@ -192,8 +262,18 @@ private struct PDFInfoSectionView: View {
     let section: PDFInfoSection
     let fontReveal: Int
     let noticeReveal: Int
+    let canExport: Bool
+    let export: (PDFExtractableResource) -> Void
     @State private var expanded: Bool
-    init(section: PDFInfoSection, fontReveal: Int, noticeReveal: Int) { self.section = section; self.fontReveal = fontReveal; self.noticeReveal = noticeReveal; _expanded = State(initialValue: section.initiallyExpanded || section.warning != nil || section.id == "analysis-notices" && noticeReveal > 0) }
+    init(section: PDFInfoSection, fontReveal: Int, noticeReveal: Int,
+         canExport: Bool, export: @escaping (PDFExtractableResource) -> Void) {
+        self.section = section
+        self.fontReveal = fontReveal
+        self.noticeReveal = noticeReveal
+        self.canExport = canExport
+        self.export = export
+        _expanded = State(initialValue: section.initiallyExpanded || section.warning != nil || section.id == "analysis-notices" && noticeReveal > 0)
+    }
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {
             VStack(alignment: .leading, spacing: 12) {
@@ -222,7 +302,19 @@ private struct PDFInfoSectionView: View {
                     }
                 }
             }.padding(.top, 10)
-        } label: { Text(section.title).font(.headline).foregroundStyle(.primary).textSelection(.enabled) }
+        } label: {
+            HStack {
+                Text(section.title).font(.headline).foregroundStyle(.primary).textSelection(.enabled)
+                Spacer()
+                if let resource = section.resource {
+                    Button { export(resource) } label: { Image(systemName: "square.and.arrow.up") }
+                        .buttonStyle(.borderless)
+                        .disabled(!canExport)
+                        .accessibilityLabel(String.localizedStringWithFormat(String(localized: "Export %@"), resource.kind.accessibilityName))
+                        .accessibilityHint(canExport ? "" : String(localized: "The PDF does not permit content copying."))
+                }
+            }
+        }
         .padding(14)
         .background(section.warning == nil ? Color(uiColor: .secondarySystemGroupedBackground) : Color.orange.opacity(0.20), in: RoundedRectangle(cornerRadius: 12))
         .overlay { if section.warning != nil { RoundedRectangle(cornerRadius: 12).stroke(Color.orange.opacity(0.62), lineWidth: 1) } }

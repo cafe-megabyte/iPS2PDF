@@ -3,9 +3,14 @@
 #include "PDFConformityMetadata.h"
 #include "PDFStructuralWriter.h"
 #include "PDFProcessingUnsupported.h"
+#include "PDFResourceExtraction.h"
 
 #include <cstdio>
+#include <cstring>
+#include <algorithm>
 #include <mutex>
+#include <set>
+#include <string>
 
 namespace {
 std::mutex processingMutex;
@@ -68,4 +73,33 @@ int32_t ips2pdf_pdf_compress_preview(const char* input, const char* output, cons
     }
     ips2pdf::PDFCompressionPolicy policy{static_cast<ips2pdf::PDFCompressionLevel>(level), monochrome != 0, threshold};
     return process(input, output, password, 0, &policy, control, result, pageIndex);
+}
+
+int32_t ips2pdf_pdf_extract_resource(const char* input, const char* output, const char* password,
+                                    const char* format, const char* fingerprint, int32_t width,
+                                    int32_t height, int32_t bitsPerComponent,
+                                    IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result) {
+    if (!result) return IPS2PDF_PROCESSING_INVALID_REQUEST;
+    *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST;
+    const std::set<std::string> formats = {"embeddedFile", "jpeg", "jpeg2000", "png", "type1", "trueType",
+        "trueTypeCollection", "cff", "openType", "openTypeCollection", "icc", "xml"};
+    if (!input || !*input || !output || !*output || !format || !*format || !fingerprint || std::strlen(fingerprint) != 64 ||
+        formats.find(format) == formats.end() ||
+        !std::all_of(fingerprint, fingerprint + 64, [](unsigned char c) { return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'); }) ||
+        width < 0 || height < 0 || bitsPerComponent < 0) return result->status;
+    std::unique_lock lock(processingMutex, std::try_to_lock);
+    if (!lock.owns_lock()) return result->status = IPS2PDF_PROCESSING_BUSY;
+    ips2pdf::PDFProcessingScope scope(control);
+    try {
+        result->output_bytes = ips2pdf::extractPDFResource(input, output, password ? password : "", format,
+                                                           fingerprint, width, height, bitsPerComponent);
+        result->status = IPS2PDF_PROCESSING_SUCCESS;
+    } catch (const ips2pdf::PDFProcessingStopped& error) {
+        result->status = error.cancelled ? IPS2PDF_PROCESSING_CANCELLED : IPS2PDF_PROCESSING_LIMIT_EXCEEDED;
+    } catch (const QPDFExc& error) {
+        result->status = error.getErrorCode() == qpdf_e_password ? IPS2PDF_PROCESSING_PASSWORD_REQUIRED : IPS2PDF_PROCESSING_FAILED;
+    } catch (...) {
+        result->status = IPS2PDF_PROCESSING_FAILED;
+    }
+    return result->status;
 }

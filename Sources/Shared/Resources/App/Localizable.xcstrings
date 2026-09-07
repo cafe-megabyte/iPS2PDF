@@ -1,6 +1,91 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "attachment" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Anhang" } }
+      }
+    },
+    "Choose where to save all exportable PDF resources." : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Wählen Sie, wo alle exportierbaren PDF-Ressourcen gesichert werden sollen." } }
+      }
+    },
+    "Export" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Exportieren" } }
+      }
+    },
+    "Export %@" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%@ exportieren" } }
+      }
+    },
+    "Export %@…" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "%@ exportieren …" } }
+      }
+    },
+    "Export All Resources…" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Ressourcen exportieren …" } }
+      }
+    },
+    "Export note" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Exporthinweis" } }
+      }
+    },
+    "Exported all resources to %@." : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Ressourcen wurden nach „%@“ exportiert." } }
+      }
+    },
+    "Exporting resource %lld of %lld: %@" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressource %1$lld von %2$lld wird exportiert: %3$@" } }
+      }
+    },
+    "Exporting resource: %@" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressource wird exportiert: %@" } }
+      }
+    },
+    "Finishing resource export…" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressourcenexport wird abgeschlossen …" } }
+      }
+    },
+    "font" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Schrift" } }
+      }
+    },
+    "ICC profile" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "ICC-Profil" } }
+      }
+    },
+    "image" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Bild" } }
+      }
+    },
+    "Preparing resource export…" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressourcenexport wird vorbereitet …" } }
+      }
+    },
+    "The exported font contains only the subset embedded in this PDF." : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Die exportierte Schrift enthält nur die in diesem PDF eingebettete Untergruppe." } }
+      }
+    },
+    "The PDF does not permit content copying." : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Das PDF erlaubt das Kopieren von Inhalten nicht." } }
+      }
+    },
     "" : {
 
     },

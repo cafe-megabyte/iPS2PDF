@@ -8,9 +8,15 @@ struct PDFInspectionReport: Equatable, Sendable {
     var pageCount = 0
     var isComplete = false
     var isLocked = false
+    var allowsResourceExporting = false
     var declaredStandards: [String] = []
 
     var hasConformityDeclaration: Bool { !declaredStandards.isEmpty }
+
+    var exportableResources: [PDFExtractableResource] {
+        var seen: Set<String> = []
+        return sections.compactMap(\.resource).filter { seen.insert($0.id).inserted }
+    }
 
     var fontWarnings: [PDFInfoSection] {
         sections.filter { $0.category == .fonts && $0.warning != nil }

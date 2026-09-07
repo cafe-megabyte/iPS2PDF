@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 import PDFKit
 import XPC
 
@@ -15,10 +16,16 @@ struct PDFProcessingIPCSmoke {
 
         func send(_ job: PDFProcessingJobDirectory, password: String? = nil,
                   version: Int = 1, operation: PDFProcessingRequest.Operation = .removeMetadata,
-                  options: PDFCompressionOptions = .init(), previewPage: Int? = nil, handler: PDFProcessingRequestHandler? = nil) throws -> PDFProcessingReply {
+                  options: PDFCompressionOptions = .init(), previewPage: Int? = nil,
+                  resource: PDFExtractableResource? = nil, handler: PDFProcessingRequestHandler? = nil) throws -> PDFProcessingReply {
             var envelope = XPCDictionary()
             let request = PDFProcessingRequest(version: version, jobID: job.id, operation: operation,
-                                                preserveConformity: false, compression: options, previewPage: previewPage)
+                                                preserveConformity: false, compression: options, previewPage: previewPage,
+                                                resourceFingerprint: resource?.fingerprint,
+                                                resourceFormat: resource?.format.rawValue,
+                                                resourceWidth: resource?.pixelWidth,
+                                                resourceHeight: resource?.pixelHeight,
+                                                resourceBitsPerComponent: resource?.bitsPerComponent)
             envelope[GhostscriptExtensionEnvelope.operation] = PDFProcessingEnvelope.operation
             envelope[PDFProcessingEnvelope.payload] = String(decoding: try JSONEncoder().encode(request), as: UTF8.self)
             if let password { envelope[PDFProcessingEnvelope.password] = Data(password.utf8).base64EncodedString() }
@@ -73,6 +80,49 @@ struct PDFProcessingIPCSmoke {
         }
         let invalidPreview = try staged("InfoPlain.pdf")
         try require(try send(invalidPreview, previewPage: 0).status == .invalidRequest, "Metadata accepted a compression-only preview parameter")
-        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression and page previews")
+
+        let iccReport = try PDFInspectionService.inspect(url: fixtures.appendingPathComponent("InfoICC.pdf"), fileName: "InfoICC.pdf", password: nil)
+        let iccResource = try iccReport.exportableResources.first { $0.kind == .iccProfile }.unwrap("ICC resource missing")
+        let iccJob = try staged("InfoICC.pdf")
+        let iccReply = try send(iccJob, operation: .extractResource, resource: iccResource)
+        try require(iccReply.status == .success, "ICC extraction failed")
+        let iccData = try Data(contentsOf: iccJob.outputURL)
+        let iccDigest = SHA256.hash(data: iccData).map { String(format: "%02x", $0) }.joined()
+        try require(iccDigest == iccResource.fingerprint, "ICC bytes changed during extraction")
+
+        let imageReport = try PDFInspectionService.inspect(url: fixtures.appendingPathComponent("InfoInlineImage.pdf"), fileName: "InfoInlineImage.pdf", password: nil)
+        let imageResource = try imageReport.exportableResources.first { $0.kind == .image }.unwrap("Inline image resource missing")
+        let imageJob = try staged("InfoInlineImage.pdf")
+        let imageReply = try send(imageJob, operation: .extractResource, resource: imageResource)
+        try require(imageReply.status == .success, "Inline image extraction failed")
+        try require(try Data(contentsOf: imageJob.outputURL).starts(with: [0x89, 0x50, 0x4e, 0x47]), "Inline image is not PNG")
+
+        let attachmentReport = try PDFInspectionService.inspect(url: fixtures.appendingPathComponent("InfoAttachment.pdf"), fileName: "InfoAttachment.pdf", password: nil)
+        let attachment = try attachmentReport.exportableResources.first { $0.kind == .attachment }.unwrap("Attachment resource missing")
+        let attachmentJob = try staged("InfoAttachment.pdf")
+        let attachmentReply = try send(attachmentJob, operation: .extractResource, resource: attachment)
+        try require(attachmentReply.status == .success, "Attachment extraction failed")
+        try require(try Data(contentsOf: attachmentJob.outputURL).starts(with: Data("iPS2PDF embedded attachment".utf8)), "Attachment bytes changed")
+
+        let fontReport = try PDFInspectionService.inspect(url: fixtures.appendingPathComponent("InfoEmbeddedSubset.pdf"), fileName: "InfoEmbeddedSubset.pdf", password: nil)
+        let font = try fontReport.exportableResources.first { $0.kind == .font }.unwrap("Embedded font resource missing")
+        let fontJob = try staged("InfoEmbeddedSubset.pdf")
+        let fontReply = try send(fontJob, operation: .extractResource, resource: font)
+        try require(fontReply.status == .success, "Embedded font extraction failed")
+        let fontData = try Data(contentsOf: fontJob.outputURL)
+        if font.format == .type1 {
+            try require(fontData.starts(with: [0x80, 0x01]), "Type 1 font was not reconstructed as PFB")
+        } else {
+            let fontDigest = SHA256.hash(data: fontData).map { String(format: "%02x", $0) }.joined()
+            try require(fontDigest == font.fingerprint, "Embedded font bytes changed during extraction")
+        }
+        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression, previews, ICC, image, attachment and font extraction")
+    }
+}
+
+private extension Optional {
+    func unwrap(_ message: String) throws -> Wrapped {
+        guard let self else { throw NSError(domain: "PDFProcessingIPCSmoke", code: 2, userInfo: [NSLocalizedDescriptionKey: message]) }
+        return self
     }
 }

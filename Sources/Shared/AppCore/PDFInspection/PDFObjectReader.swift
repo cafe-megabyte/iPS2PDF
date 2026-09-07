@@ -67,8 +67,12 @@ enum PDFObjectReader {
         return CGPDFDictionaryGetBoolean(dictionary, key, &value) ? value != 0 : nil
     }
     static func data(_ stream: CGPDFStreamRef) -> Data? {
+        streamData(stream)?.data
+    }
+    static func streamData(_ stream: CGPDFStreamRef) -> (data: Data, format: CGPDFDataFormat)? {
         var format = CGPDFDataFormat.raw
-        return CGPDFStreamCopyData(stream, &format) as Data?
+        guard let data = CGPDFStreamCopyData(stream, &format) as Data? else { return nil }
+        return (data, format)
     }
     static func describe(_ object: CGPDFObjectRef, depth: Int = 0, ancestors: Set<UInt> = [], redacting: Set<String> = []) -> String {
         switch CGPDFObjectGetType(object) {
