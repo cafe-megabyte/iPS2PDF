@@ -19,7 +19,7 @@ struct PDFCompressionPolicy {
 
     void validate() const {
         if (static_cast<int>(level) < 0 || static_cast<int>(level) > 2 || threshold < 0 || threshold > 100 ||
-            contrast < -50 || contrast > 50)
+            contrast < 0 || contrast > 100)
             throw std::runtime_error("Invalid PDF compression options");
     }
 
@@ -46,7 +46,7 @@ struct PDFCompressionPolicy {
 
     int jpegQuality() const {
         validate();
-        constexpr int quality[] = {10, 35, 60};
+        constexpr int quality[] = {20, 40, 60};
         return quality[static_cast<int>(level)];
     }
 

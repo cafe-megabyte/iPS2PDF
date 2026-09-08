@@ -136,8 +136,7 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
             case .blackAndWhite:
                 value.threshold = 75
             case .color:
-                // Contrast uses -50...50 internally. +25 places the slider at
-                // 75 percent while retaining adjustment in both directions.
+                // Each color override starts at the shared color default.
                 value.contrast = 25
             }
         }

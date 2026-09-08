@@ -314,6 +314,9 @@
 		U20000000000000000000020 /* MacOSPDFProcessingRuntime */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOSPDFProcessingRuntime; sourceTree = "<group>"; };
 		U20000000000000000000021 /* RequestHandling */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = RequestHandling; sourceTree = "<group>"; };
 		U20000000000000000000022 /* PDFProcessingClient */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PDFProcessingClient; sourceTree = "<group>"; };
+		U20000000000000000000023 /* Native */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Native; sourceTree = "<group>"; };
+		U20000000000000000000024 /* Native */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Native; sourceTree = "<group>"; };
+		U20000000000000000000025 /* MacOS */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOS; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -544,6 +547,8 @@
 			children = (
 				U20000000000000000000019 /* Unit */,
 				U2000000000000000000001A /* Integration */,
+				U20000000000000000000024 /* Native */,
+				U20000000000000000000025 /* MacOS */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -551,6 +556,7 @@
 		W70000000000000000000001 /* PDFProcessingRuntime */ = {
 			isa = PBXGroup;
 			children = (
+				U20000000000000000000023 /* Native */,
 				U20000000000000000000021 /* RequestHandling */,
 			);
 			path = PDFProcessingRuntime;

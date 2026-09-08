@@ -1,5 +1,11 @@
 # iPS2PDF Project Instructions
 
+## Source organization
+
+- A Swift source file must declare at most one top-level type. This includes classes, structures, enumerations, actors, protocols, and type aliases.
+- Put a generally reusable type in its own file named after that type. Nest a type inside its owning type when it is only an implementation detail.
+- Extensions may stay with the type they extend or live in a focused extension file; they must not be used to hide unrelated top-level types in one file.
+
 ## Joboptions consistency belongs to the consistency engine
 
 - Never disable, lock, hide, or otherwise prevent editing a Joboptions control because of a PDF standard, compatibility requirement, another setting, or a consistency rule.

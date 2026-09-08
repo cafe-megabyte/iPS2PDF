@@ -1,10 +1,5 @@
 import Foundation
 
-enum PDFInfoFieldEmphasis: Equatable, Sendable {
-    case standardDeclaration
-    case warning
-}
-
 struct PDFInfoField: Identifiable, Equatable, Sendable {
     let id: String
     let label: String

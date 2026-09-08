@@ -740,5 +740,3 @@ enum JoboptionsConsistencyEngine {
         }
     }
 }
-
-typealias GhostscriptCompatibilityAdjuster = JoboptionsConsistencyEngine

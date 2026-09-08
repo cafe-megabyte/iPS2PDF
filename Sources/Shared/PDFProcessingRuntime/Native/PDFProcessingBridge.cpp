@@ -73,7 +73,7 @@ int32_t ips2pdf_pdf_compress_preview(const char* input, const char* output, cons
                                     int32_t pageIndex,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result) {
     if (level < 0 || level > 2 || monochrome < 0 || monochrome > 1 || threshold < 0 || threshold > 100 ||
-        contrast < -50 || contrast > 50 || pageIndex < -1 || pageOverrideCount > 100000 ||
+        contrast < 0 || contrast > 100 || pageIndex < -1 || pageOverrideCount > 100000 ||
         (pageOverrideCount > 0 && !pageOverrides)) {
         if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
         return IPS2PDF_PROCESSING_INVALID_REQUEST;
@@ -83,7 +83,7 @@ int32_t ips2pdf_pdf_compress_preview(const char* input, const char* output, cons
     for (uint32_t index = 0; index < pageOverrideCount; ++index) {
         const auto& item = pageOverrides[index];
         if (item.page_index <= previousPage || item.level < 0 || item.level > 2 || item.monochrome < 0 || item.monochrome > 1 ||
-            item.threshold < 0 || item.threshold > 100 || item.contrast < -50 || item.contrast > 50) {
+            item.threshold < 0 || item.threshold > 100 || item.contrast < 0 || item.contrast > 100) {
             if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
             return IPS2PDF_PROCESSING_INVALID_REQUEST;
         }

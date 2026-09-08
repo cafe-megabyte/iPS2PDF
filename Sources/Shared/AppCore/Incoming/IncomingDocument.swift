@@ -5,5 +5,3 @@ enum IncomingDocument {
     case pdfInformation(URL)
     case joboptions(URL, LosslessJoboptionsDocument)
 }
-
-enum IncomingDocumentPurpose { case automatic, conversion }

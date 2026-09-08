@@ -5,22 +5,22 @@ import UIKit
 import XCTest
 @testable import iPS2PDF
 
-private actor RoutingConverter: FileConverting {
-    private(set) var calls = 0
-    func validateJoboptions(at joboptionsURL: URL) async throws { }
-    func convert(sourceURL: URL, outputURL: URL, joboptionsURL: URL, standard: PDFStandard, securityLimitsEnabled: Bool, postScriptRandomSeed: Int, inputPassword: String?) async throws {
-        calls += 1
-        try FileManager.default.copyItem(at: sourceURL, to: outputURL)
-    }
-}
-
-private final class RoutingFileManager: FileManager, @unchecked Sendable {
-    private let root = FileManager.default.temporaryDirectory.appendingPathComponent("RoutingWorkspace-\(UUID().uuidString)")
-    override var temporaryDirectory: URL { root }
-    deinit { try? FileManager.default.removeItem(at: root) }
-}
-
 final class PDFRoutingIntegrationTests: XCTestCase {
+    private actor RoutingConverter: FileConverting {
+        private(set) var calls = 0
+        func validateJoboptions(at joboptionsURL: URL) async throws { }
+        func convert(sourceURL: URL, outputURL: URL, joboptionsURL: URL, standard: PDFStandard, securityLimitsEnabled: Bool, postScriptRandomSeed: Int, inputPassword: String?) async throws {
+            calls += 1
+            try FileManager.default.copyItem(at: sourceURL, to: outputURL)
+        }
+    }
+
+    private final class RoutingFileManager: FileManager, @unchecked Sendable {
+        private let root = FileManager.default.temporaryDirectory.appendingPathComponent("RoutingWorkspace-\(UUID().uuidString)")
+        override var temporaryDirectory: URL { root }
+        deinit { try? FileManager.default.removeItem(at: root) }
+    }
+
     @MainActor private func model(converter: RoutingConverter = RoutingConverter()) -> ConversionViewModel {
         ConversionViewModel(workingDirectoryService: WorkingDirectoryService(fileManager: RoutingFileManager()), converter: converter)
     }

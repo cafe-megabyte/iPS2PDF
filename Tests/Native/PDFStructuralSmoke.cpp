@@ -344,11 +344,18 @@ void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
         require(policy.resizeScale(72) == 1 && std::abs(policy.resizeScale(225) - 110.0 / 225.0) < 0.001,
                 "Color compression did not apply its strict scan resolution cap");
         policy.level = ips2pdf::PDFCompressionLevel::gentle;
-        require(policy.maximumPPI() == 225 && policy.jpegQuality() == 10,
+        require(policy.maximumPPI() == 225 && policy.jpegQuality() == 20,
                 "Gentle color compression did not retain the high-resolution policy");
         policy.level = ips2pdf::PDFCompressionLevel::balanced;
-        require(policy.maximumPPI() == 140 && policy.jpegQuality() == 35,
+        require(policy.maximumPPI() == 140 && policy.jpegQuality() == 40,
                 "Balanced color compression lost its selected policy");
+        policy.contrast = 100;
+        policy.validate();
+        policy.contrast = -1;
+        bool invalidContrast = false;
+        try { policy.validate(); } catch (const std::exception&) { invalidContrast = true; }
+        require(invalidContrast, "Compression accepted a contrast below the UI range");
+        policy.contrast = 25;
         policy.monochrome = true;
         policy.level = ips2pdf::PDFCompressionLevel::strong;
         require(policy.maximumPPI() == 300 && policy.resizeScale(360) == 1,

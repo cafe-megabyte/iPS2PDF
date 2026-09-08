@@ -1,80 +1,80 @@
 import Foundation
 
-private actor ProcessingQueue {
-    struct Call {
-        let inputID: UUID
-        let options: PDFCompressionOptions
-        let overrides: [PDFPageCompressionOverride]
-        let page: Int?
-        let continuation: CheckedContinuation<PDFEditingRevision, any Error>
-    }
-    var calls: [Call] = []
-    func process(_ input: PDFEditingRevision, _ options: PDFCompressionOptions,
-                 _ overrides: [PDFPageCompressionOverride], _ page: Int?) async throws -> PDFEditingRevision {
-        // Deliberately ignore cancellation to simulate a late helper response.
-        try await withCheckedThrowingContinuation { continuation in
-            calls.append(Call(inputID: input.id, options: options, overrides: overrides,
-                              page: page, continuation: continuation))
-        }
-    }
-    func count() -> Int { calls.count }
-    func finish(_ index: Int, with revision: PDFEditingRevision) { calls[index].continuation.resume(returning: revision) }
-    func inputs() -> [UUID] { calls.map(\.inputID) }
-    func pages() -> [Int?] { calls.map(\.page) }
-    func overrides() -> [[PDFPageCompressionOverride]] { calls.map(\.overrides) }
-}
-
-private actor PagePolicyQueue {
-    struct Call {
-        let overrides: [PDFPageCompressionOverride]
-        let page: Int?
-    }
-    let standard: PDFEditingRevision
-    let individual: PDFEditingRevision
-    var calls: [Call] = []
-
-    init(standard: PDFEditingRevision, individual: PDFEditingRevision) {
-        self.standard = standard
-        self.individual = individual
-    }
-
-    func process(_ overrides: [PDFPageCompressionOverride], _ page: Int?) -> PDFEditingRevision {
-        calls.append(Call(overrides: overrides, page: page))
-        return overrides.isEmpty ? standard : individual
-    }
-
-    func recorded() -> [Call] { calls }
-}
-
-private actor PageSwitchQueue {
-    let standard: PDFEditingRevision
-    let individual: PDFEditingRevision
-    var armed = false
-    var baselineContinuation: CheckedContinuation<PDFEditingRevision, Never>?
-
-    init(standard: PDFEditingRevision, individual: PDFEditingRevision) {
-        self.standard = standard
-        self.individual = individual
-    }
-
-    func arm() { armed = true }
-    func isWaitingForBaseline() -> Bool { baselineContinuation != nil }
-    func finishBaseline() {
-        baselineContinuation?.resume(returning: standard)
-        baselineContinuation = nil
-    }
-
-    func process(_ overrides: [PDFPageCompressionOverride], _ page: Int?) async -> PDFEditingRevision {
-        if armed, overrides.isEmpty, page == nil {
-            armed = false
-            return await withCheckedContinuation { baselineContinuation = $0 }
-        }
-        return overrides.isEmpty ? standard : individual
-    }
-}
-
 @main @MainActor
 struct PDFCompressionSessionSmoke {
+    private actor ProcessingQueue {
+        struct Call {
+            let inputID: UUID
+            let options: PDFCompressionOptions
+            let overrides: [PDFPageCompressionOverride]
+            let page: Int?
+            let continuation: CheckedContinuation<PDFEditingRevision, any Error>
+        }
+        var calls: [Call] = []
+        func process(_ input: PDFEditingRevision, _ options: PDFCompressionOptions,
+                     _ overrides: [PDFPageCompressionOverride], _ page: Int?) async throws -> PDFEditingRevision {
+            // Deliberately ignore cancellation to simulate a late helper response.
+            try await withCheckedThrowingContinuation { continuation in
+                calls.append(Call(inputID: input.id, options: options, overrides: overrides,
+                                  page: page, continuation: continuation))
+            }
+        }
+        func count() -> Int { calls.count }
+        func finish(_ index: Int, with revision: PDFEditingRevision) { calls[index].continuation.resume(returning: revision) }
+        func inputs() -> [UUID] { calls.map(\.inputID) }
+        func pages() -> [Int?] { calls.map(\.page) }
+        func overrides() -> [[PDFPageCompressionOverride]] { calls.map(\.overrides) }
+    }
+
+    private actor PagePolicyQueue {
+        struct Call {
+            let overrides: [PDFPageCompressionOverride]
+            let page: Int?
+        }
+        let standard: PDFEditingRevision
+        let individual: PDFEditingRevision
+        var calls: [Call] = []
+
+        init(standard: PDFEditingRevision, individual: PDFEditingRevision) {
+            self.standard = standard
+            self.individual = individual
+        }
+
+        func process(_ overrides: [PDFPageCompressionOverride], _ page: Int?) -> PDFEditingRevision {
+            calls.append(Call(overrides: overrides, page: page))
+            return overrides.isEmpty ? standard : individual
+        }
+
+        func recorded() -> [Call] { calls }
+    }
+
+    private actor PageSwitchQueue {
+        let standard: PDFEditingRevision
+        let individual: PDFEditingRevision
+        var armed = false
+        var baselineContinuation: CheckedContinuation<PDFEditingRevision, Never>?
+
+        init(standard: PDFEditingRevision, individual: PDFEditingRevision) {
+            self.standard = standard
+            self.individual = individual
+        }
+
+        func arm() { armed = true }
+        func isWaitingForBaseline() -> Bool { baselineContinuation != nil }
+        func finishBaseline() {
+            baselineContinuation?.resume(returning: standard)
+            baselineContinuation = nil
+        }
+
+        func process(_ overrides: [PDFPageCompressionOverride], _ page: Int?) async -> PDFEditingRevision {
+            if armed, overrides.isEmpty, page == nil {
+                armed = false
+                return await withCheckedContinuation { baselineContinuation = $0 }
+            }
+            return overrides.isEmpty ? standard : individual
+        }
+    }
+
     static func require(_ condition: Bool, _ message: String) throws {
         if !condition { throw NSError(domain: "PDFCompressionSessionSmoke", code: 1, userInfo: [NSLocalizedDescriptionKey: message]) }
     }

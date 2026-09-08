@@ -27,6 +27,10 @@ xcrun swiftc -swift-version 6 \
     "$project/Sources/Targets/MacOSApp/MacOSGhostscriptService.swift" \
     "$project/Sources/Targets/MacOSApp/MacOSPDFReportSharing.swift" \
     "$project/Sources/Targets/MacOSApp/MacOSPDFInfoWindowController.swift" \
+    "$project/Sources/Targets/MacOSApp/MacOSPDFInfoViewController.swift" \
+    "$project/Sources/Targets/MacOSApp/PDFInformationRowView.swift" \
+    "$project/Sources/Targets/MacOSApp/PDFOutlineItem.swift" \
+    "$project/Sources/Targets/MacOSApp/PDFResourceExportButton.swift" \
     "$project/Sources/Targets/MacOSApp/MacOSPDFCompressionWindowController.swift" \
     "$project/Tests/MacOS/PDFInformationLayoutSmoke.swift" \
     -o "$app/Contents/MacOS/PDFInformationLayoutSmoke"

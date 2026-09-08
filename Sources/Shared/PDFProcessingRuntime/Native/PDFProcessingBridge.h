@@ -67,7 +67,7 @@ int32_t ips2pdf_pdf_remove_metadata(const char* input_path, const char* output_p
                                    IPS2PDFProcessingResult* result);
 
 // level: 0 gentle, 1 balanced, 2 strong. monochrome: 0 color, 1 black/white.
-// threshold: 0...100. contrast: -50...50 and used only for color images.
+// threshold: 0...100. contrast: 0...100 and used only for color images.
 // The same policy produces preview and accepted output.
 __attribute__((visibility("default")))
 int32_t ips2pdf_pdf_compress(const char* input_path, const char* output_path,

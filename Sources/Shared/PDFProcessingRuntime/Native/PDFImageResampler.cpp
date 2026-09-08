@@ -63,7 +63,7 @@ void resamplePDFRGB(int sourceWidth, int sourceHeight,
                     const PDFRGBRowSink& sink,
                     const PDFImageCheckpoint& checkpoint) {
     validateDimensions(sourceWidth, sourceHeight, targetWidth, targetHeight);
-    if (contrast < -50 || contrast > 50 || !source || !sink)
+    if (contrast < 0 || contrast > 100 || !source || !sink)
         throw std::runtime_error("Invalid PDF image resampling parameters");
 
     std::vector<uint8_t> sourceRow(size_t(sourceWidth) * 3);
