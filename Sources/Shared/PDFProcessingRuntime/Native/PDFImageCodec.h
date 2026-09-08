@@ -16,10 +16,12 @@ struct PDFDecodedImage {
 };
 
 PDFDecodedImage decodePDFImage(QPDFObjectHandle image, QPDFObjectHandle colorSpace, bool preserveAlpha = false);
-PDFDecodedImage resizePDFImage(const PDFDecodedImage& image, int width, int height);
-void adjustPDFImageContrast(PDFDecodedImage& image, int contrast);
-std::vector<uint8_t> encodePDFJPEG(const PDFDecodedImage& image, int quality, bool chromaSubsampling);
-std::vector<uint8_t> encodePDFGroup4(const PDFDecodedImage& image, const PDFCompressionPolicy& policy);
+
+// Decode, resample and encode one image through a bounded row pipeline. The
+// replacement stream is file-backed until QPDF writes the final document.
+void recompressPDFImage(QPDFObjectHandle image, QPDFObjectHandle colorSpace,
+                        int targetWidth, int targetHeight,
+                        const PDFCompressionPolicy& policy);
 
 // Reuse PDFium's PDF color-space/tint-function implementation for vectors and
 // images. Keeping a converter per resolved color space avoids reparsing ICC

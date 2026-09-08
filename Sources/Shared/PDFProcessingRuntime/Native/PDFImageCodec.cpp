@@ -1,29 +1,40 @@
 #include "PDFProcessingUnsupported.h"
+#include "PDFGroup4Encoder.h"
 #include "PDFImageCodec.h"
+#include "PDFImageResampler.h"
 #include "PDFProcessingControl.h"
-#include "PDFImageMetadata.h"
+#include <qpdf/Pipeline.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <qpdf/QPDFWriter.hh>
+#include <qpdf/QUtil.hh>
 #include <public/fpdf_edit.h>
 #include <public/fpdfview.h>
-#include <core/fxcodec/fax/faxmodule.h>
-#include <core/fxge/dib/cfx_dibitmap.h>
 #include <core/fpdfapi/page/cpdf_colorspace.h>
+#include <core/fpdfapi/page/cpdf_image.h>
+#include <core/fpdfapi/page/cpdf_imageobject.h>
 #include <core/fpdfapi/parser/cpdf_document.h>
 #include <core/fpdfapi/parser/cpdf_dictionary.h>
+#include <core/fxge/dib/cfx_dibbase.h>
 #include <fpdfsdk/cpdfsdk_helpers.h>
-#include <Accelerate/Accelerate.h>
+#include <lib/jpegli/common.h>
+#include <lib/jpegli/encode.h>
+#include <zlib.h>
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <fcntl.h>
+#include <filesystem>
 #include <memory>
+#include <set>
+#include <setjmp.h>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
-
-// This is the pinned Hyper Compress jpegli shim, built from source. It accepts
-// interleaved samples and has no font, page, document or metadata side effects.
-extern "C" bool HyperJpegliEncode(const uint8_t*, int, int, int, int, int, int, int, int, uint8_t**, size_t*);
-extern "C" void HyperJpegliFree(void*);
+#include <unistd.h>
+#include <vector>
 
 namespace ips2pdf {
 namespace {
@@ -45,146 +56,459 @@ void ensureLibrary() {
         // caches until process exit; closing one image must not destroy them
         // while another decoder or a native verification client uses PDFium.
 }
+
+struct FileCloser {
+    void operator()(FILE* file) const { if (file) std::fclose(file); }
+};
+using FileHandle = std::unique_ptr<FILE, FileCloser>;
+
+class TemporaryFile {
+public:
+    static std::shared_ptr<TemporaryFile> create() {
+        const char* environment = std::getenv("TMPDIR");
+        std::string directory = environment && *environment ? environment : "/tmp";
+        if (directory.back() != '/') directory.push_back('/');
+        std::string pattern = directory + "ips2pdf-image-XXXXXX";
+        std::vector<char> name(pattern.begin(), pattern.end());
+        name.push_back('\0');
+        const int descriptor = ::mkstemp(name.data());
+        if (descriptor < 0) throw std::runtime_error("Could not create private image storage");
+        ::close(descriptor);
+        return std::shared_ptr<TemporaryFile>(new TemporaryFile(name.data()));
+    }
+
+    ~TemporaryFile() {
+        std::error_code ignored;
+        std::filesystem::remove(path_, ignored);
+    }
+
+    FileHandle openForWriting() const {
+        const int descriptor = ::open(path_.c_str(), O_WRONLY | O_TRUNC | O_CLOEXEC | O_NOFOLLOW);
+        if (descriptor < 0) throw std::runtime_error("Could not open private image storage");
+        FILE* file = ::fdopen(descriptor, "wb");
+        if (!file) {
+            ::close(descriptor);
+            throw std::runtime_error("Could not open private image storage");
+        }
+        return FileHandle(file);
+    }
+
+    int openForReading() const {
+        const int descriptor = ::open(path_.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
+        if (descriptor < 0) throw std::runtime_error("Could not read private image storage");
+        return descriptor;
+    }
+
+    uint64_t size() const {
+        return std::filesystem::file_size(path_);
+    }
+
+    void pipe(Pipeline* pipeline) const {
+        checkPDFProcessing();
+        QUtil::pipe_file(path_.c_str(), pipeline);
+        checkPDFProcessing();
+    }
+
+    const std::string& path() const { return path_; }
+
+private:
+    explicit TemporaryFile(std::string path) : path_(std::move(path)) {}
+    std::string path_;
+};
+
+class TemporaryFilePipeline final : public Pipeline {
+public:
+    explicit TemporaryFilePipeline(FILE* file) : Pipeline("private image PDF", nullptr), file_(file) {}
+    void write(const unsigned char* data, size_t count) override {
+        checkPDFProcessing();
+        if (std::fwrite(data, 1, count, file_) != count)
+            throw std::runtime_error("Could not write private image storage");
+    }
+    void finish() override { checkPDFProcessing(); }
+private:
+    FILE* file_;
+};
+
+class PDFImageRows {
+public:
+    PDFImageRows(Object image, Object colorSpace, bool preserveAlpha)
+        : preserveAlpha_(preserveAlpha) {
+        if (!image.isStream()) throw std::runtime_error("Invalid PDF image");
+        auto source = image.getDict();
+        auto embeddedAlpha = source.getKey("/SMaskInData");
+        if (!embeddedAlpha.isNull() && (!embeddedAlpha.isInteger() || embeddedAlpha.getIntValue() != 0))
+            throw PDFProcessingUnsupported("Embedded JPEG 2000 alpha requires a separate alpha conversion");
+        width_ = source.getKey("/Width").getIntValueAsInt();
+        height_ = source.getKey("/Height").getIntValueAsInt();
+        dimensions(width_, height_);
+
+        // A private image-only PDF lets PDFium apply Decode arrays, palettes,
+        // ICC profiles and tint functions without rasterizing a document page.
+        QPDF wrapper;
+        wrapper.emptyPDF();
+        auto copied = wrapper.copyForeignObject(image);
+        if (!colorSpace.isNull()) {
+            if (!colorSpace.isIndirect()) colorSpace = image.getOwningQPDF()->makeIndirectObject(colorSpace);
+            copied.getDict().replaceKey("/ColorSpace", wrapper.copyForeignObject(colorSpace));
+        }
+        if (!preserveAlpha_) {
+            copied.getDict().removeKey("/SMask");
+            copied.getDict().removeKey("/Mask");
+        }
+        auto pageObject = wrapper.makeIndirectObject(Object::parse("<< /Type /Page /MediaBox [0 0 1 1] >>"));
+        pageObject.replaceKey("/Resources", Object::newDictionary({{"/XObject", Object::newDictionary({{"/Image", copied}})}}));
+        pageObject.replaceKey("/Contents", wrapper.newStream("/Image Do\n"));
+        QPDFPageDocumentHelper(wrapper).addPage(QPDFPageObjectHelper(pageObject), false);
+
+        storage_ = TemporaryFile::create();
+        auto file = storage_->openForWriting();
+        TemporaryFilePipeline pipeline(file.get());
+        QPDFWriter writer(wrapper);
+        writer.setOutputPipeline(&pipeline);
+        writer.setPreserveEncryption(false);
+        writer.write();
+        if (std::fflush(file.get()) || std::ferror(file.get()))
+            throw std::runtime_error("Could not finish private image storage");
+        file.reset();
+
+        ensureLibrary();
+        document_.reset(FPDF_LoadDocument(storage_->path().c_str(), nullptr));
+        if (!document_) throw std::runtime_error("The PDF image could not be decoded");
+        page_.reset(FPDF_LoadPage(document_.get(), 0));
+        if (!page_ || FPDFPage_CountObjects(page_.get()) != 1)
+            throw std::runtime_error("The PDF image could not be decoded");
+        auto* pageObjectHandle = CPDFPageObjectFromFPDFPageObject(FPDFPage_GetObject(page_.get(), 0));
+        auto* imageObject = pageObjectHandle ? pageObjectHandle->AsImage() : nullptr;
+        if (!imageObject || !imageObject->GetImage())
+            throw std::runtime_error("The PDF image could not be decoded");
+        dib_ = imageObject->GetImage()->LoadDIBBase();
+        if (!dib_ || dib_->GetWidth() != width_ || dib_->GetHeight() != height_)
+            throw std::runtime_error("The decoded PDF image has unexpected dimensions");
+    }
+
+    int width() const { return width_; }
+    int height() const { return height_; }
+
+    void readRGB(int rowNumber, std::span<uint8_t> target) const {
+        if (rowNumber < 0 || rowNumber >= height_ || target.size() != size_t(width_) * 3)
+            throw std::runtime_error("Invalid decoded PDF image row");
+        const auto source = dib_->GetScanline(rowNumber);
+        const auto palette = [&](unsigned index) {
+            if (dib_->HasPalette()) return dib_->GetPaletteArgb(static_cast<int>(index));
+            const unsigned sample = dib_->GetBPP() == 1 ? (index ? 255u : 0u) : index;
+            return 0xff000000u | sample << 16 | sample << 8 | sample;
+        };
+        for (int x = 0; x < width_; ++x) {
+            uint8_t red = 0, green = 0, blue = 0;
+            switch (dib_->GetFormat()) {
+            case FXDIB_Format::k1bppRgb:
+            case FXDIB_Format::k1bppMask: {
+                if (source.size() <= size_t(x / 8)) throw std::runtime_error("Invalid decoded PDF image samples");
+                const auto argb = palette((source[x / 8] >> (7 - x % 8)) & 1);
+                red = uint8_t(argb >> 16); green = uint8_t(argb >> 8); blue = uint8_t(argb);
+                break;
+            }
+            case FXDIB_Format::k8bppRgb:
+            case FXDIB_Format::k8bppMask: {
+                if (source.size() <= size_t(x)) throw std::runtime_error("Invalid decoded PDF image samples");
+                const auto argb = palette(source[x]);
+                red = uint8_t(argb >> 16); green = uint8_t(argb >> 8); blue = uint8_t(argb);
+                break;
+            }
+            case FXDIB_Format::kBgr:
+                if (source.size() < size_t(width_) * 3) throw std::runtime_error("Invalid decoded PDF image samples");
+                blue = source[size_t(x) * 3]; green = source[size_t(x) * 3 + 1]; red = source[size_t(x) * 3 + 2];
+                break;
+            case FXDIB_Format::kBgrx:
+            case FXDIB_Format::kBgra:
+                if (source.size() < size_t(width_) * 4) throw std::runtime_error("Invalid decoded PDF image samples");
+                blue = source[size_t(x) * 4]; green = source[size_t(x) * 4 + 1]; red = source[size_t(x) * 4 + 2];
+                break;
+            default:
+                throw std::runtime_error("The PDF image uses an unsupported sample format");
+            }
+            target[size_t(x) * 3] = red;
+            target[size_t(x) * 3 + 1] = green;
+            target[size_t(x) * 3 + 2] = blue;
+        }
+    }
+
+    void readBGRA(int rowNumber, std::span<uint8_t> target) const {
+        if (target.size() != size_t(width_) * 4) throw std::runtime_error("Invalid decoded PDF image row");
+        std::vector<uint8_t> rgb(size_t(width_) * 3);
+        readRGB(rowNumber, rgb);
+        const auto source = dib_->GetScanline(rowNumber);
+        for (int x = 0; x < width_; ++x) {
+            target[size_t(x) * 4] = rgb[size_t(x) * 3 + 2];
+            target[size_t(x) * 4 + 1] = rgb[size_t(x) * 3 + 1];
+            target[size_t(x) * 4 + 2] = rgb[size_t(x) * 3];
+            target[size_t(x) * 4 + 3] = preserveAlpha_ && dib_->GetFormat() == FXDIB_Format::kBgra
+                ? source[size_t(x) * 4 + 3] : 255;
+        }
+    }
+
+private:
+    bool preserveAlpha_;
+    int width_ = 0;
+    int height_ = 0;
+    std::shared_ptr<TemporaryFile> storage_;
+    std::unique_ptr<std::remove_pointer_t<FPDF_DOCUMENT>, decltype(&FPDF_CloseDocument)>
+        document_{nullptr, FPDF_CloseDocument};
+    std::unique_ptr<std::remove_pointer_t<FPDF_PAGE>, decltype(&FPDF_ClosePage)>
+        page_{nullptr, FPDF_ClosePage};
+    RetainPtr<CFX_DIBBase> dib_;
+};
+
+struct JpegliError {
+    jpeg_error_mgr manager{};
+    jmp_buf jump{};
+};
+
+void jpegliErrorExit(j_common_ptr common) {
+    auto* error = reinterpret_cast<JpegliError*>(common->err);
+    longjmp(error->jump, 1);
+}
+
+class JpegliEncoder {
+public:
+    JpegliEncoder(FILE* file, int width, int height, int quality, bool subsampling)
+        : width_(width), height_(height) {
+        std::memset(&compression_, 0, sizeof(compression_));
+        compression_.err = jpegli_std_error(&error_.manager);
+        error_.manager.error_exit = jpegliErrorExit;
+        if (setjmp(error_.jump)) fail();
+        jpegli_CreateCompress(&compression_, JPEG_LIB_VERSION, sizeof(jpeg_compress_struct));
+        created_ = true;
+        jpegli_stdio_dest(&compression_, file);
+        compression_.image_width = static_cast<JDIMENSION>(width);
+        compression_.image_height = static_cast<JDIMENSION>(height);
+        compression_.input_components = 3;
+        compression_.in_color_space = JCS_RGB;
+        jpegli_set_defaults(&compression_);
+        jpegli_set_quality(&compression_, quality, TRUE);
+        if (subsampling) {
+            compression_.comp_info[0].h_samp_factor = 2;
+            compression_.comp_info[0].v_samp_factor = 2;
+            compression_.comp_info[1].h_samp_factor = compression_.comp_info[1].v_samp_factor = 1;
+            compression_.comp_info[2].h_samp_factor = compression_.comp_info[2].v_samp_factor = 1;
+        }
+        // PDF readers receive the complete image stream. A sequential JPEG
+        // avoids jpegli's full-image progressive coefficient allocation.
+        jpegli_set_progressive_level(&compression_, 0);
+        compression_.optimize_coding = FALSE;
+        compression_.write_JFIF_header = FALSE;
+        compression_.write_Adobe_marker = FALSE;
+        jpegli_start_compress(&compression_, TRUE);
+    }
+
+    ~JpegliEncoder() { if (created_) jpegli_destroy_compress(&compression_); }
+
+    void write(std::span<const uint8_t> row) {
+        if (finished_ || row.size() != size_t(width_) * 3 || compression_.next_scanline >= compression_.image_height)
+            throw std::runtime_error("Invalid PDF JPEG row");
+        if (setjmp(error_.jump)) fail();
+        JSAMPROW pointer = const_cast<JSAMPROW>(row.data());
+        if (jpegli_write_scanlines(&compression_, &pointer, 1) != 1)
+            throw std::runtime_error("The PDF image could not be JPEG encoded");
+    }
+
+    void finish() {
+        if (finished_ || compression_.next_scanline != compression_.image_height)
+            throw std::runtime_error("Incomplete PDF JPEG image");
+        if (setjmp(error_.jump)) fail();
+        jpegli_finish_compress(&compression_);
+        finished_ = true;
+    }
+
+private:
+    [[noreturn]] void fail() {
+        if (created_ || compression_.mem) jpegli_destroy_compress(&compression_);
+        created_ = false;
+        throw std::runtime_error("The PDF image could not be JPEG encoded");
+    }
+    int width_;
+    int height_;
+    jpeg_compress_struct compression_{};
+    JpegliError error_{};
+    bool created_ = false;
+    bool finished_ = false;
+};
+
+class FlateEncoder {
+public:
+    explicit FlateEncoder(FILE* file) : file_(file) {
+        if (deflateInit(&stream_, Z_BEST_COMPRESSION) != Z_OK)
+            throw std::runtime_error("Could not initialize PDF sample compression");
+        initialized_ = true;
+    }
+    ~FlateEncoder() { if (initialized_) deflateEnd(&stream_); }
+
+    void write(std::span<const uint8_t> bytes) {
+        stream_.next_in = const_cast<Bytef*>(reinterpret_cast<const Bytef*>(bytes.data()));
+        stream_.avail_in = static_cast<uInt>(bytes.size());
+        while (stream_.avail_in) pump(Z_NO_FLUSH);
+    }
+
+    void finish() {
+        int status;
+        do { status = pump(Z_FINISH); } while (status == Z_OK);
+        if (status != Z_STREAM_END) throw std::runtime_error("Could not finish PDF sample compression");
+        deflateEnd(&stream_);
+        initialized_ = false;
+    }
+
+private:
+    int pump(int flush) {
+        stream_.next_out = buffer_.data();
+        stream_.avail_out = static_cast<uInt>(buffer_.size());
+        const int status = deflate(&stream_, flush);
+        const size_t produced = buffer_.size() - stream_.avail_out;
+        if (produced && std::fwrite(buffer_.data(), 1, produced, file_) != produced)
+            throw std::runtime_error("Could not write compressed PDF samples");
+        if (status != Z_OK && status != Z_STREAM_END)
+            throw std::runtime_error("Could not compress PDF samples");
+        return status;
+    }
+    FILE* file_;
+    z_stream stream_{};
+    std::array<uint8_t, 16384> buffer_{};
+    bool initialized_ = false;
+};
+
+class LosslessSampler {
+public:
+    LosslessSampler(int width, int height)
+        : width_(width), always_(uint64_t(width) * height <= 65536),
+          step_(std::max<uint64_t>(1, uint64_t(width) * height / 32768)) {}
+
+    bool consider(int rowNumber, std::span<const uint8_t> row) {
+        if (always_ || !viable_) return viable_;
+        const uint64_t first = uint64_t(rowNumber) * width_;
+        const uint64_t end = first + width_;
+        while (next_ < end) {
+            if (next_ >= first) {
+                const size_t offset = size_t(next_ - first) * 3;
+                colors_.insert(uint32_t(row[offset]) << 16 |
+                               uint32_t(row[offset + 1]) << 8 | row[offset + 2]);
+                if (colors_.size() > 256) return viable_ = false;
+            }
+            next_ += step_;
+        }
+        return true;
+    }
+
+private:
+    uint64_t width_;
+    bool always_;
+    uint64_t step_;
+    uint64_t next_ = 0;
+    bool viable_ = true;
+    std::set<uint32_t> colors_;
+};
+
 } // namespace
 
 PDFDecodedImage decodePDFImage(Object image, Object colorSpace, bool preserveAlpha) {
-    if (!image.isStream()) throw std::runtime_error("Invalid PDF image");
-    auto source = image.getDict();
-    auto embeddedAlpha = source.getKey("/SMaskInData");
-    if (!embeddedAlpha.isNull() && (!embeddedAlpha.isInteger() || embeddedAlpha.getIntValue() != 0))
-        throw PDFProcessingUnsupported("Embedded JPEG 2000 alpha requires a separate alpha conversion");
-    const int width = source.getKey("/Width").getIntValueAsInt();
-    const int height = source.getKey("/Height").getIntValueAsInt();
-    dimensions(width, height);
-    // A tiny, private image-only PDF lets PDFium apply the original Decode,
-    // palette and ICC interpretation without regenerating any document page.
-    // The real PDF's content streams and embedded font programs stay in qpdf.
-    QPDF wrapper;
-    wrapper.emptyPDF();
-    auto copied = wrapper.copyForeignObject(image);
-    if (!colorSpace.isNull()) {
-        if (!colorSpace.isIndirect()) colorSpace = image.getOwningQPDF()->makeIndirectObject(colorSpace);
-        copied.getDict().replaceKey("/ColorSpace", wrapper.copyForeignObject(colorSpace));
-    }
-    if (!preserveAlpha) {
-        copied.getDict().removeKey("/SMask");
-        copied.getDict().removeKey("/Mask");
-    }
-    auto page = wrapper.makeIndirectObject(Object::parse("<< /Type /Page /MediaBox [0 0 1 1] >>"));
-    page.replaceKey("/Resources", Object::newDictionary({{"/XObject", Object::newDictionary({{"/Image", copied}})}}));
-    page.replaceKey("/Contents", wrapper.newStream("/Image Do\n"));
-    QPDFPageDocumentHelper(wrapper).addPage(QPDFPageObjectHelper(page), false);
-    QPDFWriter writer(wrapper);
-    writer.setOutputMemory();
-    writer.setPreserveEncryption(false);
-    writer.write();
-    auto bytes = writer.getBufferSharedPointer();
-    ensureLibrary();
-    std::unique_ptr<std::remove_pointer_t<FPDF_DOCUMENT>, decltype(&FPDF_CloseDocument)> document(
-        FPDF_LoadMemDocument64(bytes->getBuffer(), bytes->getSize(), nullptr), FPDF_CloseDocument);
-    if (!document) throw std::runtime_error("The PDF image could not be decoded");
-    std::unique_ptr<std::remove_pointer_t<FPDF_PAGE>, decltype(&FPDF_ClosePage)> loadedPage(FPDF_LoadPage(document.get(), 0), FPDF_ClosePage);
-    if (!loadedPage || FPDFPage_CountObjects(loadedPage.get()) != 1)
-        throw std::runtime_error("The PDF image could not be decoded");
-    std::unique_ptr<std::remove_pointer_t<FPDF_BITMAP>, decltype(&FPDFBitmap_Destroy)> bitmap(
-        FPDFImageObj_GetBitmap(FPDFPage_GetObject(loadedPage.get(), 0)), FPDFBitmap_Destroy);
-    if (!bitmap || FPDFBitmap_GetWidth(bitmap.get()) != width || FPDFBitmap_GetHeight(bitmap.get()) != height)
-        throw std::runtime_error("The decoded PDF image has unexpected dimensions");
-    const int format = FPDFBitmap_GetFormat(bitmap.get());
-    const int stride = FPDFBitmap_GetStride(bitmap.get());
-    const int channels = format == FPDFBitmap_Gray ? 1 : format == FPDFBitmap_BGR ? 3 :
-                         format == FPDFBitmap_BGRx || format == FPDFBitmap_BGRA ? 4 : 0;
-    const auto* samples = static_cast<const uint8_t*>(FPDFBitmap_GetBuffer(bitmap.get()));
-    if (!channels || !samples || stride < width * channels)
-        throw std::runtime_error("The PDF image uses an unsupported sample format");
-    PDFDecodedImage result{width, height, std::vector<uint8_t>(size_t(width) * height * 4)};
-    for (int y = 0; y < height; ++y) {
+    PDFImageRows rows(image, colorSpace, preserveAlpha);
+    PDFDecodedImage result{rows.width(), rows.height(),
+                           std::vector<uint8_t>(size_t(rows.width()) * rows.height() * 4)};
+    for (int y = 0; y < rows.height(); ++y) {
         checkPDFProcessing();
-        for (int x = 0; x < width; ++x) {
-            const auto* pixel = samples + size_t(y) * stride + x * channels;
-            auto* target = result.pixels.data() + (size_t(y) * width + x) * 4;
-            target[0] = pixel[0];
-            target[1] = pixel[channels == 1 ? 0 : 1];
-            target[2] = pixel[channels == 1 ? 0 : 2];
-            target[3] = preserveAlpha && format == FPDFBitmap_BGRA ? pixel[3] : 255;
-        }
+        rows.readBGRA(y, std::span(result.pixels).subspan(size_t(y) * rows.width() * 4,
+                                                         size_t(rows.width()) * 4));
     }
     return result;
 }
 
-PDFDecodedImage resizePDFImage(const PDFDecodedImage& source, int width, int height) {
-    dimensions(source.width, source.height);
-    dimensions(width, height);
-    if (width > source.width || height > source.height ||
-        source.pixels.size() != size_t(source.width) * source.height * 4)
-        throw std::runtime_error("Invalid PDF image resampling dimensions");
-    PDFDecodedImage target{width, height, std::vector<uint8_t>(size_t(width) * height * 4)};
-    vImage_Buffer input{const_cast<uint8_t*>(source.pixels.data()), vImagePixelCount(source.height),
-                        vImagePixelCount(source.width), size_t(source.width) * 4};
-    vImage_Buffer output{target.pixels.data(), vImagePixelCount(height), vImagePixelCount(width), size_t(width) * 4};
-    if (vImageScale_ARGB8888(&input, &output, nullptr, kvImageHighQualityResampling) != kvImageNoError)
-        throw std::runtime_error("The PDF image could not be resampled");
-    checkPDFProcessing();
-    return target;
-}
-
-void adjustPDFImageContrast(PDFDecodedImage& image, int contrast) {
-    dimensions(image.width, image.height);
-    if (contrast < -50 || contrast > 50 || image.pixels.size() != size_t(image.width) * image.height * 4)
-        throw std::runtime_error("Invalid PDF image contrast");
-    if (contrast == 0) return;
-    // One stop across the complete slider range keeps the control useful
-    // without turning small movements into clipped scan highlights/shadows.
-    const double factor = std::exp2(double(contrast) / 50.0);
-    for (size_t i = 0; i < image.pixels.size(); i += 4) {
-        if ((i & 0xfffff) == 0) checkPDFProcessing();
-        const double blue = image.pixels[i], green = image.pixels[i + 1], red = image.pixels[i + 2];
-        const double luminance = 0.0722 * blue + 0.7152 * green + 0.2126 * red;
-        const double adjusted = (luminance - 127.5) * factor + 127.5;
-        const double offset = adjusted - luminance;
-        image.pixels[i] = static_cast<uint8_t>(std::clamp(std::round(blue + offset), 0.0, 255.0));
-        image.pixels[i + 1] = static_cast<uint8_t>(std::clamp(std::round(green + offset), 0.0, 255.0));
-        image.pixels[i + 2] = static_cast<uint8_t>(std::clamp(std::round(red + offset), 0.0, 255.0));
-    }
-}
-
-std::vector<uint8_t> encodePDFJPEG(const PDFDecodedImage& image, int quality, bool subsampling) {
-    dimensions(image.width, image.height);
-    if (quality < 1 || quality > 100 || image.pixels.size() != size_t(image.width) * image.height * 4)
-        throw std::runtime_error("Invalid PDF JPEG encoding parameters");
-    uint8_t* buffer = nullptr;
-    size_t count = 0;
-    const bool success = HyperJpegliEncode(image.pixels.data(), image.width, image.height, image.width * 4,
-                                          4, 1, quality, 1, subsampling ? 1 : 0, &buffer, &count);
-    std::unique_ptr<void, decltype(&HyperJpegliFree)> storage(buffer, HyperJpegliFree);
-    checkPDFProcessing();
-    if (!success || !buffer || !count) throw std::runtime_error("The PDF image could not be JPEG encoded");
-    // Remove any encoder comments/application metadata before publication.
-    return removeJPEGMetadata(std::span(buffer, count), false);
-}
-
-std::vector<uint8_t> encodePDFGroup4(const PDFDecodedImage& image, const PDFCompressionPolicy& policy) {
+void recompressPDFImage(Object image, Object colorSpace, int targetWidth, int targetHeight,
+                        const PDFCompressionPolicy& policy) {
     policy.validate();
-    dimensions(image.width, image.height);
-    if (image.pixels.size() != size_t(image.width) * image.height * 4)
-        throw std::runtime_error("Invalid PDF bitmap samples");
-    auto bitmap = pdfium::MakeRetain<CFX_DIBitmap>();
-    if (!bitmap->Create(image.width, image.height, FXDIB_Format::k1bppRgb)) throw std::bad_alloc();
-    for (int y = 0; y < image.height; ++y) {
-        checkPDFProcessing();
-        auto row = bitmap->GetWritableScanline(y);
-        std::fill(row.begin(), row.end(), 0xff);
-        for (int x = 0; x < image.width; ++x) {
-            const auto* pixel = image.pixels.data() + (size_t(y) * image.width + x) * 4;
-            if (policy.blackPixel(pixel[2], pixel[1], pixel[0])) row[x / 8] &= uint8_t(~(0x80 >> (x % 8)));
+    dimensions(targetWidth, targetHeight);
+    PDFImageRows rows(image, colorSpace, false);
+    if (targetWidth > rows.width() || targetHeight > rows.height())
+        throw std::runtime_error("Invalid PDF image resampling dimensions");
+
+    std::shared_ptr<TemporaryFile> selected;
+    const char* encoding = nullptr;
+    Object parameters = Object::newNull();
+    if (policy.monochrome) {
+        selected = TemporaryFile::create();
+        auto file = selected->openForWriting();
+        const size_t rowBytes = (size_t(targetWidth) + 7) / 8;
+        std::vector<uint8_t> bits(rowBytes);
+        {
+            PDFGroup4Encoder encoder(file.get(), targetWidth);
+            resamplePDFRGB(rows.width(), rows.height(), targetWidth, targetHeight, 0,
+                [&](int row, std::span<uint8_t> output) { rows.readRGB(row, output); },
+                [&](int, std::span<const uint8_t> input) {
+                    std::fill(bits.begin(), bits.end(), 0xff);
+                    for (int x = 0; x < targetWidth; ++x) {
+                        const auto* pixel = input.data() + size_t(x) * 3;
+                        if (policy.blackPixel(pixel[0], pixel[1], pixel[2]))
+                            bits[x / 8] &= uint8_t(~(0x80 >> (x % 8)));
+                    }
+                    encoder.write(bits);
+                }, [] { checkPDFProcessing(); });
+            encoder.finish();
+        }
+        if (std::fflush(file.get()) || std::ferror(file.get()))
+            throw std::runtime_error("Could not write compressed PDF bitmap");
+        file.reset();
+        encoding = "/CCITTFaxDecode";
+        parameters = Object::newDictionary({{"/K", Object::newInteger(-1)},
+            {"/Columns", Object::newInteger(targetWidth)}, {"/Rows", Object::newInteger(targetHeight)}});
+    } else {
+        auto jpegFile = TemporaryFile::create();
+        auto jpegOutput = jpegFile->openForWriting();
+        auto flateFile = TemporaryFile::create();
+        auto flateOutput = flateFile->openForWriting();
+        LosslessSampler sampler(targetWidth, targetHeight);
+        {
+            JpegliEncoder jpeg(jpegOutput.get(), targetWidth, targetHeight, policy.jpegQuality(), false);
+            auto flate = std::make_unique<FlateEncoder>(flateOutput.get());
+            resamplePDFRGB(rows.width(), rows.height(), targetWidth, targetHeight, policy.contrast,
+                [&](int row, std::span<uint8_t> output) { rows.readRGB(row, output); },
+                [&](int row, std::span<const uint8_t> output) {
+                    jpeg.write(output);
+                    if (flate) {
+                        if (sampler.consider(row, output)) flate->write(output);
+                        else {
+                            flate.reset();
+                            flateOutput.reset();
+                            flateFile.reset();
+                        }
+                    }
+                }, [] { checkPDFProcessing(); });
+            jpeg.finish();
+            if (flate) flate->finish();
+        }
+        if (std::fflush(jpegOutput.get()) || std::ferror(jpegOutput.get()))
+            throw std::runtime_error("Could not finish compressed PDF image");
+        jpegOutput.reset();
+        if (flateOutput) {
+            if (std::fflush(flateOutput.get()) || std::ferror(flateOutput.get()))
+                throw std::runtime_error("Could not finish compressed PDF samples");
+            flateOutput.reset();
+        }
+        if (!jpegFile->size()) throw std::runtime_error("The PDF image could not be JPEG encoded");
+        if (flateFile && flateFile->size() <= jpegFile->size()) {
+            selected = std::move(flateFile);
+            encoding = "/FlateDecode";
+        } else {
+            selected = std::move(jpegFile);
+            encoding = "/DCTDecode";
         }
     }
-    // Use the same lossless Group 4 encoder as Hyper Compress's CCITT path.
-    // No JBIG2 symbol substitution, dithering, or page rasterization occurs.
-    auto encoded = fxcodec::FaxModule::FaxEncode(bitmap);
-    checkPDFProcessing();
-    if (encoded.empty()) throw std::runtime_error("The PDF bitmap could not be CCITT encoded");
-    return {encoded.begin(), encoded.end()};
+
+    auto dictionary = image.getDict();
+    dictionary.replaceKey("/Width", Object::newInteger(targetWidth));
+    dictionary.replaceKey("/Height", Object::newInteger(targetHeight));
+    dictionary.replaceKey("/BitsPerComponent", Object::newInteger(policy.monochrome ? 1 : 8));
+    dictionary.replaceKey("/ColorSpace", Object::newName(policy.monochrome ? "/DeviceGray" : "/DeviceRGB"));
+    for (const char* key : {"/Decode", "/SMaskInData", "/Intent"}) dictionary.removeKey(key);
+    image.replaceStreamData([selected](Pipeline* pipeline) { selected->pipe(pipeline); },
+                            Object::newName(encoding), parameters);
+    image.setFilterOnWrite(false);
 }
 
 class PDFColorConverter::Impl {

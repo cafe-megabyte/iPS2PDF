@@ -4,13 +4,13 @@
 #include "PDFImageCodec.h"
 #include "PDFProcessingControl.h"
 #include "PDFProcessingUnsupported.h"
+#include <qpdf/Pl_SHA2.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <algorithm>
 #include <cstring>
 #include <functional>
 #include <map>
 #include <set>
-#include <zlib.h>
 
 namespace ips2pdf {
 namespace {
@@ -30,20 +30,30 @@ void visit(Object root, const Visitor& callback) {
     walk(root, 0);
 }
 
-using FontPrograms = std::map<std::pair<QPDFObjGen, std::string>, std::pair<QPDFObjGen, std::shared_ptr<Buffer>>>;
+struct FontProgram {
+    QPDFObjGen stream;
+    std::string fingerprint;
+};
+using FontPrograms = std::map<std::pair<QPDFObjGen, std::string>, FontProgram>;
+
+std::string streamFingerprint(Object stream) {
+    Pl_SHA2 digest(256);
+    bool filteringAttempted = false;
+    if (!stream.pipeStreamData(&digest, &filteringAttempted, 0, qpdf_dl_none, true, false))
+        throw std::runtime_error("Could not read an embedded PDF font program");
+    return digest.getHexDigest();
+}
+
 FontPrograms fontPrograms(QPDF& pdf) {
     FontPrograms programs;
-    uint64_t bytes = 0;
     visit(pdf.getRoot(), [&](Object object) {
         if (!object.isDictionary()) return;
         for (const char* key : {"/FontFile", "/FontFile2", "/FontFile3"}) {
             auto stream = object.getKey(key);
             if (stream.isNull()) continue;
             if (!stream.isStream()) throw std::runtime_error("Invalid embedded PDF font program");
-            auto data = stream.getRawStreamData();
-            bytes += data->getSize();
-            if (bytes > 256ull * 1024 * 1024) throw PDFProcessingStopped(false);
-            programs[{object.isIndirect() ? object.getObjGen() : stream.getObjGen(), key}] = {stream.getObjGen(), data};
+            programs[{object.isIndirect() ? object.getObjGen() : stream.getObjGen(), key}] =
+                {stream.getObjGen(), streamFingerprint(stream)};
         }
     });
     return programs;
@@ -53,9 +63,8 @@ void verifyFonts(QPDF& pdf, const FontPrograms& original) {
     if (current.size() != original.size()) throw std::runtime_error("PDF compression changed embedded fonts");
     for (const auto& [key, program] : original) {
         auto found = current.find(key);
-        if (found == current.end() || found->second.first != program.first ||
-            found->second.second->getSize() != program.second->getSize() ||
-            std::memcmp(found->second.second->getBuffer(), program.second->getBuffer(), program.second->getSize()))
+        if (found == current.end() || found->second.stream != program.stream ||
+            found->second.fingerprint != program.fingerprint)
             throw std::runtime_error("PDF compression changed an embedded font program");
     }
 }
@@ -65,17 +74,6 @@ bool filter(Object image, const std::string& name) {
     if (value.isArray()) for (auto item : value.getArrayAsVector()) if (item.isNameAndEquals(name)) return true;
     return false;
 }
-std::string flate(const std::string& bytes) {
-    uLongf size = compressBound(bytes.size());
-    std::string result(size, '\0');
-    if (compress2(reinterpret_cast<Bytef*>(result.data()), &size,
-                  reinterpret_cast<const Bytef*>(bytes.data()), bytes.size(), Z_BEST_COMPRESSION) != Z_OK)
-        throw std::runtime_error("Could not compress PDF samples");
-    result.resize(size);
-    checkPDFProcessing();
-    return result;
-}
-
 // Output intents describe the intended interpretation of device samples.
 // Materialize that interpretation before removing the profile. A PDF/X CMYK
 // page must not change to an arbitrary generic CMYK conversion by accident.
@@ -252,21 +250,6 @@ std::map<QPDFObjGen, Image> imageInventory(QPDF& pdf) {
     return images;
 }
 
-bool losslessCandidate(const PDFDecodedImage& image) {
-    // The expensive best-compression Flate comparison protects small graphics
-    // and genuinely low-color artwork. Multicolor scans go directly to jpegli.
-    const size_t pixels = size_t(image.width) * image.height;
-    if (pixels <= 65536) return true;
-    std::set<uint32_t> colors;
-    const size_t step = std::max<size_t>(1, pixels / 32768);
-    for (size_t i = 0; i < pixels; i += step) {
-        auto p = image.pixels.data() + i * 4;
-        colors.insert((uint32_t(p[0]) << 16) | (uint32_t(p[1]) << 8) | p[2]);
-        if (colors.size() > 256) return false;
-    }
-    return true;
-}
-
 void compressImages(QPDF& pdf, const PDFCompressionPlan& plan,
                     const std::map<QPDFObjGen, std::size_t>& pageOwners,
                     const std::map<QPDFObjGen, PDFImagePlacement>& placements) {
@@ -308,51 +291,22 @@ void compressImages(QPDF& pdf, const PDFCompressionPlan& plan,
                     throw PDFProcessingUnsupported("Registration or non-painting image colorants require a dedicated conversion.");
             }
         }
-        auto decoded = decodePDFImage(image.object, image.colorSpace);
+        const int sourceWidth = dictionary.getKey("/Width").getIntValueAsInt();
+        const int sourceHeight = dictionary.getKey("/Height").getIntValueAsInt();
+        if (sourceWidth <= 0 || sourceHeight <= 0)
+            throw std::runtime_error("Invalid PDF image dimensions");
         const auto found = placements.find(id);
         double ppi = found == placements.end() ? 0 : found->second.minimumPPI;
         auto scale = policy.resizeScale(ppi);
-        if (!policy.monochrome) adjustPDFImageContrast(decoded, policy.contrast);
+        int width = sourceWidth;
+        int height = sourceHeight;
         if (scale < 1) {
-            const int width = std::max(1, static_cast<int>(std::ceil(decoded.width * scale)));
-            const int height = std::max(1, static_cast<int>(std::ceil(decoded.height * scale)));
-            const double actual = std::min(double(width) / decoded.width, double(height) / decoded.height);
-            decoded = resizePDFImage(decoded, width, height);
+            width = std::max(1, static_cast<int>(std::ceil(sourceWidth * scale)));
+            height = std::max(1, static_cast<int>(std::ceil(sourceHeight * scale)));
+            const double actual = std::min(double(width) / sourceWidth, double(height) / sourceHeight);
             ppi *= actual;
         }
-        std::string encoded;
-        Object parameters = Object::newNull();
-        const char* encoding;
-        if (policy.monochrome) {
-            auto bytes = encodePDFGroup4(decoded, policy);
-            encoded.assign(bytes.begin(), bytes.end());
-            encoding = "/CCITTFaxDecode";
-            parameters = Object::newDictionary({{"/K", Object::newInteger(-1)},
-                {"/Columns", Object::newInteger(decoded.width)}, {"/Rows", Object::newInteger(decoded.height)}});
-        } else {
-            // Scan/document content retains full chroma resolution. The
-            // counter-running preset quality protects the smaller bitmap.
-            auto jpeg = encodePDFJPEG(decoded, policy.jpegQuality(), false);
-            if (losslessCandidate(decoded)) {
-                std::string rgb; rgb.reserve(size_t(decoded.width) * decoded.height * 3);
-                for (size_t i = 0; i < decoded.pixels.size(); i += 4) {
-                    rgb.push_back(decoded.pixels[i + 2]); rgb.push_back(decoded.pixels[i + 1]); rgb.push_back(decoded.pixels[i]);
-                }
-                auto lossless = flate(rgb);
-                if (lossless.size() <= jpeg.size()) { encoded = std::move(lossless); encoding = "/FlateDecode"; }
-                else { encoded.assign(jpeg.begin(), jpeg.end()); encoding = "/DCTDecode"; }
-            } else {
-                encoded.assign(jpeg.begin(), jpeg.end());
-                encoding = "/DCTDecode";
-            }
-        }
-        dictionary.replaceKey("/Width", Object::newInteger(decoded.width));
-        dictionary.replaceKey("/Height", Object::newInteger(decoded.height));
-        dictionary.replaceKey("/BitsPerComponent", Object::newInteger(policy.monochrome ? 1 : 8));
-        dictionary.replaceKey("/ColorSpace", Object::newName(policy.monochrome ? "/DeviceGray" : "/DeviceRGB"));
-        for (const char* key : {"/Decode", "/SMaskInData", "/Intent"}) dictionary.removeKey(key);
-        image.object.replaceStreamData(encoded, Object::newName(encoding), parameters);
-        image.object.setFilterOnWrite(false);
+        recompressPDFImage(image.object, image.colorSpace, width, height, policy);
     }
 }
 } // namespace
