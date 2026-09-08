@@ -2,6 +2,7 @@
 #include "PDFColorProgram.h"
 #include "PDFContentProgram.h"
 #include "PDFImageCodec.h"
+#include "PDFOpenTypeFont.h"
 #include "PDFProcessingControl.h"
 #include "PDFStructuralWriter.h"
 
@@ -243,7 +244,11 @@ std::uintmax_t extractPDFResource(const std::filesystem::path& input,
         if (found.isNull()) throw std::runtime_error("The PDF resource was not found");
         auto data = found.getStreamData(qpdf_dl_all);
         if (format == "type1") writeBytes(output, type1Container(found, data));
-        else writeBytes(output, data->getBuffer(), data->getSize());
+        else if (format == "openType" && data->getSize() >= 4 && data->getBuffer()[0] == 1) {
+            const auto font = openTypeContainerForCFF(
+                std::span<const uint8_t>(data->getBuffer(), data->getSize()));
+            writeBytes(output, font);
+        } else writeBytes(output, data->getBuffer(), data->getSize());
     }
     checkPDFProcessing();
     if (pdf->anyWarnings()) { std::filesystem::remove(output); throw std::runtime_error("The PDF resource could not be read safely"); }

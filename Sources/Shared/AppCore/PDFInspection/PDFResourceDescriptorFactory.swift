@@ -52,22 +52,24 @@ enum PDFResourceDescriptorFactory {
         guard let data = PDFObjectReader.data(stream), !data.isEmpty else { return nil }
         let dictionary = CGPDFStreamGetDictionary(stream)
         let subtype = PDFObjectReader.name(dictionary, "Subtype")
-        let format: PDFExtractableResourceFormat
-        if key == "FontFile" {
-            format = .type1
-        } else if key == "FontFile2" {
-            format = collectionFormat(data) ?? .trueType
-        } else if subtype == "Type1C" || subtype == "CIDFontType0C" {
-            format = .cff
-        } else if subtype == "OpenType" {
-            format = collectionFormat(data) ?? (data.starts(with: [0x00, 0x01, 0x00, 0x00]) ? .trueType : .openType)
-        } else {
-            return nil
-        }
+        guard let format = fontProgramFormat(data, key: key, subtype: subtype) else { return nil }
         let base = filename(base: fontName, format: format, fallback: "Embedded Font", subset: subset)
         return PDFExtractableResource(fingerprint: fingerprint(data), kind: .font, format: format,
                                       suggestedFilename: base, pixelWidth: nil, pixelHeight: nil,
                                       bitsPerComponent: nil, isFontSubset: subset)
+    }
+
+    static func fontProgramFormat(_ data: Data, key: String, subtype: String?) -> PDFExtractableResourceFormat? {
+        if key == "FontFile" {
+            return .type1
+        } else if key == "FontFile2" {
+            return sfntFormat(data) ?? .trueType
+        } else if subtype == "Type1C" || subtype == "CIDFontType0C" {
+            return sfntFormat(data) ?? (canWrapCFFAsOpenType(data) ? .openType : .cff)
+        } else if subtype == "OpenType" {
+            return sfntFormat(data) ?? (canWrapCFFAsOpenType(data) ? .openType : .cff)
+        }
+        return nil
     }
 
     static func image(_ stream: CGPDFStreamRef, fallbackIndex: Int = 0) -> PDFExtractableResource? {
@@ -94,10 +96,33 @@ enum PDFResourceDescriptorFactory {
                                       pixelHeight: height, bitsPerComponent: bits)
     }
 
+    static func sfntFormat(_ data: Data) -> PDFExtractableResourceFormat? {
+        if let collection = collectionFormat(data) { return collection }
+        guard data.count >= 4 else { return nil }
+        if data.starts(with: Array("OTTO".utf8)) { return .openType }
+        if data.starts(with: [0x00, 0x01, 0x00, 0x00]) { return .trueType }
+        return nil
+    }
+
     private static func collectionFormat(_ data: Data) -> PDFExtractableResourceFormat? {
         guard data.count >= 16, data.starts(with: Array("ttcf".utf8)) else { return nil }
         let offset = data[12..<16].reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
         guard offset <= UInt32(Int.max), Int(offset) + 4 <= data.count else { return .trueType }
         return data[Int(offset)..<(Int(offset) + 4)].elementsEqual("OTTO".utf8) ? .openTypeCollection : .trueTypeCollection
+    }
+
+    static func canWrapCFFAsOpenType(_ data: Data) -> Bool {
+        guard data.count >= 4, data[data.startIndex] == 1,
+              data[data.startIndex + 2] >= 4,
+              Int(data[data.startIndex + 2]) <= data.count,
+              (1...4).contains(data[data.startIndex + 3]),
+              Int(data[data.startIndex + 2]) + 2 <= data.count,
+              data[data.startIndex + Int(data[data.startIndex + 2])] == 0,
+              data[data.startIndex + Int(data[data.startIndex + 2]) + 1] == 1,
+              let provider = CGDataProvider(data: data as CFData),
+              let font = CGFont(provider),
+              (1...Int(UInt16.max)).contains(font.numberOfGlyphs),
+              (16...16_384).contains(font.unitsPerEm) else { return false }
+        return true
     }
 }

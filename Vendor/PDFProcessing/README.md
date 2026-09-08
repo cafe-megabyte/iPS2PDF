@@ -31,6 +31,14 @@ processing separate from the original document and from Ghostscript jobs. The
 native runtime is a private macOS framework and a static iOS helper dependency.
 Quick Look and thumbnail targets do not acquire this dependency.
 
+Embedded font export preserves an existing PFB, TrueType or OpenType container.
+A readable bare CFF 1 program is placed unchanged in a newly built `.otf`
+container with metrics, names and every Unicode mapping that FreeType can
+derive from its glyph names. CID and custom glyphs without a Unicode value stay
+in the CFF glyph program. Both FreeType and Apple font services must reopen the
+result before it is written. A malformed CFF that cannot be represented safely
+keeps its honest `.cff` export instead of receiving an OpenType extension.
+
 The linker first combines the native archives into a relocatable object, then
 localizes implementation symbols with Apple's `nmedit`. Only the C interface
 remains public. This prevents Ghostscript's copies of JPEG, Little CMS, FreeType

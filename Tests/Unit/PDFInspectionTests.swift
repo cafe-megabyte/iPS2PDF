@@ -129,7 +129,22 @@ final class PDFInspectionTests: XCTestCase {
             XCTAssertEqual(resource.kind, .font)
             XCTAssertEqual(resource.suggestedFilename.localizedCaseInsensitiveContains("subset"), fixture == "InfoEmbeddedSubset")
             XCTAssertEqual(resource.isFontSubset, fixture == "InfoEmbeddedSubset")
+            if fixture == "InfoEmbeddedSubset" {
+                XCTAssertEqual(resource.format, .openType)
+                XCTAssertTrue(resource.suggestedFilename.hasSuffix(".otf"))
+            }
         }
+    }
+    func testBareCFFPrefersOpenTypeOnlyWhenItCanBeWrapped() throws {
+        let cff = try XCTUnwrap(Data(base64Encoded: "AQAEAgABAgABABpBQkNERUYrQXBwbGVHYXJhbW9uZC1Cb29rAAECAAEAHx0AAAGHAB0AAAGIAh0AAAGJAx0AAAB+Dx0AAACDEQADAgABAAgAGwApMi4wLTEuMEFwcGxlIEdhcmFtb25kIEJvb2tBcHBsZSBHYXJhbW9uZAAAAAABAHUAAwIAAQACAAMARg4Oi4sVjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFDg=="))
+        XCTAssertTrue(PDFResourceDescriptorFactory.canWrapCFFAsOpenType(cff))
+        XCTAssertEqual(PDFResourceDescriptorFactory.fontProgramFormat(cff, key: "FontFile3", subtype: "Type1C"), .openType)
+        XCTAssertEqual(PDFResourceDescriptorFactory.filename(base: "ABCDEF+Example", format: .openType,
+                                                              fallback: "Font", subset: true),
+                       "ABCDEF+Example-subset.otf")
+        let malformed = Data([1, 0, 4, 0])
+        XCTAssertFalse(PDFResourceDescriptorFactory.canWrapCFFAsOpenType(malformed))
+        XCTAssertEqual(PDFResourceDescriptorFactory.fontProgramFormat(malformed, key: "FontFile3", subtype: "Type1C"), .cff)
     }
     func testType0ResolvesDescendantFontEmbedding() throws {
         let report = try inspect("InfoType0")

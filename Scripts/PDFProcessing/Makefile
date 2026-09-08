@@ -162,12 +162,16 @@ NATIVE_OBJECTS := $(patsubst $(NATIVE_SOURCE)/%.cpp,$(OBJECT_ROOT)/native/%.o,$(
 NATIVE_INCLUDES := '-I$(NATIVE_SOURCE)' \
   -isystem '$(QPDF_SOURCE)/include' -isystem '$(QPDF_SOURCE)/libqpdf' -isystem 'generated/qpdf' \
   -isystem 'generated/qpdf-jpeg' -isystem '$(PDFIUM_SOURCE)' \
+  -isystem '$(PDFIUM_SOURCE)/third_party/freetype/include' \
+  -isystem '$(PDFIUM_SOURCE)/third_party/freetype/src/include' \
   -isystem '$(PDFIUM_SOURCE)/third_party/leptonica/src' \
   -isystem '$(JPEGLI_SOURCE)' -isystem '$(JPEGLI_SOURCE)/lib/include' -isystem 'generated/jpegli' \
   -isystem '$(SDKROOT)/usr/include/libxml2'
+NATIVE_DEFINES := '-DFT_CONFIG_MODULES_H="freetype-custom-config/ftmodule.h"' \
+  '-DFT_CONFIG_OPTIONS_H="freetype-custom-config/ftoption.h"'
 $(NATIVE_OBJECTS): $(OBJECT_ROOT)/native/%.o: $(NATIVE_SOURCE)/%.cpp
 	@mkdir -p "$(@D)"
-	@$(CXX) $(CXX_FLAGS) $(NATIVE_INCLUDES) -c "$<" -o "$@"
+	@$(CXX) $(CXX_FLAGS) $(NATIVE_DEFINES) $(NATIVE_INCLUDES) -c "$<" -o "$@"
 
 COMBINED_OBJECT := $(OUTPUT_ROOT)/PDFProcessingCombined.o
 $(COMBINED_OBJECT): $(PDFIUM_ARCHIVE) $(QPDF_ARCHIVE) $(QPDF_JPEG_ARCHIVE) \

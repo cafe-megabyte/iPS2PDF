@@ -17,6 +17,7 @@ PDFIUM_GROUP_01_SOURCES := \
   third_party/freetype/src/src/base/ftinit.c \
   third_party/freetype/src/src/base/ftmm.c \
   third_party/freetype/src/src/base/ftsystem.c \
+  third_party/freetype/src/src/base/fttype1.c \
   third_party/freetype/src/src/cff/cff.c \
   third_party/freetype/src/src/cid/type1cid.c \
   third_party/freetype/src/src/psaux/psaux.c \
