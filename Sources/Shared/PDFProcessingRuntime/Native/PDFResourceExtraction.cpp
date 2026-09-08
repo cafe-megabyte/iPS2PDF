@@ -6,10 +6,9 @@
 #include "PDFProcessingControl.h"
 #include "PDFStructuralWriter.h"
 
+#include <qpdf/Pipeline.hh>
 #include <qpdf/Pl_SHA2.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
-#include <ImageIO/ImageIO.h>
-#include <CoreGraphics/CoreGraphics.h>
 #include <algorithm>
 #include <array>
 #include <cstdio>
@@ -26,11 +25,70 @@ namespace ips2pdf {
 namespace {
 using Object = QPDFObjectHandle;
 
-std::string fingerprint(const std::shared_ptr<Buffer>& data) {
+std::string streamFingerprint(Object stream,
+                              qpdf_stream_decode_level_e level = qpdf_dl_generalized) {
     Pl_SHA2 digest(256);
-    digest.write(data->getBuffer(), data->getSize());
-    digest.finish();
+    bool filteringAttempted = false;
+    if (!stream.pipeStreamData(&digest, &filteringAttempted, 0, level, true, false))
+        throw std::runtime_error("Could not read the PDF resource stream");
     return digest.getHexDigest();
+}
+
+class ResourceOutputPipeline final : public Pipeline {
+public:
+    explicit ResourceOutputPipeline(const std::filesystem::path& output)
+        : Pipeline("private PDF resource result", nullptr) {
+        const int descriptor = ::open(output.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0600);
+        if (descriptor < 0) throw std::runtime_error("Could not create the private resource result");
+        file_ = ::fdopen(descriptor, "wb");
+        if (!file_) {
+            ::close(descriptor);
+            std::error_code ignored;
+            std::filesystem::remove(output, ignored);
+            throw std::runtime_error("Could not open the private resource result");
+        }
+    }
+
+    ~ResourceOutputPipeline() override { if (file_) std::fclose(file_); }
+
+    void write(const unsigned char* data, size_t count) override {
+        checkPDFProcessing();
+        checkPDFOutputSize(bytesWritten_ + count);
+        if (count && std::fwrite(data, 1, count, file_) != count)
+            throw std::runtime_error("Could not write the resource result");
+        bytesWritten_ += count;
+    }
+
+    void finish() override {
+        checkPDFProcessing();
+        if (std::fflush(file_) || std::ferror(file_))
+            throw std::runtime_error("Could not finish the resource result");
+    }
+
+    void close() {
+        finish();
+        const int closeStatus = std::fclose(file_);
+        file_ = nullptr;
+        if (closeStatus) throw std::runtime_error("Could not finish the resource result");
+    }
+
+private:
+    FILE* file_ = nullptr;
+    uint64_t bytesWritten_ = 0;
+};
+
+void writeStream(const std::filesystem::path& output, Object stream) {
+    ResourceOutputPipeline pipeline(output);
+    try {
+        bool filteringAttempted = false;
+        if (!stream.pipeStreamData(&pipeline, &filteringAttempted, 0, qpdf_dl_generalized, true, false))
+            throw std::runtime_error("Could not read the PDF resource stream");
+        pipeline.close();
+    } catch (...) {
+        std::error_code ignored;
+        std::filesystem::remove(output, ignored);
+        throw;
+    }
 }
 
 void writeBytes(const std::filesystem::path& output, const unsigned char* bytes, size_t count) {
@@ -94,40 +152,6 @@ std::vector<uint8_t> type1Container(Object stream, const std::shared_ptr<Buffer>
     return result;
 }
 
-void writePNG(const std::filesystem::path& output, const PDFDecodedImage& image) {
-    if (image.width <= 0 || image.height <= 0 || image.pixels.size() != size_t(image.width) * image.height * 4)
-        throw std::runtime_error("Invalid decoded image result");
-    std::vector<uint8_t> rgba(image.pixels.size());
-    for (size_t i = 0; i < image.pixels.size(); i += 4) {
-        rgba[i] = image.pixels[i + 2]; rgba[i + 1] = image.pixels[i + 1];
-        rgba[i + 2] = image.pixels[i]; rgba[i + 3] = image.pixels[i + 3];
-    }
-    auto releaseData = [](void*, const void*, size_t) {};
-    CGDataProviderRef provider = CGDataProviderCreateWithData(nullptr, rgba.data(), rgba.size(), releaseData);
-    CGColorSpaceRef color = CGColorSpaceCreateDeviceRGB();
-    const CGBitmapInfo bitmapInfo = CGBitmapInfo(static_cast<uint32_t>(kCGImageAlphaLast) |
-                                                 static_cast<uint32_t>(kCGBitmapByteOrder32Big));
-    CGImageRef cgImage = provider && color ? CGImageCreate(image.width, image.height, 8, 32, size_t(image.width) * 4,
-        color, bitmapInfo, provider, nullptr, false, kCGRenderingIntentDefault) : nullptr;
-    if (provider) CGDataProviderRelease(provider);
-    if (color) CGColorSpaceRelease(color);
-    if (!cgImage) throw std::runtime_error("Could not create the exported image");
-    const int descriptor = ::open(output.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0600);
-    if (descriptor < 0) { CGImageRelease(cgImage); throw std::runtime_error("Could not create the private image result"); }
-    close(descriptor);
-    CFURLRef url = CFURLCreateFromFileSystemRepresentation(nullptr,
-        reinterpret_cast<const UInt8*>(output.c_str()), output.string().size(), false);
-    CGImageDestinationRef destination = url ? CGImageDestinationCreateWithURL(url, CFSTR("public.png"), 1, nullptr) : nullptr;
-    if (destination) CGImageDestinationAddImage(destination, cgImage, nullptr);
-    const bool success = destination && CGImageDestinationFinalize(destination);
-    if (destination) CFRelease(destination);
-    if (url) CFRelease(url);
-    CGImageRelease(cgImage);
-    checkPDFProcessing();
-    if (!success) { std::filesystem::remove(output); throw std::runtime_error("Could not encode the exported image"); }
-    checkPDFOutputSize(std::filesystem::file_size(output));
-}
-
 template <typename Callback>
 void visit(QPDF& pdf, const Callback& callback) {
     std::set<QPDFObjGen> seen;
@@ -150,7 +174,8 @@ void visit(QPDF& pdf, const Callback& callback) {
 }
 
 struct ImageMatch { Object image, colorSpace; };
-std::vector<ImageMatch> matchingImages(QPDF& pdf, const std::string& wanted, int width, int height, int bits) {
+std::vector<ImageMatch> matchingImages(QPDF& pdf, const std::filesystem::path& input,
+                                       const std::string& wanted, int width, int height, int bits) {
     std::vector<ImageMatch> matches;
     std::set<std::pair<QPDFObjGen, std::string>> seen;
     std::function<void(Object, Object, unsigned)> walk = [&](Object object, Object resources, unsigned depth) {
@@ -160,12 +185,13 @@ std::vector<ImageMatch> matchingImages(QPDF& pdf, const std::string& wanted, int
         if (dictionary.isDictionary() && dictionary.getKey("/Resources").isDictionary()) resources = dictionary.getKey("/Resources");
         if (object.isIndirect() && !seen.emplace(object.getObjGen(), resources.unparse()).second) return;
         if (object.isStream() && dictionary.getKey("/Subtype").isNameAndEquals("/Image")) {
-            auto data = object.getStreamData(qpdf_dl_generalized);
             auto integerMatches = [&](const char* key, int wantedValue) {
                 auto value = dictionary.getKey(key);
                 return wantedValue <= 0 || value.isInteger() && value.getIntValueAsInt() == wantedValue;
             };
-            if (fingerprint(data) == wanted && integerMatches("/Width", width) && integerMatches("/Height", height) && integerMatches("/BitsPerComponent", bits)) {
+            auto fingerprint = streamingPDFImageFingerprint(input, object, pdf.isEncrypted());
+            if (!fingerprint) fingerprint = streamFingerprint(object);
+            if (*fingerprint == wanted && integerMatches("/Width", width) && integerMatches("/Height", height) && integerMatches("/BitsPerComponent", bits)) {
                 auto space = dictionary.getKey("/ColorSpace");
                 if (!space.isNull()) space = resolvePDFColorSpace(space, resources);
                 matches.push_back({object, space});
@@ -192,16 +218,16 @@ std::uintmax_t extractPDFResource(const std::filesystem::path& input,
     auto pdf = openPDFDocument(input, password);
     if (format == "jpeg" || format == "jpeg2000" || format == "png") {
         externalizePDFInlineImages(*pdf);
-        auto matches = matchingImages(*pdf, wanted, width, height, bitsPerComponent);
+        auto matches = matchingImages(*pdf, input, wanted, width, height, bitsPerComponent);
         if (matches.empty()) throw std::runtime_error("The PDF image resource was not found");
         const auto interpretation = matches.front().colorSpace.unparse();
         if (std::any_of(matches.begin() + 1, matches.end(), [&](const auto& item) { return item.colorSpace.unparse() != interpretation; }))
             throw std::runtime_error("The PDF image resource has ambiguous color interpretations");
         if (format == "jpeg" || format == "jpeg2000") {
-            auto data = matches.front().image.getStreamData(qpdf_dl_generalized);
-            writeBytes(output, data->getBuffer(), data->getSize());
+            writeStream(output, matches.front().image);
         } else {
-            writePNG(output, decodePDFImage(matches.front().image, matches.front().colorSpace, true));
+            writePDFImagePNG(input, matches.front().image, matches.front().colorSpace,
+                             output, pdf->isEncrypted());
         }
     } else {
         Object found = Object::newNull();
@@ -236,8 +262,7 @@ std::uintmax_t extractPDFResource(const std::filesystem::path& input,
                 }
             }
             for (auto candidate : candidates) {
-                auto data = candidate.getStreamData(qpdf_dl_all);
-                if (fingerprint(data) == wanted) { found = candidate; break; }
+                if (streamFingerprint(candidate, qpdf_dl_all) == wanted) { found = candidate; break; }
             }
             return !found.isNull();
         });

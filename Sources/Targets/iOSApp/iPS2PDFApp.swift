@@ -6,6 +6,7 @@ struct iPS2PDFApp: App {
 
     init() {
         try? WorkingDirectoryService.clearStaleStagingDirectories()
+        try? PDFInspectionInput.clearStaleDirectories()
         _viewModel = StateObject(wrappedValue: ConversionViewModel())
     }
 

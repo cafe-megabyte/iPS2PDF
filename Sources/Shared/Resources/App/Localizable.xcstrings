@@ -112,12 +112,12 @@
         }
       }
     },
-    "%+.1f%% compared with the original" : {
+    "%@ compared with the original" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%+.1f%% gegenüber dem Original"
+            "value" : "%@ gegenüber dem Original"
           }
         }
       }
@@ -4552,23 +4552,6 @@
         }
       }
     },
-    "open_file" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Datei öffnen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Open File"
-          }
-        }
-      }
-    },
     "Optimize for fast web view" : {
       "localizations" : {
         "de" : {
@@ -4912,17 +4895,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF information"
-          }
-        }
-      }
-    },
-    "PDF processing exceeded its time or file-size limit." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Die PDF-Verarbeitung hat das Zeitlimit oder die zulässige Dateigröße überschritten."
           }
         }
       }
@@ -5340,17 +5312,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF/X-Ausgabebedingung"
-          }
-        }
-      }
-    },
-    "PDF/X output intent" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "PDF/X-Ausgabeprofil"
           }
         }
       }

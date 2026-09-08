@@ -2,6 +2,13 @@ import Foundation
 import XCTest
 
 final class PDFInspectionTests: XCTestCase {
+    private final class InspectionFileManager: FileManager, @unchecked Sendable {
+        private let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PDFInspectionTests-\(UUID().uuidString)", isDirectory: true)
+        override var temporaryDirectory: URL { root }
+        deinit { try? FileManager.default.removeItem(at: root) }
+    }
+
     private func fixture(_ name: String) throws -> URL {
         let bundle = Bundle(for: Self.self)
         return try XCTUnwrap(bundle.url(forResource: name, withExtension: "pdf") ?? bundle.url(forResource: name, withExtension: "pdf", subdirectory: "Fixtures"))
@@ -118,6 +125,24 @@ final class PDFInspectionTests: XCTestCase {
         XCTAssertTrue(try PDFInspectionService.inspect(url: snapshot, fileName: "Snapshot.pdf", password: nil).isComplete)
         input = nil
         XCTAssertFalse(FileManager.default.fileExists(atPath: snapshot.path))
+    }
+    func testSnapshotRemovesEmptyRootAndStartupCleanupRemovesCrashArtifacts() throws {
+        let fileManager = InspectionFileManager()
+        var input: PDFInspectionInput? = try PDFInspectionInput(
+            sourceURL: fixture("InfoPlain"),
+            fileManager: fileManager
+        )
+        XCTAssertNotNil(input)
+        let root = fileManager.temporaryDirectory.appendingPathComponent("PDFInspection", isDirectory: true)
+        XCTAssertTrue(fileManager.fileExists(atPath: root.path))
+        input = nil
+        XCTAssertFalse(fileManager.fileExists(atPath: root.path))
+
+        let abandoned = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try fileManager.createDirectory(at: abandoned, withIntermediateDirectories: true)
+        try Data("abandoned".utf8).write(to: abandoned.appendingPathComponent("Document.pdf"))
+        try PDFInspectionInput.clearStaleDirectories(fileManager: fileManager)
+        XCTAssertFalse(fileManager.fileExists(atPath: root.path))
     }
     func testEmbeddedSubsetAndFullFontAreDistinguishedWithoutWarnings() throws {
         for (fixture, status) in [("InfoEmbeddedSubset", "Embedded subset"), ("InfoEmbeddedFull", "Fully embedded (PDF declaration)")] {

@@ -18,6 +18,7 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
     func applicationDidFinishLaunching(_ notification: Notification) {
         try? MacOSDocumentWorkspace.clearStaleDirectories()
         JoboptionsEditingSession.cleanupStaleDirectories()
+        try? PDFInspectionInput.clearStaleDirectories()
         try? AppGroupWorkspace.clearStaleDataPreservingShareInbox()
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(350))
