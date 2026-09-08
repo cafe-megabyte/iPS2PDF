@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cmath>
 #include <map>
@@ -10,16 +11,35 @@ namespace ips2pdf {
 
 enum class PDFCompressionLevel { gentle, balanced, strong };
 
+struct PDFPaperColor {
+    int red = 255;
+    int green = 255;
+    int blue = 255;
+
+    bool isValid() const {
+        return red >= 0 && red <= 255 && green >= 0 && green <= 255 &&
+               blue >= 0 && blue <= 255;
+    }
+};
+
 struct PDFCompressionPolicy {
     PDFCompressionLevel level = PDFCompressionLevel::balanced;
     bool monochrome = false;
     int threshold = 75;
     // Keep direct native callers aligned with the fresh-session UI default.
     int contrast = 25;
+    // At 50, paper normalization and one-bit foreground separation use their
+    // balanced defaults; 100 applies the most aggressive paper cleanup.
+    int paperCleanup = 50;
+    std::array<PDFPaperColor, 3> paperColors{};
+    std::size_t paperColorCount = 0;
 
     void validate() const {
         if (static_cast<int>(level) < 0 || static_cast<int>(level) > 2 || threshold < 0 || threshold > 100 ||
-            contrast < 0 || contrast > 100)
+            contrast < 0 || contrast > 100 || paperCleanup < 0 || paperCleanup > 100 ||
+            paperColorCount > paperColors.size() ||
+            !std::all_of(paperColors.begin(), paperColors.begin() + paperColorCount,
+                         [](const auto& color) { return color.isValid(); }))
             throw std::runtime_error("Invalid PDF compression options");
     }
 

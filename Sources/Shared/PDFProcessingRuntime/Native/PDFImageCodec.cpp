@@ -2,6 +2,7 @@
 #include "PDFGroup4Encoder.h"
 #include "PDFImageCodec.h"
 #include "PDFImageResampler.h"
+#include "PDFPaperCleanup.h"
 #include "PDFProcessingControl.h"
 #include <qpdf/Pipeline.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
@@ -28,6 +29,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <set>
 #include <setjmp.h>
 #include <stdexcept>
@@ -406,6 +408,155 @@ private:
     std::set<uint32_t> colors_;
 };
 
+struct EncodedColorImage {
+    std::shared_ptr<TemporaryFile> storage;
+    std::string filter;
+};
+
+std::shared_ptr<TemporaryFile> encodeCleanBitmap(
+    const PDFImageRows& rows, int targetWidth, int targetHeight,
+    const PDFCompressionPolicy& policy, const PDFPaperCleanup& cleanup,
+    bool excludeColor) {
+    auto storage = TemporaryFile::create();
+    auto file = storage->openForWriting();
+    const size_t rowBytes = (size_t(targetWidth) + 7) / 8;
+    std::vector<uint8_t> bits(rowBytes);
+    std::vector<uint8_t> adjusted(size_t(targetWidth) * 3);
+    {
+        PDFGroup4Encoder encoder(file.get(), targetWidth);
+        resamplePDFRGB(rows.width(), rows.height(), targetWidth, targetHeight, 0,
+            [&](int row, std::span<uint8_t> output) { rows.readRGB(row, output); },
+            [&](int row, std::span<const uint8_t> input) {
+                std::copy(input.begin(), input.end(), adjusted.begin());
+                cleanup.normalizeRow(row, targetWidth, targetHeight, adjusted);
+                std::fill(bits.begin(), bits.end(), 0xff);
+                for (int x = 0; x < targetWidth; ++x) {
+                    const auto* pixel = adjusted.data() + size_t(x) * 3;
+                    const bool black = excludeColor
+                        ? cleanup.isForeground(x, row, targetWidth, targetHeight,
+                                               pixel[0], pixel[1], pixel[2])
+                        : policy.blackPixel(pixel[0], pixel[1], pixel[2]);
+                    if ((!excludeColor || !cleanup.retainsColor(x, row, targetWidth, targetHeight)) && black)
+                        bits[x / 8] &= uint8_t(~(0x80 >> (x % 8)));
+                }
+                encoder.write(bits);
+            }, [] { checkPDFProcessing(); });
+        encoder.finish();
+    }
+    if (std::fflush(file.get()) || std::ferror(file.get()))
+        throw std::runtime_error("Could not write compressed PDF bitmap");
+    file.reset();
+    return storage;
+}
+
+EncodedColorImage encodeCleanColor(
+    const PDFImageRows& rows, int targetWidth, int targetHeight,
+    const PDFCompressionPolicy& policy, const PDFPaperCleanup& cleanup,
+    bool sparse) {
+    auto jpegFile = TemporaryFile::create();
+    auto jpegOutput = jpegFile->openForWriting();
+    auto flateFile = TemporaryFile::create();
+    auto flateOutput = flateFile->openForWriting();
+    LosslessSampler sampler(targetWidth, targetHeight);
+    std::vector<uint8_t> adjusted(size_t(targetWidth) * 3);
+    {
+        JpegliEncoder jpeg(jpegOutput.get(), targetWidth, targetHeight,
+                           policy.jpegQuality(), false);
+        auto flate = std::make_unique<FlateEncoder>(flateOutput.get());
+        resamplePDFRGB(rows.width(), rows.height(), targetWidth, targetHeight, 0,
+            [&](int row, std::span<uint8_t> output) { rows.readRGB(row, output); },
+            [&](int row, std::span<const uint8_t> input) {
+                std::copy(input.begin(), input.end(), adjusted.begin());
+                cleanup.normalizeRow(row, targetWidth, targetHeight, adjusted);
+                applyPDFRGBContrast(adjusted, policy.contrast);
+                if (sparse) {
+                    for (int x = 0; x < targetWidth; ++x) {
+                        if (!cleanup.retainsColor(x, row, targetWidth, targetHeight))
+                            std::fill_n(adjusted.begin() + size_t(x) * 3, 3, uint8_t(255));
+                    }
+                }
+                jpeg.write(adjusted);
+                if (flate) {
+                    if (sampler.consider(row, adjusted)) flate->write(adjusted);
+                    else {
+                        flate.reset();
+                        flateOutput.reset();
+                        flateFile.reset();
+                    }
+                }
+            }, [] { checkPDFProcessing(); });
+        jpeg.finish();
+        if (flate) flate->finish();
+    }
+    if (std::fflush(jpegOutput.get()) || std::ferror(jpegOutput.get()))
+        throw std::runtime_error("Could not finish compressed PDF image");
+    jpegOutput.reset();
+    if (flateOutput) {
+        if (std::fflush(flateOutput.get()) || std::ferror(flateOutput.get()))
+            throw std::runtime_error("Could not finish compressed PDF samples");
+        flateOutput.reset();
+    }
+    if (!jpegFile->size()) throw std::runtime_error("The PDF image could not be JPEG encoded");
+    if (flateFile && flateFile->size() <= jpegFile->size())
+        return {std::move(flateFile), "/FlateDecode"};
+    return {std::move(jpegFile), "/DCTDecode"};
+}
+
+void installEncodedImage(Object image, const std::shared_ptr<TemporaryFile>& storage,
+                         const std::string& filter, int width, int height,
+                         bool monochrome, bool transparentWhite,
+                         bool preserveDictionary) {
+    auto dictionary = preserveDictionary ? image.getDict() : Object::newDictionary();
+    dictionary.replaceKey("/Type", Object::newName("/XObject"));
+    dictionary.replaceKey("/Subtype", Object::newName("/Image"));
+    dictionary.replaceKey("/Width", Object::newInteger(width));
+    dictionary.replaceKey("/Height", Object::newInteger(height));
+    dictionary.replaceKey("/BitsPerComponent", Object::newInteger(monochrome ? 1 : 8));
+    dictionary.replaceKey("/ColorSpace", Object::newName(monochrome ? "/DeviceGray" : "/DeviceRGB"));
+    for (const char* key : {"/Decode", "/SMaskInData", "/Intent"}) dictionary.removeKey(key);
+    if (transparentWhite)
+        dictionary.replaceKey("/Mask", Object::newArray({Object::newInteger(1), Object::newInteger(1)}));
+    Object parameters = Object::newNull();
+    if (monochrome)
+        parameters = Object::newDictionary({{"/K", Object::newInteger(-1)},
+            {"/Columns", Object::newInteger(width)}, {"/Rows", Object::newInteger(height)}});
+    image.replaceDict(dictionary);
+    image.replaceStreamData([storage](Pipeline* pipeline) { storage->pipe(pipeline); },
+                            Object::newName(filter), parameters);
+    image.setFilterOnWrite(false);
+}
+
+void installHybridImage(Object image, const EncodedColorImage& color,
+                        const std::shared_ptr<TemporaryFile>& black,
+                        int colorWidth, int colorHeight,
+                        int blackWidth, int blackHeight) {
+    auto* owner = image.getOwningQPDF();
+    if (!owner) throw std::runtime_error("PDF image has no owning document");
+    auto colorImage = owner->newStream("");
+    installEncodedImage(colorImage, color.storage, color.filter,
+                        colorWidth, colorHeight, false, false, false);
+    auto blackImage = owner->newStream("");
+    installEncodedImage(blackImage, black, "/CCITTFaxDecode",
+                        blackWidth, blackHeight, true, true, false);
+
+    auto original = image.getDict();
+    auto xObjects = Object::newDictionary({{"/Color", colorImage}, {"/Black", blackImage}});
+    auto dictionary = Object::newDictionary({
+        {"/Type", Object::newName("/XObject")},
+        {"/Subtype", Object::newName("/Form")},
+        {"/FormType", Object::newInteger(1)},
+        {"/BBox", Object::newArray({Object::newInteger(0), Object::newInteger(0),
+                                      Object::newInteger(1), Object::newInteger(1)})},
+        {"/Resources", Object::newDictionary({{"/XObject", xObjects}})}
+    });
+    for (const char* key : {"/OC", "/StructParent", "/StructParents"})
+        if (original.hasKey(key)) dictionary.replaceKey(key, original.getKey(key));
+    image.replaceDict(dictionary);
+    image.replaceStreamData("q /Color Do Q\nq /Black Do Q\n",
+                            Object::newNull(), Object::newNull());
+    image.setFilterOnWrite(true);
+}
+
 } // namespace
 
 PDFDecodedImage decodePDFImage(Object image, Object colorSpace, bool preserveAlpha) {
@@ -422,11 +573,60 @@ PDFDecodedImage decodePDFImage(Object image, Object colorSpace, bool preserveAlp
 
 void recompressPDFImage(Object image, Object colorSpace, int targetWidth, int targetHeight,
                         const PDFCompressionPolicy& policy) {
+    recompressPDFImage(image, colorSpace, targetWidth, targetHeight,
+                       targetWidth, targetHeight, policy);
+}
+
+void recompressPDFImage(Object image, Object colorSpace,
+                        int targetWidth, int targetHeight,
+                        int selectorWidth, int selectorHeight,
+                        const PDFCompressionPolicy& policy) {
     policy.validate();
     dimensions(targetWidth, targetHeight);
+    dimensions(selectorWidth, selectorHeight);
     PDFImageRows rows(image, colorSpace, false);
-    if (targetWidth > rows.width() || targetHeight > rows.height())
+    if (targetWidth > rows.width() || targetHeight > rows.height() ||
+        selectorWidth > rows.width() || selectorHeight > rows.height())
         throw std::runtime_error("Invalid PDF image resampling dimensions");
+
+    if (policy.paperCleanup > 0) {
+        const auto cleanup = PDFPaperCleanup::analyze(
+            rows.width(), rows.height(),
+            [&](int row, std::span<uint8_t> output) { rows.readRGB(row, output); },
+            policy);
+        if (policy.monochrome) {
+            auto encoded = encodeCleanBitmap(rows, targetWidth, targetHeight,
+                                             policy, cleanup, false);
+            installEncodedImage(image, encoded, "/CCITTFaxDecode", targetWidth,
+                                targetHeight, true, false, true);
+            return;
+        }
+
+        const bool hasIndependentMask = image.getDict().hasKey("/SMask") ||
+                                        image.getDict().hasKey("/Mask");
+        const bool separatesContent = cleanup.neutralBlackCoverage() >= 0.0005 &&
+                                      cleanup.colorCoverage() < 0.98;
+        if (!hasIndependentMask && separatesContent) {
+            auto black = encodeCleanBitmap(rows, selectorWidth, selectorHeight,
+                                           policy, cleanup, true);
+            if (cleanup.colorCoverage() == 0) {
+                installEncodedImage(image, black, "/CCITTFaxDecode", selectorWidth,
+                                    selectorHeight, true, false, true);
+            } else {
+                auto color = encodeCleanColor(rows, targetWidth, targetHeight,
+                                              policy, cleanup, true);
+                installHybridImage(image, color, black, targetWidth, targetHeight,
+                                   selectorWidth, selectorHeight);
+            }
+            return;
+        }
+
+        auto color = encodeCleanColor(rows, targetWidth, targetHeight,
+                                      policy, cleanup, false);
+        installEncodedImage(image, color.storage, color.filter, targetWidth,
+                            targetHeight, false, false, true);
+        return;
+    }
 
     std::shared_ptr<TemporaryFile> selected;
     const char* encoding = nullptr;

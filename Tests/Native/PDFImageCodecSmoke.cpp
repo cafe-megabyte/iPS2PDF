@@ -101,9 +101,14 @@ void runImageCodecSmoke(const std::filesystem::path& output) {
         policy.threshold = 50;
         ips2pdf::recompressPDFImage(encoded, encoded.getDict().getKey("/ColorSpace"), width, height, policy);
         const auto roundTrip = ips2pdf::decodePDFImage(encoded, Object::newNull());
-        for (size_t pixel = 0; pixel < expected.size(); ++pixel)
-            require(roundTrip.pixels[pixel * 4] == (expected[pixel] ? 0 : 255),
-                    "Streaming CCITT Group 4 changed a patterned bitmap");
+        for (size_t pixel = 0; pixel < expected.size(); ++pixel) {
+            const int wanted = expected[pixel] ? 0 : 255;
+            if (roundTrip.pixels[pixel * 4] != wanted)
+                throw std::runtime_error(
+                    "Streaming CCITT Group 4 changed patterned pixel " +
+                    std::to_string(pixel) + " from " + std::to_string(wanted) +
+                    " to " + std::to_string(roundTrip.pixels[pixel * 4]));
+        }
     }
 
     {

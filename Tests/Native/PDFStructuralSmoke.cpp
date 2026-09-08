@@ -336,8 +336,8 @@ void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
     {
         ips2pdf::PDFCompressionPolicy policy;
         require(policy.level == ips2pdf::PDFCompressionLevel::balanced && !policy.monochrome &&
-                    policy.threshold == 75 && policy.contrast == 25,
-                "Compression defaults are not Color, Balanced, threshold 75 and contrast 25");
+                    policy.threshold == 75 && policy.contrast == 25 && policy.paperCleanup == 50,
+                "Compression defaults are not Color, Balanced, threshold 75, contrast 25 and paper cleanup 50");
         policy.level = ips2pdf::PDFCompressionLevel::strong;
         require(policy.maximumPPI() == 110 && policy.jpegQuality() == 60,
                 "Strong color compression does not protect its smaller bitmap");
@@ -356,6 +356,11 @@ void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
         try { policy.validate(); } catch (const std::exception&) { invalidContrast = true; }
         require(invalidContrast, "Compression accepted a contrast below the UI range");
         policy.contrast = 25;
+        policy.paperCleanup = -1;
+        bool invalidCleanup = false;
+        try { policy.validate(); } catch (const std::exception&) { invalidCleanup = true; }
+        require(invalidCleanup, "Compression accepted paper cleanup below the UI range");
+        policy.paperCleanup = 50;
         policy.monochrome = true;
         policy.level = ips2pdf::PDFCompressionLevel::strong;
         require(policy.maximumPPI() == 300 && policy.resizeScale(360) == 1,

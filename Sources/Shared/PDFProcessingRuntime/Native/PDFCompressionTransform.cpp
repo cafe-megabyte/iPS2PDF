@@ -7,6 +7,7 @@
 #include <qpdf/Pl_SHA2.hh>
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <functional>
 #include <map>
@@ -303,10 +304,20 @@ void compressImages(QPDF& pdf, const PDFCompressionPlan& plan,
         if (scale < 1) {
             width = std::max(1, static_cast<int>(std::ceil(sourceWidth * scale)));
             height = std::max(1, static_cast<int>(std::ceil(sourceHeight * scale)));
-            const double actual = std::min(double(width) / sourceWidth, double(height) / sourceHeight);
-            ppi *= actual;
         }
-        recompressPDFImage(image.object, image.colorSpace, width, height, policy);
+        int selectorWidth = width;
+        int selectorHeight = height;
+        if (!policy.monochrome) {
+            // Neutral text-like samples use a fixed 300 ppi selector. This is
+            // independent of the color preset and avoids making text softer
+            // merely because its sparse color background uses fewer samples.
+            const double selectorScale = !std::isfinite(ppi) || ppi <= 300
+                ? 1 : 300 / ppi;
+            selectorWidth = std::max(1, static_cast<int>(std::ceil(sourceWidth * selectorScale)));
+            selectorHeight = std::max(1, static_cast<int>(std::ceil(sourceHeight * selectorScale)));
+        }
+        recompressPDFImage(image.object, image.colorSpace, width, height,
+                           selectorWidth, selectorHeight, policy);
     }
 }
 } // namespace

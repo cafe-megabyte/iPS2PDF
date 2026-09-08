@@ -67,15 +67,28 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
                             value.monochrome = item.options.colorMode == .blackAndWhite ? 1 : 0
                             value.threshold = Int32(item.options.threshold)
                             value.contrast = Int32(item.options.contrast)
+                            value.paper_cleanup = Int32(item.options.paperCleanup)
+                            let colors = nativePaperColors(item.options.paperSample)
+                            value.paper_color_count = Int32(colors.count)
+                            if colors.indices.contains(0) { value.paper_color_0 = colors[0] }
+                            if colors.indices.contains(1) { value.paper_color_1 = colors[1] }
+                            if colors.indices.contains(2) { value.paper_color_2 = colors[2] }
                             return value
                         }
-                        _ = overrides.withUnsafeBufferPointer { buffer in
-                            ips2pdf_pdf_compress_preview(job.inputURL.path, job.outputURL.path, password ?? "",
-                                                         Int32(request.compression.level.rawValue),
-                                                         request.compression.colorMode == .blackAndWhite ? 1 : 0,
-                                                         Int32(request.compression.threshold), Int32(request.compression.contrast),
-                                                         buffer.baseAddress, UInt32(buffer.count),
-                                                         Int32(request.previewPage ?? -1), native.pointer, &result)
+                        let colors = nativePaperColors(request.compression.paperSample)
+                        _ = colors.withUnsafeBufferPointer { colorBuffer in
+                            overrides.withUnsafeBufferPointer { overrideBuffer in
+                                ips2pdf_pdf_compress_preview(
+                                    job.inputURL.path, job.outputURL.path, password ?? "",
+                                    Int32(request.compression.level.rawValue),
+                                    request.compression.colorMode == .blackAndWhite ? 1 : 0,
+                                    Int32(request.compression.threshold), Int32(request.compression.contrast),
+                                    Int32(request.compression.paperCleanup),
+                                    colorBuffer.baseAddress, UInt32(colorBuffer.count),
+                                    overrideBuffer.baseAddress, UInt32(overrideBuffer.count),
+                                    Int32(request.previewPage ?? -1), native.pointer, &result
+                                )
+                            }
                         }
                     case .extractResource:
                         ips2pdf_pdf_extract_resource(job.inputURL.path, job.outputURL.path, password ?? "",
@@ -114,6 +127,16 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
             // third-party exception descriptions.
             return encode(PDFProcessingReply(jobID: request.jobID, status: .failed))
         }
+    }
+
+    private func nativePaperColors(_ sample: PDFPaperSample?) -> [IPS2PDFPaperColor] {
+        sample?.colors.map { color in
+            var value = IPS2PDFPaperColor()
+            value.red = Int32(color.red)
+            value.green = Int32(color.green)
+            value.blue = Int32(color.blue)
+            return value
+        } ?? []
     }
 
     private func encode(_ reply: PDFProcessingReply) -> XPCDictionary {

@@ -8135,6 +8135,21 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Gesamtes PDF" } }
       }
     },
+    "Automatic" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Automatisch" } }
+      }
+    },
+    "Choose paper area" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Papierbereich wählen" } }
+      }
+    },
+    "Choose paper area again" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Papierbereich erneut wählen" } }
+      }
+    },
     "Contrast: %lld" : {
       "localizations" : {
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Kontrast: %lld" } }
@@ -8165,6 +8180,26 @@
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Kein Unterschied bei der Dateigröße" } }
       }
     },
+    "Paper cleanup" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Papierbereinigung" } }
+      }
+    },
+    "Paper cleanup strength" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Stärke der Papierbereinigung" } }
+      }
+    },
+    "Paper cleanup: %lld" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Papierbereinigung: %lld" } }
+      }
+    },
+    "Paper area selected" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Papierbereich ausgewählt" } }
+      }
+    },
     "Page %lld of %lld" : {
       "localizations" : {
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Seite %1$lld von %2$lld" } }
@@ -8188,6 +8223,11 @@
     "Settings for" : {
       "localizations" : {
         "de" : { "stringUnit" : { "state" : "translated", "value" : "Einstellungen für" } }
+      }
+    },
+    "Tap an unprinted paper area" : {
+      "localizations" : {
+        "de" : { "stringUnit" : { "state" : "translated", "value" : "Auf einen unbedruckten Papierbereich tippen" } }
       }
     },
     "Threshold: %lld" : {

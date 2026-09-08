@@ -96,8 +96,9 @@ struct PDFCompressionSessionSmoke {
         let model = try PDFCompressionSession(editing: editing) { input, options, overrides, _, page in
             try await queue.process(input, options, overrides, page)
         }
-        try require(model.options.level == .balanced && model.options.colorMode == .color && model.options.contrast == 25,
-                    "A fresh compression session did not start with Color, Balanced and 25 percent contrast")
+        try require(model.options.level == .balanced && model.options.colorMode == .color &&
+                    model.options.contrast == 25 && model.options.paperCleanup == 50,
+                    "A fresh compression session did not start with Color, Balanced, 25 percent contrast and 50 percent paper cleanup")
         model.start()
         try await wait { await queue.count() == 1 }
         model.options.level = .strong
@@ -129,7 +130,7 @@ struct PDFCompressionSessionSmoke {
 
         let freshModel = try PDFCompressionSession(editing: editing) { input, _, _, _, _ in input }
         try require(freshModel.options.level == .balanced && freshModel.options.colorMode == .color &&
-                    freshModel.options.contrast == 25,
+                    freshModel.options.contrast == 25 && freshModel.options.paperCleanup == 50,
                     "A fresh compression session remembered settings from an earlier session")
         freshModel.cancel()
 

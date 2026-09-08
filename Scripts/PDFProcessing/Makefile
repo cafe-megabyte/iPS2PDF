@@ -162,6 +162,7 @@ NATIVE_OBJECTS := $(patsubst $(NATIVE_SOURCE)/%.cpp,$(OBJECT_ROOT)/native/%.o,$(
 NATIVE_INCLUDES := '-I$(NATIVE_SOURCE)' \
   -isystem '$(QPDF_SOURCE)/include' -isystem '$(QPDF_SOURCE)/libqpdf' -isystem 'generated/qpdf' \
   -isystem 'generated/qpdf-jpeg' -isystem '$(PDFIUM_SOURCE)' \
+  -isystem '$(PDFIUM_SOURCE)/third_party/leptonica/src' \
   -isystem '$(JPEGLI_SOURCE)' -isystem '$(JPEGLI_SOURCE)/lib/include' -isystem 'generated/jpegli' \
   -isystem '$(SDKROOT)/usr/include/libxml2'
 $(NATIVE_OBJECTS): $(OBJECT_ROOT)/native/%.o: $(NATIVE_SOURCE)/%.cpp

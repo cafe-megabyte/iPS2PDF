@@ -3,6 +3,9 @@ import SwiftUI
 struct CompressionOptionsEditor: View {
     @Binding var options: PDFCompressionOptions
     let isLevelEnabled: (PDFCompressionOptions.Level) -> Bool
+    let isChoosingPaperArea: Bool
+    let choosePaperArea: () -> Void
+    let clearPaperArea: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -41,6 +44,38 @@ struct CompressionOptionsEditor: View {
                         .frame(width: 32, alignment: .trailing)
                 }
             }
+            HStack {
+                Text("Paper cleanup")
+                Slider(
+                    value: Binding(
+                        get: { Double(options.paperCleanup) },
+                        set: { options.paperCleanup = Int($0.rounded()) }
+                    ),
+                    in: 0...100, step: 1
+                )
+                .accessibilityLabel("Paper cleanup strength")
+                Text(options.paperCleanup.formatted())
+                    .monospacedDigit()
+                    .frame(width: 32, alignment: .trailing)
+                paperAreaControls
+            }
+        }
+    }
+
+    @ViewBuilder private var paperAreaControls: some View {
+        Button(action: choosePaperArea) {
+            Image(systemName: "scope")
+        }
+        .accessibilityLabel(options.paperSample == nil ? "Choose paper area" : "Choose paper area again")
+        .help(options.paperSample == nil ? "Choose paper area" : "Choose paper area again")
+        .buttonStyle(.bordered)
+        .tint(isChoosingPaperArea ? .accentColor : nil)
+        if options.paperSample != nil {
+            Button(action: clearPaperArea) {
+                Image(systemName: "arrow.counterclockwise")
+            }
+            .accessibilityLabel("Automatic")
+            .help("Automatic")
         }
     }
 

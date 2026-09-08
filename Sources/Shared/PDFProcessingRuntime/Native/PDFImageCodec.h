@@ -23,6 +23,13 @@ void recompressPDFImage(QPDFObjectHandle image, QPDFObjectHandle colorSpace,
                         int targetWidth, int targetHeight,
                         const PDFCompressionPolicy& policy);
 
+// Color cleanup can retain a lower-resolution color layer while keeping the
+// neutral one-bit selector at an independently capped resolution.
+void recompressPDFImage(QPDFObjectHandle image, QPDFObjectHandle colorSpace,
+                        int targetWidth, int targetHeight,
+                        int selectorWidth, int selectorHeight,
+                        const PDFCompressionPolicy& policy);
+
 // Reuse PDFium's PDF color-space/tint-function implementation for vectors and
 // images. Keeping a converter per resolved color space avoids reparsing ICC
 // data for every color-setting operation in a content stream.
