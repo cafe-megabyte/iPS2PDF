@@ -7,68 +7,185 @@ struct FrontConversionView: View {
     let onOpenFile: () -> Void
 
     var body: some View {
-        VStack(spacing: 32) {
-            HStack {
-                Button(action: onShowPDFInfo) { Label("PDF information", systemImage: "info.circle") }
-                    .buttonStyle(.bordered)
-                    .disabled(viewModel.controlsAppearDisabled)
-                Spacer()
-                Button(action: onShowSettings) {
-                    Label("Settings", systemImage: "slider.horizontal.3")
-                }
-                .buttonStyle(.bordered)
-                .disabled(viewModel.controlsAppearDisabled)
-            }
+        VStack(spacing: 0) {
+            Text(verbatim: "iPS2PDF")
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
 
-            Spacer(minLength: 0)
-
-            Button(String(localized: "Convert file…"), action: onOpenFile)
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .disabled(viewModel.controlsAppearDisabled)
-
-            VStack(alignment: .leading, spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Joboptions")
-                        .font(.headline)
-
-                    JoboptionsDropdown(
-                        repository: viewModel.joboptionsRepository,
-                        isDisabled: viewModel.controlsAppearDisabled
-                    )
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: "pdf_version"))
-                        .font(.headline)
-
-                    PDFVersionDropdown(
-                        selectedVersion: viewModel.selectedPDFVersion,
-                        isDisabled: viewModel.controlsAppearDisabled || viewModel.isPDFVersionConstrained
-                    ) { version in
-                        viewModel.setPDFVersion(version)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Tools")
+                            .font(.largeTitle.weight(.bold))
+                        Text("Choose a task.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .saturation(viewModel.isPDFVersionConstrained ? 0 : 1)
-                }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(String(localized: "pdfa_compatibility"))
-                        .font(.headline)
-
-                    PDFACompatibilityDropdown(
-                        selectedCompatibility: viewModel.selectedPDFACompatibility,
-                        isDisabled: viewModel.controlsAppearDisabled
-                    ) { compatibility in
-                        viewModel.setPDFACompatibility(compatibility)
-                    }
+                    analysisCard
+                    conversionCard
                 }
+                .frame(maxWidth: 520, alignment: .leading)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, 32)
             }
-            .frame(maxWidth: 360, alignment: .leading)
-            .frame(maxWidth: .infinity, alignment: .center)
-
-            Spacer(minLength: 0)
+            .scrollIndicators(.hidden)
         }
-        .padding(32)
+        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
         .allowsHitTesting(!viewModel.controlsAreDisabled)
+    }
+
+    private var analysisCard: some View {
+        toolButton(
+            title: LocalizedStringResource("Open PDF…"),
+            subtitle: LocalizedStringResource("Information & Tools"),
+            systemImage: "doc.text.magnifyingglass",
+            action: onShowPDFInfo
+        )
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+    }
+
+    private var conversionCard: some View {
+        VStack(spacing: 0) {
+            toolButton(
+                title: LocalizedStringResource("Convert file…"),
+                subtitle: LocalizedStringResource("PostScript · EPS · PDF → PDF"),
+                systemImage: "arrow.down.doc",
+                action: onOpenFile
+            )
+
+            Divider()
+                .padding(.leading, 18)
+
+            Text("Conversion options")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 18)
+                .padding(.top, 16)
+                .padding(.bottom, 7)
+
+            joboptionsRow
+
+            Divider()
+                .padding(.leading, 18)
+
+            optionRow(LocalizedStringResource("pdf_version")) {
+                PDFVersionDropdown(
+                    selectedVersion: viewModel.selectedPDFVersion,
+                    isDisabled: viewModel.controlsAppearDisabled || viewModel.isPDFVersionConstrained
+                ) { version in
+                    viewModel.setPDFVersion(version)
+                }
+                .saturation(viewModel.isPDFVersionConstrained ? 0 : 1)
+            }
+
+            Divider()
+                .padding(.leading, 18)
+
+            optionRow(LocalizedStringResource("pdfa_compatibility")) {
+                PDFACompatibilityDropdown(
+                    selectedCompatibility: viewModel.selectedPDFACompatibility,
+                    isDisabled: viewModel.controlsAppearDisabled
+                ) { compatibility in
+                    viewModel.setPDFACompatibility(compatibility)
+                }
+            }
+        }
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+    }
+
+    private var joboptionsRow: some View {
+        HStack(spacing: 10) {
+            Text("Joboptions")
+                .layoutPriority(1)
+
+            Spacer(minLength: 8)
+
+            JoboptionsDropdown(
+                repository: viewModel.joboptionsRepository,
+                isDisabled: viewModel.controlsAppearDisabled
+            )
+
+            Divider()
+                .frame(height: 32)
+
+            Button(action: onShowSettings) {
+                Image(systemName: "pencil")
+                    .font(.body.weight(.medium))
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.tint)
+            .disabled(viewModel.controlsAppearDisabled)
+            .accessibilityLabel("Edit selected Joboptions")
+            .help("Edit selected Joboptions")
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 8)
+        .frame(minHeight: 60)
+    }
+
+    private func optionRow<Control: View>(
+        _ title: LocalizedStringResource,
+        @ViewBuilder control: () -> Control
+    ) -> some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .layoutPriority(1)
+            Spacer(minLength: 8)
+            control()
+        }
+        .padding(.leading, 18)
+        .padding(.trailing, 14)
+        .frame(minHeight: 60)
+    }
+
+    private func toolButton(
+        title: LocalizedStringResource,
+        subtitle: LocalizedStringResource,
+        systemImage: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 16) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 26, weight: .regular))
+                    .foregroundStyle(.tint)
+                    .frame(width: 58, height: 58)
+                    .background(Color.appTint.opacity(0.1))
+                    .clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .multilineTextAlignment(.leading)
+            .padding(18)
+            .frame(maxWidth: .infinity, minHeight: 112, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.controlsAppearDisabled)
     }
 }

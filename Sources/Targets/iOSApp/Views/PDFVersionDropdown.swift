@@ -18,16 +18,18 @@ struct PDFVersionDropdown: View {
                 }
             }
         } label: {
-            HStack(spacing: 10) {
-                PDFVersionOptionRow(version: selectedVersion, showsSelection: false)
-
+            HStack(spacing: 6) {
+                Text(selectedVersion.title)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.trailing)
                 Image(systemName: "chevron.down")
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.plain)
         .disabled(isDisabled)
     }
 

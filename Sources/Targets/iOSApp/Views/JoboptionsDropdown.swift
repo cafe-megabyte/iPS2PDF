@@ -22,20 +22,18 @@ struct JoboptionsDropdown: View {
             }
             menuHeader("Bundled")
         } label: {
-            HStack(spacing: 10) {
-                Image(systemName: repository.activeRecord?.isBundled == true ? "shippingbox.fill" : "person.crop.circle")
-                    .frame(width: 22)
+            HStack(spacing: 6) {
                 Text(repository.activeName)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                Spacer()
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.trailing)
                 Image(systemName: "chevron.down")
                     .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.plain)
         .disabled(isDisabled)
         .allowsHitTesting(!isDisabled && repository.isReady)
     }

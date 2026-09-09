@@ -6,6 +6,15 @@
 - Put a generally reusable type in its own file named after that type. Nest a type inside its owning type when it is only an implementation detail.
 - Extensions may stay with the type they extend or live in a focused extension file; they must not be used to hide unrelated top-level types in one file.
 
+## Localized text
+
+- All static user-facing text must use compile-time-discoverable localization APIs so Xcode can maintain `Localizable.xcstrings` automatically.
+- In SwiftUI, put string literals directly in localization-aware initializers and modifiers such as `Text("Settings")`, `Button("Apply")`, `Label("Remove", systemImage: "trash")`, `.navigationTitle("Joboptions")`, and `.accessibilityLabel("Edit selected Joboptions")`.
+- When a reusable SwiftUI helper must receive localizable copy, accept `LocalizedStringResource` and construct it explicitly at the call site, for example `LocalizedStringResource("Open PDF…")`. Do not pass static user-facing copy through `String` or through a custom `LocalizedStringKey` parameter, because Xcode may not discover that indirection reliably.
+- In non-SwiftUI Swift code that requires a localized `String`, use `String(localized: "Conversion failed")` rather than a raw string or a dynamically constructed localization key.
+- Use `Text(verbatim:)` and raw dynamic strings only for content that must not be localized, such as product names, filenames, identifiers, imported document content, and runtime diagnostics.
+- Do not keep obsolete catalog entries. If no source still uses a localized string, remove the stale entry instead of marking it manual merely to silence extraction warnings.
+
 ## Joboptions consistency belongs to the consistency engine
 
 - Never disable, lock, hide, or otherwise prevent editing a Joboptions control because of a PDF standard, compatibility requirement, another setting, or a consistency rule.

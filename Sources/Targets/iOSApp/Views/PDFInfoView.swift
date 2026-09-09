@@ -99,9 +99,22 @@ struct PDFInfoView: View {
                     }.padding()
                 } else {
                     HStack {
-                        Picker("Category", selection: $category) {
-                            ForEach(PDFInfoCategory.allCases) { category in Label(category.title, systemImage: category.symbol).tag(category) }
-                        }.pickerStyle(.menu)
+                        Menu {
+                            Picker("Category", selection: $category) {
+                                ForEach(PDFInfoCategory.allCases) { category in Label(category.title, systemImage: category.symbol).tag(category) }
+                            }
+                        } label: {
+                            HStack(spacing: 5) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: category.symbol)
+                                    Text(verbatim: category.title)
+                                }
+                                Image(systemName: "chevron.up.chevron.down")
+                                    .font(.caption.weight(.semibold))
+                                    .accessibilityHidden(true)
+                            }
+                        }
+                        .menuIndicator(.hidden)
                         Spacer()
                     }.padding(.horizontal).padding(.vertical, 4)
                     Divider()
