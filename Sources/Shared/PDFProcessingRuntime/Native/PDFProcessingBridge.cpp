@@ -4,13 +4,16 @@
 #include "PDFStructuralWriter.h"
 #include "PDFProcessingUnsupported.h"
 #include "PDFResourceExtraction.h"
+#include "PDFSignatureWriter.h"
 
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
 #include <mutex>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace {
 std::mutex processingMutex;
@@ -93,6 +96,45 @@ int32_t ips2pdf_pdf_compress_preview(const char* input, const char* output, cons
             item.threshold, item.contrast});
     }
     return process(input, output, password, 0, &plan, control, result, pageIndex);
+}
+
+int32_t ips2pdf_pdf_add_signatures(const char* input, const char* output, const char* font,
+                                  const char* password, const IPS2PDFSignaturePlacement* placements,
+                                  uint32_t placementCount, IPS2PDFProcessingControl* control,
+                                  IPS2PDFProcessingResult* result) {
+    if (!result) return IPS2PDF_PROCESSING_INVALID_REQUEST;
+    *result = {};
+    result->version = 1;
+    result->status = IPS2PDF_PROCESSING_INVALID_REQUEST;
+    if (!input || !*input || !output || !*output || !font || !*font || placementCount == 0 ||
+        placementCount > 10000 || !placements) return result->status;
+    std::vector<ips2pdf::PDFSignaturePlacement> values;
+    values.reserve(placementCount);
+    for (uint32_t index = 0; index < placementCount; ++index) {
+        const auto& item = placements[index];
+        if (item.page_index < 0 || !std::isfinite(item.x) || !std::isfinite(item.y) ||
+            !std::isfinite(item.font_size) || item.font_size < 5 || item.font_size > 500)
+            return result->status;
+        values.push_back({item.page_index, item.x, item.y, item.font_size});
+    }
+    std::unique_lock lock(processingMutex, std::try_to_lock);
+    if (!lock.owns_lock()) return result->status = IPS2PDF_PROCESSING_BUSY;
+    ips2pdf::PDFProcessingScope scope(control);
+    try {
+        auto finished = ips2pdf::addPDFSignatures(input, output, font, password ? password : "", values);
+        result->output_bytes = finished.outputBytes;
+        if (finished.sanitization.signaturesRemoved) result->warnings |= IPS2PDF_WARNING_SIGNATURES_REMOVED;
+        if (finished.protectionRemoved) result->warnings |= IPS2PDF_WARNING_PROTECTION_REMOVED;
+        if (finished.sanitization.signatureAppearancesMayDiffer) result->warnings |= IPS2PDF_WARNING_SIGNATURE_APPEARANCE;
+        result->status = IPS2PDF_PROCESSING_SUCCESS;
+    } catch (const ips2pdf::PDFProcessingStopped& error) {
+        result->status = error.cancelled ? IPS2PDF_PROCESSING_CANCELLED : IPS2PDF_PROCESSING_LIMIT_EXCEEDED;
+    } catch (const QPDFExc& error) {
+        result->status = error.getErrorCode() == qpdf_e_password ? IPS2PDF_PROCESSING_PASSWORD_REQUIRED : IPS2PDF_PROCESSING_FAILED;
+    } catch (...) {
+        result->status = IPS2PDF_PROCESSING_FAILED;
+    }
+    return result->status;
 }
 
 int32_t ips2pdf_pdf_extract_resource(const char* input, const char* output, const char* password,

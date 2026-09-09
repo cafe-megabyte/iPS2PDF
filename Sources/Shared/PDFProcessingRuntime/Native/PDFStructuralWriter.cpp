@@ -61,7 +61,9 @@ private:
     uint64_t bytes = 0;
 };
 
-bool canPreserveEncryption(QPDF& pdf) {
+} // namespace
+
+bool canPreservePDFEncryption(QPDF& pdf) {
     if (!pdf.isEncrypted()) return true;
     int revision = 0, permissions = 0, version = 0;
     QPDF::encryption_method_e streams, strings, files;
@@ -73,8 +75,6 @@ bool canPreserveEncryption(QPDF& pdf) {
     const auto expected = version >= 5 ? QPDF::e_aesv3 : QPDF::e_aes;
     return streams == expected && strings == expected && files == expected;
 }
-
-} // namespace
 
 std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input, const std::string& password) {
     auto read = [&](const std::string& encoded) {
@@ -98,22 +98,8 @@ std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input, const 
     }
 }
 
-namespace {
-
-static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
-                                          const std::filesystem::path& output,
-                                          const std::string& password,
-                                          const PDFMetadataRetention& retention,
-                                          bool preserveConformity,
-                                          const PDFCompressionPlan* compression, int previewPage = -1) {
-    if (input == output) throw std::runtime_error("PDF processing requires a separate output file");
-    auto pdf = openPDFDocument(input, password);
-    PDFStructuralWriteResult result;
-    result.protectionRemoved = !canPreserveEncryption(*pdf);
-    const auto effectiveRetention = preserveConformity ? metadataPreservingConformity(*pdf) : retention;
-    if (compression) result.compression = compressPDFObjects(*pdf, *compression, previewPage);
-    else externalizePDFInlineImages(*pdf);
-    result.sanitization = sanitizePDFMetadata(*pdf, effectiveRetention);
+std::uintmax_t writePDFDocument(QPDF& pdf, const std::filesystem::path& output,
+                               bool preserveEncryption, bool compressStreams) {
     // Exclusivity prevents accidental overwrite and rejects symlink targets.
     int descriptor = ::open(output.c_str(), O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW, 0600);
     if (descriptor < 0) throw std::runtime_error("Could not create the private PDF result");
@@ -125,27 +111,46 @@ static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
     }
     try {
         CheckedOutput pipeline(file);
-        QPDFWriter writer(*pdf);
+        QPDFWriter writer(pdf);
         writer.setOutputPipeline(&pipeline);
         writer.setPreserveUnreferencedObjects(false);
-        writer.setObjectStreamMode(compression ? qpdf_o_generate : qpdf_o_preserve);
-        writer.setStreamDataMode(compression ? qpdf_s_compress : qpdf_s_preserve);
-        writer.setPreserveEncryption(!result.protectionRemoved);
+        writer.setObjectStreamMode(compressStreams ? qpdf_o_generate : qpdf_o_preserve);
+        writer.setStreamDataMode(compressStreams ? qpdf_s_compress : qpdf_s_preserve);
+        writer.setPreserveEncryption(preserveEncryption);
         writer.write();
         checkPDFProcessing();
         if (fflush(file) || ferror(file)) throw std::runtime_error("Could not finish the PDF result");
         int status = fclose(file);
         file = nullptr;
         if (status) throw std::runtime_error("Could not close the PDF result");
-        if (pdf->anyWarnings()) throw std::runtime_error("The PDF contains unsupported or damaged objects");
-        result.outputBytes = std::filesystem::file_size(output);
-        return result;
+        if (pdf.anyWarnings()) throw std::runtime_error("The PDF contains unsupported or damaged objects");
+        return std::filesystem::file_size(output);
     } catch (...) {
         if (file) fclose(file);
         std::error_code ignored;
         std::filesystem::remove(output, ignored);
         throw;
     }
+}
+
+namespace {
+
+static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
+                                          const std::filesystem::path& output,
+                                          const std::string& password,
+                                          const PDFMetadataRetention& retention,
+                                          bool preserveConformity,
+                                          const PDFCompressionPlan* compression, int previewPage = -1) {
+    if (input == output) throw std::runtime_error("PDF processing requires a separate output file");
+    auto pdf = openPDFDocument(input, password);
+    PDFStructuralWriteResult result;
+    result.protectionRemoved = !canPreservePDFEncryption(*pdf);
+    const auto effectiveRetention = preserveConformity ? metadataPreservingConformity(*pdf) : retention;
+    if (compression) result.compression = compressPDFObjects(*pdf, *compression, previewPage);
+    else externalizePDFInlineImages(*pdf);
+    result.sanitization = sanitizePDFMetadata(*pdf, effectiveRetention);
+    result.outputBytes = writePDFDocument(*pdf, output, !result.protectionRemoved, compression != nullptr);
+    return result;
 }
 } // namespace
 

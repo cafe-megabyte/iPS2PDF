@@ -126,6 +126,7 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
     private var actionsObservation: AnyCancellable?
     private let metadataButton = NSButton(title: String(localized: "Remove metadata"), target: nil, action: nil)
     private let compressionButton = NSButton(title: String(localized: "Compress PDF…"), target: nil, action: nil)
+    private let signatureButton = NSButton(title: String(localized: "Sign PDF…"), target: nil, action: nil)
     private let savePDFButton = NSButton(title: String(localized: "Export edited PDF…"), target: nil, action: nil)
     private let undoPDFButton = NSButton(title: "", target: nil, action: nil)
     private let redoPDFButton = NSButton(title: "", target: nil, action: nil)
@@ -239,6 +240,10 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         compressionButton.image = NSImage(systemSymbolName: "arrow.down.right.and.arrow.up.left", accessibilityDescription: nil)
         compressionButton.imagePosition = .imageLeading
         compressionButton.setAccessibilityIdentifier("pdf-compress")
+        signatureButton.target = self; signatureButton.action = #selector(signPDF(_:))
+        signatureButton.image = NSImage(systemSymbolName: "signature", accessibilityDescription: nil)
+        signatureButton.imagePosition = .imageLeading
+        signatureButton.setAccessibilityIdentifier("pdf-sign")
         savePDFButton.target = self; savePDFButton.action = #selector(exportEditedPDF)
         undoPDFButton.image = NSImage(systemSymbolName: "arrow.uturn.backward", accessibilityDescription: String(localized: "Undo PDF edit"))
         redoPDFButton.image = NSImage(systemSymbolName: "arrow.uturn.forward", accessibilityDescription: String(localized: "Redo PDF edit"))
@@ -246,7 +251,7 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         redoPDFButton.target = self; redoPDFButton.action = #selector(redoPDFEdit)
         cancelProcessingButton.target = self; cancelProcessingButton.action = #selector(cancelProcessing)
         processingStatus.font = .systemFont(ofSize: 11); processingStatus.textColor = .secondaryLabelColor
-        let tools = NSStackView(views: [metadataButton, compressionButton, NSView(), undoPDFButton, redoPDFButton, savePDFButton])
+        let tools = NSStackView(views: [metadataButton, compressionButton, signatureButton, NSView(), undoPDFButton, redoPDFButton, savePDFButton])
         tools.spacing = 10; root.addArrangedSubview(tools)
         tools.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true
         let progress = NSStackView(views: [processingStatus, NSView(), cancelProcessingButton])
@@ -289,6 +294,7 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         redoPDFButton.isEnabled = actions.editing?.canRedo == true && !actions.isProcessing
         savePDFButton.isEnabled = actions.editing?.isEdited == true && !actions.isProcessing
         compressionButton.isEnabled = metadataButton.isEnabled
+        signatureButton.isEnabled = metadataButton.isEnabled
         cancelProcessingButton.isHidden = !actions.isProcessing && !isExportingResources
         processingStatus.stringValue = isExportingResources ? resourceExportStatus : (actions.isProcessing ? String(localized: "Removing metadata…") : "")
         categoryButtons.enumerated().forEach { $0.element.state = PDFInfoCategory.allCases[$0.offset] == category ? .on : .off }
@@ -299,7 +305,8 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
         outline.reloadData()
         for item in items {
             guard let section = item.section else { continue }
-            if expanded.contains(section.id) || (!collapsed.contains(section.id) && (section.initiallyExpanded || section.warning != nil)) { outline.expandItem(item) }
+            let expandsInitially = category != .fonts && (section.initiallyExpanded || section.warning != nil)
+            if expanded.contains(section.id) || (!collapsed.contains(section.id) && expandsInitially) { outline.expandItem(item) }
         }
         isReloading = false
     }
@@ -315,6 +322,14 @@ private final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewD
             MacOSPDFCompressionWindowController.present(editing: editing)
         }
         catch { actions.errorMessage = error.localizedDescription }
+    }
+    @objc private func signPDF(_ sender: Any?) {
+        guard metadataButton.isEnabled else { return }
+        do {
+            let editing = try actions.editingSession()
+            view.window?.identifier = NSUserInterfaceItemIdentifier("pdf-editing:" + editing.id.uuidString)
+            MacOSPDFSignatureWindowController.present(editing: editing)
+        } catch { actions.errorMessage = error.localizedDescription }
     }
     @objc private func removeMetadata() {
         guard session.report.hasConformityDeclaration else {

@@ -77,6 +77,21 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
                                                          buffer.baseAddress, UInt32(buffer.count),
                                                          Int32(request.previewPage ?? -1), native.pointer, &result)
                         }
+                    case .addSignatures:
+                        let placements = request.signaturePlacements.map { item in
+                            var value = IPS2PDFSignaturePlacement()
+                            value.page_index = Int32(item.pageIndex)
+                            value.x = item.x
+                            value.y = item.y
+                            value.font_size = item.fontSize
+                            return value
+                        }
+                        _ = placements.withUnsafeBufferPointer { buffer in
+                            ips2pdf_pdf_add_signatures(job.inputURL.path, job.outputURL.path,
+                                                       job.signatureFontURL.path, password ?? "",
+                                                       buffer.baseAddress, UInt32(buffer.count),
+                                                       native.pointer, &result)
+                        }
                     case .extractResource:
                         ips2pdf_pdf_extract_resource(job.inputURL.path, job.outputURL.path, password ?? "",
                                                      request.resourceFormat ?? "", request.resourceFingerprint ?? "",

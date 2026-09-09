@@ -25,25 +25,7 @@ public:
         // A fresh ID is permitted only for unencrypted input. The original ID
         // participates in legacy PDF encryption and must survive that rewrite.
         if (!pdf.isEncrypted()) remove(pdf.getTrailer(), "/ID");
-        auto form = root.getKey("/AcroForm");
-        if (form.isDictionary()) {
-            std::set<QPDFObjGen> active;
-            clearSignatures(form.getKey("/Fields"), Object::newNull(), false, active, 0);
-            auto flags = form.getKey("/SigFlags");
-            if (flags.isInteger()) form.replaceKey("/SigFlags", Object::newInteger(flags.getIntValue() & ~2LL));
-        }
-        auto permissions = root.getKey("/Perms");
-        if (permissions.isDictionary()) {
-            for (const char* key : {"/DocMDP", "/UR", "/UR3"}) {
-                if (!permissions.getKey(key).isNull()) result.signaturesRemoved = true;
-                remove(permissions, key);
-            }
-            if (permissions.getKeys().empty()) remove(root, "/Perms");
-        }
-        // DSS contains validation material for signatures invalidated by any
-        // rewrite. It is not part of a page's visible signature appearance.
-        remove(root, "/DSS");
-        preserveSignatureAppearances();
+        invalidateSignatures(root);
         walk(root, 0);
         if (!retention.xmp.empty()) {
             auto metadata = pdf.newStream(retention.xmp);
@@ -69,11 +51,38 @@ public:
         return result;
     }
 
+    PDFSanitizationResult signaturesOnly() {
+        invalidateSignatures(pdf.getRoot());
+        return result;
+    }
+
 private:
     QPDF& pdf;
     PDFSanitizationResult result;
     std::set<QPDFObjGen> visited;
     std::set<QPDFObjGen> signedWidgets;
+
+    void invalidateSignatures(Object root) {
+        auto form = root.getKey("/AcroForm");
+        if (form.isDictionary()) {
+            std::set<QPDFObjGen> active;
+            clearSignatures(form.getKey("/Fields"), Object::newNull(), false, active, 0);
+            auto flags = form.getKey("/SigFlags");
+            if (flags.isInteger()) form.replaceKey("/SigFlags", Object::newInteger(flags.getIntValue() & ~2LL));
+        }
+        auto permissions = root.getKey("/Perms");
+        if (permissions.isDictionary()) {
+            for (const char* key : {"/DocMDP", "/UR", "/UR3"}) {
+                if (!permissions.getKey(key).isNull()) result.signaturesRemoved = true;
+                remove(permissions, key);
+            }
+            if (permissions.getKeys().empty()) remove(root, "/Perms");
+        }
+        // DSS contains validation material for signatures invalidated by any
+        // rewrite. It is not part of a page's visible signature appearance.
+        remove(root, "/DSS");
+        preserveSignatureAppearances();
+    }
 
     void remove(Object dictionary, const char* key) {
         if (!dictionary.hasKey(key)) return;
@@ -224,5 +233,9 @@ private:
 
 PDFSanitizationResult sanitizePDFMetadata(QPDF& pdf, const PDFMetadataRetention& retention) {
     return Sanitizer(pdf).run(retention);
+}
+
+PDFSanitizationResult invalidatePDFDigitalSignatures(QPDF& pdf) {
+    return Sanitizer(pdf).signaturesOnly();
 }
 } // namespace ips2pdf

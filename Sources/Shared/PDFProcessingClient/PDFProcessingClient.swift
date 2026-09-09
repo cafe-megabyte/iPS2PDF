@@ -46,14 +46,23 @@ struct PDFProcessingClient: Sendable {
     func process(_ revision: PDFEditingRevision, operation: PDFProcessingRequest.Operation,
                  preserveConformity: Bool, compression: PDFCompressionOptions = .init(),
                  pageCompressionOverrides: [PDFPageCompressionOverride] = [],
+                 signaturePlacements: [PDFSignaturePlacement] = [],
                  password: String?, previewPage: Int? = nil) async throws -> PDFEditingRevision {
         guard revision.byteCount <= 1_073_741_824 else { throw PDFProcessingError.limitExceeded }
+        let signatureFontURL: URL? = if operation == .addSignatures {
+            Bundle.main.url(forResource: "SignatureFont", withExtension: "otf")
+        } else { nil }
+        if operation == .addSignatures, signatureFontURL == nil { throw PDFProcessingError.failed }
         try Task.checkCancellation()
         let job = try await Task.detached(priority: .userInitiated) {
             try? PDFProcessingJobDirectory.removeStaleJobs()
             let job = try PDFProcessingJobDirectory.create()
             try FileManager.default.copyItem(at: revision.input.url, to: job.inputURL)
             try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: job.inputURL.path)
+            if let signatureFontURL {
+                try FileManager.default.copyItem(at: signatureFontURL, to: job.signatureFontURL)
+                try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: job.signatureFontURL.path)
+            }
             return job
         }.value
         // A sender lease survives the await and snapshot copy; the helper owns
@@ -63,7 +72,8 @@ struct PDFProcessingClient: Sendable {
         let request = PDFProcessingRequest(jobID: job.id, operation: operation,
                                            preserveConformity: preserveConformity, compression: compression,
                                            pageCompressionOverrides: pageCompressionOverrides,
-                                           previewPage: previewPage)
+                                           previewPage: previewPage,
+                                           signaturePlacements: signaturePlacements)
         guard request.isValid else { throw PDFProcessingError.failed }
         let reply = try await send(request, password: password)
         try Task.checkCancellation()

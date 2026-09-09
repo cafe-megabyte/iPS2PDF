@@ -5,6 +5,7 @@ frameworks="${2:?Expected built macOS frameworks directory}"
 project="$(cd "$(dirname "$0")/.." && pwd)"
 mkdir -p "$scratch"
 xcrun swiftc -swift-version 6 -parse-as-library -target "$(uname -m)-apple-macos15" \
+    -module-cache-path "$scratch/ModuleCache" \
     -F "$frameworks" -framework PDFProcessingRuntime -Xlinker -rpath -Xlinker "$frameworks" \
     "$project"/Sources/Shared/AppCore/PDFInspection/*.swift \
     "$project"/Sources/Shared/ICCMetadata/*.swift \
@@ -16,4 +17,5 @@ xcrun swiftc -swift-version 6 -parse-as-library -target "$(uname -m)-apple-macos
     "$project/Sources/Shared/PDFProcessingRuntime/RequestHandling/PDFNativeRequestLease.swift" \
     "$project/Sources/Shared/PDFProcessingRuntime/RequestHandling/PDFProcessingRequestHandler.swift" \
     "$project/Tests/MacOS/PDFProcessingIPCSmoke.swift" -o "$scratch/PDFProcessingIPCSmoke"
-"$scratch/PDFProcessingIPCSmoke" "$project/Tests/Unit/Fixtures"
+"$scratch/PDFProcessingIPCSmoke" "$project/Tests/Unit/Fixtures" \
+    "$project/BundledResources/Signature/SignatureFont-Dummy.otf"

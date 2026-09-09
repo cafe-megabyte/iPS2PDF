@@ -17,6 +17,7 @@ struct PDFInfoView: View {
     @State private var asksConformity = false
     @State private var sharedRevision: PDFEditingRevision?
     @State private var compression: PDFCompressionSession?
+    @State private var signature: PDFSignatureEditingSession?
     @State private var resourceArtifact: PDFExportArtifact?
     @State private var resourceExportTask: Task<Void, Never>?
     @State private var selectsResourceFolder = false
@@ -163,6 +164,12 @@ struct PDFInfoView: View {
                     } label: { Image(systemName: "arrow.down.right.and.arrow.up.left") }
                         .accessibilityLabel("Compress PDF")
                         .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
+                    Button {
+                        do { signature = try PDFSignatureEditingSession(editing: actions.editingSession()) }
+                        catch { message = error.localizedDescription }
+                    } label: { Image(systemName: "signature") }
+                        .accessibilityLabel("Sign PDF")
+                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
                     Spacer()
                     Button { actions.editing?.undo() } label: { Image(systemName: "arrow.uturn.backward") }
                         .accessibilityLabel("Undo PDF edit")
@@ -183,6 +190,11 @@ struct PDFInfoView: View {
             PDFCompressionView(session: model) { compression = nil }
                 .presentationDetents([.large]).presentationDragIndicator(.visible)
         }
+        .sheet(item: $signature) { model in
+            PDFSignatureEditorView(session: model) { signature = nil }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
         .fileImporter(isPresented: $selectsResourceFolder, allowedContentTypes: [.folder]) { result in
             switch result {
             case .success(let parent): exportAllResources(to: parent)
@@ -202,7 +214,7 @@ struct PDFInfoView: View {
         } message: { Text(message ?? "") }
         .onChange(of: actions.errorMessage) { _, value in if let value { message = value; actions.errorMessage = nil } }
         .onChange(of: actions.notice) { _, value in if let value { message = value; actions.notice = nil } }
-        .onDisappear { if !showsExport && sharedRevision == nil && compression == nil && !selectsResourceFolder { close(); removeExport() } }
+        .onDisappear { if !showsExport && sharedRevision == nil && compression == nil && signature == nil && !selectsResourceFolder { close(); removeExport() } }
     }
     private func close() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; if ownsInspection { session.cancel() } }
     private func unlock() { let value = password; password = ""; session.unlock(value) }
@@ -272,7 +284,9 @@ private struct PDFInfoSectionView: View {
         self.noticeReveal = noticeReveal
         self.canExport = canExport
         self.export = export
-        _expanded = State(initialValue: section.initiallyExpanded || section.warning != nil || section.id == "analysis-notices" && noticeReveal > 0)
+        let expandsInitially = section.category != .fonts && (section.initiallyExpanded || section.warning != nil)
+        let expandsForFontWarning = section.category == .fonts && section.warning != nil && fontReveal > 0
+        _expanded = State(initialValue: expandsInitially || expandsForFontWarning || section.id == "analysis-notices" && noticeReveal > 0)
     }
     var body: some View {
         DisclosureGroup(isExpanded: $expanded) {

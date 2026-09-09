@@ -44,6 +44,13 @@ typedef struct {
     int32_t contrast;
 } IPS2PDFPageCompressionOverride;
 
+typedef struct {
+    int32_t page_index;
+    double x;
+    double y;
+    double font_size;
+} IPS2PDFSignaturePlacement;
+
 typedef struct IPS2PDFProcessingControl IPS2PDFProcessingControl;
 
 // The caller retains this handle until processing and any cancellation callback
@@ -84,6 +91,16 @@ int32_t ips2pdf_pdf_compress_preview(const char* input_path, const char* output_
                                     const IPS2PDFPageCompressionOverride* page_overrides,
                                     uint32_t page_override_count, int32_t page_index,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result);
+
+// Adds visible, flattened U+201A glyphs. The private OpenType/CFF font is read
+// from the fixed per-request job file and embedded exactly once in the result.
+__attribute__((visibility("default")))
+int32_t ips2pdf_pdf_add_signatures(const char* input_path, const char* output_path,
+                                  const char* font_path, const char* password,
+                                  const IPS2PDFSignaturePlacement* placements,
+                                  uint32_t placement_count,
+                                  IPS2PDFProcessingControl* control,
+                                  IPS2PDFProcessingResult* result);
 
 __attribute__((visibility("default")))
 int32_t ips2pdf_pdf_extract_resource(const char* input_path, const char* output_path,

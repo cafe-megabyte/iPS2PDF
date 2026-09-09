@@ -22,3 +22,7 @@ BundledResources/Profiles/*
 # Local font packages are used by build scripts when present, but must not be
 # published with the source repository.
 BundledResources/PostScriptBase14/
+
+# A private signature font may override the tracked dummy at build time.
+# Never publish the real signature.
+BundledResources/Signature/SignatureFont.otf

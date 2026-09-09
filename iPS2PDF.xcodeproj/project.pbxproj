@@ -566,6 +566,7 @@
 				A60000000000000000000004 /* Sources */,
 				A60000000000000000000001 /* Frameworks */,
 				A60000000000000000000005 /* Resources */,
+				Z60000000000000000000001 /* Install Signature Font */,
 				E00000000000000000000003 /* Install Joboptions */,
 				F6000000000000000000000D /* Embed Foundation Extensions */,
 				B60000000000000000000004 /* Embed Foundation Extensions */,
@@ -667,6 +668,7 @@
 				M60000000000000000000010 /* Sources */,
 				M60000000000000000000001 /* Frameworks */,
 				M60000000000000000000011 /* Resources */,
+				Z60000000000000000000002 /* Install Signature Font */,
 				R60000000000000000000008 /* Remove Legacy Runtime Resources */,
 				R60000000000000000000004 /* Embed Frameworks */,
 				Q60000000000000000000004 /* Embed MacOS Extensions */,
@@ -1066,6 +1068,44 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		Z60000000000000000000001 /* Install Signature Font */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Scripts/install_signature_font_resource.sh",
+				"$(SRCROOT)/Scripts/validate_signature_font.py",
+				"$(SRCROOT)/BundledResources/Signature/SignatureFont-Dummy.otf",
+			);
+			name = "Install Signature Font";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/SignatureFont.otf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"$SRCROOT/Scripts/install_signature_font_resource.sh\"\n";
+		};
+		Z60000000000000000000002 /* Install Signature Font */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Scripts/install_signature_font_resource.sh",
+				"$(SRCROOT)/Scripts/validate_signature_font.py",
+				"$(SRCROOT)/BundledResources/Signature/SignatureFont-Dummy.otf",
+			);
+			name = "Install Signature Font";
+			outputPaths = (
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/SignatureFont.otf",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "\"$SRCROOT/Scripts/install_signature_font_resource.sh\"\n";
+		};
 		28037B25303F6B6B005B1F70 /* Package Ghostscript iOS */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;

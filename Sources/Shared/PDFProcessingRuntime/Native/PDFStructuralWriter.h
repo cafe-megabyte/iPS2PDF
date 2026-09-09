@@ -12,6 +12,13 @@ namespace ips2pdf {
 std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input,
                                       const std::string& password);
 
+bool canPreservePDFEncryption(QPDF& pdf);
+
+// Writes to a new private output with the same cancellation, size, symlink and
+// warning checks used by metadata removal and compression.
+std::uintmax_t writePDFDocument(QPDF& pdf, const std::filesystem::path& output,
+                               bool preserveEncryption, bool compressStreams = false);
+
 struct PDFStructuralWriteResult {
     PDFSanitizationResult sanitization;
     bool protectionRemoved = false;

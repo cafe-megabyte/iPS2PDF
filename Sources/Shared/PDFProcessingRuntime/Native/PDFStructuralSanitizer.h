@@ -31,4 +31,9 @@ struct PDFSanitizationResult {
 // identifiers remain.
 PDFSanitizationResult sanitizePDFMetadata(QPDF& pdf, const PDFMetadataRetention& retention = {});
 
+// Any full rewrite invalidates cryptographic signatures. Clear their values
+// while retaining and flattening printable appearances, without removing
+// unrelated document metadata.
+PDFSanitizationResult invalidatePDFDigitalSignatures(QPDF& pdf);
+
 } // namespace ips2pdf

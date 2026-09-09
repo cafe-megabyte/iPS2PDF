@@ -8,6 +8,7 @@ final class PDFProcessingJobDirectory: @unchecked Sendable {
     let url: URL
     var inputURL: URL { url.appendingPathComponent("input.pdf") }
     var outputURL: URL { url.appendingPathComponent("result.pdf") }
+    var signatureFontURL: URL { url.appendingPathComponent("signature-font.otf") }
     private let descriptor: Int32
 
     static func rootURL() throws -> URL {

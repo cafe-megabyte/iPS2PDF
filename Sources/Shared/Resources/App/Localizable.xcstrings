@@ -1,91 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "attachment" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Anhang" } }
-      }
-    },
-    "Choose where to save all exportable PDF resources." : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Wählen Sie, wo alle exportierbaren PDF-Ressourcen gesichert werden sollen." } }
-      }
-    },
-    "Export" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Exportieren" } }
-      }
-    },
-    "Export %@" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "%@ exportieren" } }
-      }
-    },
-    "Export %@…" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "%@ exportieren …" } }
-      }
-    },
-    "Export All Resources…" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Ressourcen exportieren …" } }
-      }
-    },
-    "Export note" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Exporthinweis" } }
-      }
-    },
-    "Exported all resources to %@." : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Ressourcen wurden nach „%@“ exportiert." } }
-      }
-    },
-    "Exporting resource %lld of %lld: %@" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressource %1$lld von %2$lld wird exportiert: %3$@" } }
-      }
-    },
-    "Exporting resource: %@" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressource wird exportiert: %@" } }
-      }
-    },
-    "Finishing resource export…" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressourcenexport wird abgeschlossen …" } }
-      }
-    },
-    "font" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Schrift" } }
-      }
-    },
-    "ICC profile" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "ICC-Profil" } }
-      }
-    },
-    "image" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Bild" } }
-      }
-    },
-    "Preparing resource export…" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Ressourcenexport wird vorbereitet …" } }
-      }
-    },
-    "The exported font contains only the subset embedded in this PDF." : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Die exportierte Schrift enthält nur die in diesem PDF eingebettete Untergruppe." } }
-      }
-    },
-    "The PDF does not permit content copying." : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Das PDF erlaubt das Kopieren von Inhalten nicht." } }
-      }
-    },
     "" : {
 
     },
@@ -108,6 +23,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%1$@ · %2$@ → %3$@"
+          }
+        }
+      }
+    },
+    "%@%@ with individual page settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@%@ mit individuellen Seiteneinstellungen"
           }
         }
       }
@@ -155,6 +80,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inkonsistente Einstellungen: %lld"
+          }
+        }
+      }
+    },
+    "%lld pt" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld pt"
+          }
+        }
+      }
+    },
+    "%lld shared resources use settings from earlier pages." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gemeinsam genutzte Ressourcen mit Einstellungen früherer Seiten: %lld"
           }
         }
       }
@@ -621,6 +566,16 @@
         }
       }
     },
+    "attachment" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anhang"
+          }
+        }
+      }
+    },
     "Attachment" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -911,6 +866,26 @@
         }
       }
     },
+    "Calculating page comparison…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seitenvergleich wird berechnet …"
+          }
+        }
+      }
+    },
+    "Calculating…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wird berechnet …"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "de" : {
@@ -984,6 +959,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF/X-3 prüfen"
+          }
+        }
+      }
+    },
+    "Choose where to save all exportable PDF resources." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie, wo alle exportierbaren PDF-Ressourcen gesichert werden sollen."
           }
         }
       }
@@ -1233,6 +1218,16 @@
         }
       }
     },
+    "Complete PDF" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gesamtes PDF"
+          }
+        }
+      }
+    },
     "Compress color images" : {
       "localizations" : {
         "de" : {
@@ -1464,6 +1459,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Kontrast"
+          }
+        }
+      }
+    },
+    "Contrast: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kontrast: %lld"
           }
         }
       }
@@ -1719,6 +1724,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Created"
+          }
+        }
+      }
+    },
+    "Creating signed PDF…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterschriebenes PDF wird erstellt …"
           }
         }
       }
@@ -2162,6 +2177,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dokumentberechtigungen"
+          }
+        }
+      }
+    },
+    "Document Standard" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dokumentstandard"
           }
         }
       }
@@ -2869,6 +2894,46 @@
         }
       }
     },
+    "Export" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exportieren"
+          }
+        }
+      }
+    },
+    "Export %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ exportieren"
+          }
+        }
+      }
+    },
+    "Export %@…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ exportieren …"
+          }
+        }
+      }
+    },
+    "Export All Resources…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Ressourcen exportieren …"
+          }
+        }
+      }
+    },
     "Export complete report" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -2892,6 +2957,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bearbeitetes PDF exportieren …"
+          }
+        }
+      }
+    },
+    "Export note" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Exporthinweis"
           }
         }
       }
@@ -2945,6 +3020,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Export…"
+          }
+        }
+      }
+    },
+    "Exported all resources to %@." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Ressourcen wurden nach „%@“ exportiert."
+          }
+        }
+      }
+    },
+    "Exporting resource %lld of %lld: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ressource %1$lld von %2$lld wird exportiert: %3$@"
+          }
+        }
+      }
+    },
+    "Exporting resource: %@" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ressource wird exportiert: %@"
           }
         }
       }
@@ -3052,6 +3157,16 @@
         }
       }
     },
+    "Finishing resource export…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ressourcenexport wird abgeschlossen …"
+          }
+        }
+      }
+    },
     "Flags" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -3101,6 +3216,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ZIP"
+          }
+        }
+      }
+    },
+    "font" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schrift"
           }
         }
       }
@@ -3451,6 +3576,16 @@
         }
       }
     },
+    "ICC profile" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ICC-Profil"
+          }
+        }
+      }
+    },
     "ICC profiles" : {
       "localizations" : {
         "de" : {
@@ -3521,6 +3656,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Illuminant XYZ"
+          }
+        }
+      }
+    },
+    "image" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bild"
           }
         }
       }
@@ -3634,6 +3779,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Inkonsistente Einstellungen"
+          }
+        }
+      }
+    },
+    "Individual" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Individuell"
+          }
+        }
+      }
+    },
+    "Individual pages: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Individuelle Seiten: %lld"
           }
         }
       }
@@ -4303,6 +4468,16 @@
         }
       }
     },
+    "No file-size difference" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kein Unterschied bei der Dateigröße"
+          }
+        }
+      }
+    },
     "No standard specified" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -4711,6 +4886,16 @@
         }
       }
     },
+    "Page %lld of %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seite %1$lld von %2$lld"
+          }
+        }
+      }
+    },
     "Page boxes" : {
       "localizations" : {
         "de" : {
@@ -4777,6 +4962,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seitenbereich"
+          }
+        }
+      }
+    },
+    "Page settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seiteneinstellungen"
           }
         }
       }
@@ -4889,6 +5084,9 @@
         }
       }
     },
+    "PDF changed" : {
+
+    },
     "PDF compatibility" : {
       "localizations" : {
         "de" : {
@@ -4970,6 +5168,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "PDF-Einstellungen: %@"
+          }
+        }
+      }
+    },
+    "PDF signature placement" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Platzierung der PDF-Unterschrift"
           }
         }
       }
@@ -5676,6 +5884,16 @@
         }
       }
     },
+    "Preparing resource export…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ressourcenexport wird vorbereitet …"
+          }
+        }
+      }
+    },
     "Preserve" : {
       "localizations" : {
         "de" : {
@@ -6157,6 +6375,16 @@
         }
       }
     },
+    "Remove signature" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterschrift entfernen"
+          }
+        }
+      }
+    },
     "Removing metadata…" : {
       "localizations" : {
         "de" : {
@@ -6214,12 +6442,32 @@
         }
       }
     },
+    "Reset All Pages" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alle Seiten zurücksetzen"
+          }
+        }
+      }
+    },
     "Reset iPS2PDF?" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "iPS2PDF zurücksetzen?"
+          }
+        }
+      }
+    },
+    "Reset Page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seite zurücksetzen"
           }
         }
       }
@@ -6551,6 +6799,16 @@
         }
       }
     },
+    "Settings for" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einstellungen für"
+          }
+        }
+      }
+    },
     "Shading paints require a dedicated monochrome conversion" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6615,6 +6873,26 @@
         }
       }
     },
+    "Sign PDF" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF unterschreiben"
+          }
+        }
+      }
+    },
+    "Sign PDF…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF unterschreiben …"
+          }
+        }
+      }
+    },
     "Signature (not validated)" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -6632,6 +6910,16 @@
         }
       }
     },
+    "Signature size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe der Unterschrift"
+          }
+        }
+      }
+    },
     "Signature value present (not validated)" : {
       "localizations" : {
         "de" : {
@@ -6644,6 +6932,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Signature value present (not validated)"
+          }
+        }
+      }
+    },
+    "Signatures: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unterschriften: %lld"
+          }
+        }
+      }
+    },
+    "Size" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Größe"
           }
         }
       }
@@ -6910,6 +7218,16 @@
         }
       }
     },
+    "Tap or click a page to insert the signature. Select it to move, resize or remove it." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tippen oder klicken Sie auf eine Seite, um die Unterschrift einzufügen. Wählen Sie sie aus, um sie zu verschieben, zu skalieren oder zu entfernen."
+          }
+        }
+      }
+    },
     "Text ICC profile" : {
       "localizations" : {
         "de" : {
@@ -7025,6 +7343,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "The encryption dictionary could not be read completely."
+          }
+        }
+      }
+    },
+    "The exported font contains only the subset embedded in this PDF." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die exportierte Schrift enthält nur die in diesem PDF eingebettete Untergruppe."
           }
         }
       }
@@ -7194,6 +7522,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Das PDF konnte nicht verarbeitet werden. Das Original ist unverändert."
+          }
+        }
+      }
+    },
+    "The PDF does not permit content copying." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das PDF erlaubt das Kopieren von Inhalten nicht."
           }
         }
       }
@@ -7606,6 +7944,16 @@
         }
       }
     },
+    "Threshold: %lld" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schwellwert: %lld"
+          }
+        }
+      }
+    },
     "Title" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -7949,6 +8297,27 @@
         }
       }
     },
+    "Visible signature" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichtbare Unterschrift"
+          }
+        }
+      }
+    },
+    "Visible signature — not a cryptographic digital signature" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichtbare Unterschrift – keine kryptografische digitale Signatur"
+          }
+        }
+      }
+    },
     "Warning" : {
       "localizations" : {
         "de" : {
@@ -7975,6 +8344,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Breite"
+          }
+        }
+      }
+    },
+    "With Document Standard on this page" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit Dokumentstandard auf dieser Seite"
+          }
+        }
+      }
+    },
+    "With individual page settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mit individuellen Seiteneinstellungen"
           }
         }
       }
@@ -8108,101 +8497,6 @@
             "value" : "XMP properties"
           }
         }
-      }
-    },
-    "%@%@ with individual page settings" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "%@%@ mit individuellen Seiteneinstellungen" } }
-      }
-    },
-    "%lld shared resources use settings from earlier pages." : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Gemeinsam genutzte Ressourcen mit Einstellungen früherer Seiten: %lld" } }
-      }
-    },
-    "Calculating page comparison…" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seitenvergleich wird berechnet …" } }
-      }
-    },
-    "Calculating…" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Wird berechnet …" } }
-      }
-    },
-    "Complete PDF" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Gesamtes PDF" } }
-      }
-    },
-    "Contrast: %lld" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Kontrast: %lld" } }
-      }
-    },
-    "Document" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dokument" } }
-      }
-    },
-    "Document Standard" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Dokumentstandard" } }
-      }
-    },
-    "Individual" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Individuell" } }
-      }
-    },
-    "Individual pages: %lld" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Individuelle Seiten: %lld" } }
-      }
-    },
-    "No file-size difference" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Kein Unterschied bei der Dateigröße" } }
-      }
-    },
-    "Page %lld of %lld" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seite %1$lld von %2$lld" } }
-      }
-    },
-    "Page settings" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seiteneinstellungen" } }
-      }
-    },
-    "Reset All Pages" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Alle Seiten zurücksetzen" } }
-      }
-    },
-    "Reset Page" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Seite zurücksetzen" } }
-      }
-    },
-    "Settings for" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Einstellungen für" } }
-      }
-    },
-    "Threshold: %lld" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Schwellwert: %lld" } }
-      }
-    },
-    "With Document Standard on this page" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mit Dokumentstandard auf dieser Seite" } }
-      }
-    },
-    "With individual page settings" : {
-      "localizations" : {
-        "de" : { "stringUnit" : { "state" : "translated", "value" : "Mit individuellen Seiteneinstellungen" } }
       }
     },
     "Y" : {

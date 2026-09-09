@@ -2,6 +2,7 @@ _ips2pdf_pdf_remove_metadata
 _ips2pdf_pdf_compress
 _ips2pdf_pdf_compress_preview
 _ips2pdf_pdf_extract_resource
+_ips2pdf_pdf_add_signatures
 _ips2pdf_pdf_control_create
 _ips2pdf_pdf_control_cancel
 _ips2pdf_pdf_control_destroy

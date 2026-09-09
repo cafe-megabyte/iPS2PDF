@@ -1,6 +1,6 @@
 # iPS2PDF
 
-iPS2PDF converts files to PDF with a statically linked Ghostscript library. Its iOS and iPadOS interface uses SwiftUI; the MacOS app uses AppKit. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Convert file…**. Every MacOS conversion gets an independent PDF document window.
+iPS2PDF converts files to PDF with a statically linked Ghostscript library. Its iOS and iPadOS interface uses SwiftUI; the MacOS app is primarily AppKit and hosts the SwiftUI PDF workflow views it shares with iOS. On iOS, a file can be selected inside the app or sent to it through **Open with iPS2PDF**; selected PostScript text can also be handed to the lightweight Share Extension. On MacOS, files can be opened from Finder, dropped onto the app icon, or selected with **File > Convert file…**. Every MacOS conversion gets an independent PDF document window.
 
 Ghostscript never runs in either main app process. iOS delegates it to the existing ExtensionKit helper; MacOS embeds a private XPC service. The MacOS Quick Look extensions execute Ghostscript directly through the same bridge because they cannot use the app's XPC service. The app and the relevant helper stage exactly one current job in their shared App Group, while a FIFO coordinator serializes requests from multiple MacOS document windows. XPC carries control metadata, not document payloads.
 
@@ -27,6 +27,20 @@ The shared encryption reader only lexes bounded trailer dictionaries; Core Graph
 Bookmarks and page labels are read directly from the independently unlocked Core Graphics document, including Unicode-password files that PDFKit cannot unlock. Resource inheritance is retained when scanning Form XObjects; direct Device color operators are also recorded. Form fields include inherited properties and qualified names. The effective PDF version is the higher valid value from header and catalog. Images inside Type-3 glyphs retain their pixel properties, but effective PPI is explicitly unknown because the full text rendering matrix is not evaluated.
 
 Validation fixtures are in `Tests/Unit/Fixtures` (see its README). iOS integration tests exercise the real Ghostscript extension, password cases, incoming-file routing, sheet presentation and RTF/plain-text equivalence. After a MacOS build, `Scripts/test_pdf_information_macos.sh <Debug-products> <scratch-directory>` tests the bundled MacOS Ghostscript framework and report sharing without provisioning; a signed app/XPC run must still be checked separately. `Scripts/test_pdf_information_layout_macos.sh <scratch-directory>` checks the production AppKit view with 35 notices, its Details button and minimum-size layout without a simulator.
+
+## PDF signatures
+
+The PDF information view offers **Sign PDF** beside compression and metadata removal. The shared SwiftUI editor uses the platform PDFKit view for paging and zooming. Clicking or tapping inserts U+201A from the signature font at 50 pt; placed signatures can be selected, moved, resized, or removed until **Apply** creates a flattened PDF revision. This is a visible signature, not a cryptographic digital signature. All placements in one result reference one embedded CFF font program.
+
+The publishable fallback font is `BundledResources/Signature/SignatureFont-Dummy.otf`. It contains only one visible character, U+201A, whose outline reads as three X marks and has approximately the same 50 pt bounds as the private signature. `Scripts/generate_dummy_signature_font.py` recreates it deterministically, and the build validates it before use.
+
+For a private build, put the real font at `BundledResources/Signature/SignatureFont.otf`, or install it with:
+
+```sh
+Scripts/install_private_signature_font.sh /path/to/SignatureFont.otf
+```
+
+That exact private path is ignored by Git. Never replace or copy private signature data into `SignatureFont-Dummy.otf`. Each iOS and MacOS build validates both the dummy contract and any private override, chooses the private font when present, otherwise chooses the dummy, and installs the selected file into the app bundle as `SignatureFont.otf`. Both fonts must be OpenType/CFF, permit embedding, map the signature to U+201A, and have no other visible mapped character.
 
 ## Building
 
