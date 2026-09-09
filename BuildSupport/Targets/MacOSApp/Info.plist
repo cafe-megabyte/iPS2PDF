@@ -6,8 +6,6 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>iPS2PDF</string>
-	<key>CFBundleIconFile</key>
-	<string>LegacyAppIcon</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
