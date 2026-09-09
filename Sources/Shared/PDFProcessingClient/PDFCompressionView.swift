@@ -10,6 +10,7 @@ struct PDFCompressionView: View {
     @State private var password = ""
     @State private var showsLicenses = false
     @State private var editingScope: EditingScope = .document
+    @State private var paperSelectionScope: EditingScope?
 
     var body: some View {
         VStack(spacing: 12) {
@@ -30,7 +31,10 @@ struct PDFCompressionView: View {
             PDFComparisonSurface(
                 original: session.input, result: session.candidate ?? session.pagePreview,
                 previewPage: session.previewPageIndex, password: session.password,
-                currentPage: $session.currentPage
+                currentPage: $session.currentPage,
+                paperSample: displayedPaperSample,
+                isChoosingPaperArea: paperSelectionScope != nil,
+                paperSampled: applyPaperSample
             )
             if let candidate = session.candidate, !candidate.warnings.isEmpty {
                 ScrollView {
@@ -59,7 +63,10 @@ struct PDFCompressionView: View {
                 GroupBox("Document Standard") {
                     CompressionOptionsEditor(
                         options: $session.options,
-                        isLevelEnabled: { session.isLevelEnabled($0, for: session.options) }
+                        isLevelEnabled: { session.isLevelEnabled($0, for: session.options) },
+                        isChoosingPaperArea: paperSelectionScope == .document,
+                        choosePaperArea: { togglePaperSelection(.document) },
+                        clearPaperArea: clearDocumentPaperArea
                     )
                 }
                 .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -75,7 +82,10 @@ struct PDFCompressionView: View {
             if editingScope == .document {
                 CompressionOptionsEditor(
                     options: $session.options,
-                    isLevelEnabled: { session.isLevelEnabled($0, for: session.options) }
+                    isLevelEnabled: { session.isLevelEnabled($0, for: session.options) },
+                    isChoosingPaperArea: paperSelectionScope == .document,
+                    choosePaperArea: { togglePaperSelection(.document) },
+                    clearPaperArea: clearDocumentPaperArea
                 )
             } else {
                 pageSettings
@@ -116,7 +126,10 @@ struct PDFCompressionView: View {
                         get: { session.currentPageOptions },
                         set: { session.updateCurrentPageOptionsFromView($0) }
                     ),
-                    isLevelEnabled: { session.isLevelEnabled($0, for: session.currentPageOptions) }
+                    isLevelEnabled: { session.isLevelEnabled($0, for: session.currentPageOptions) },
+                    isChoosingPaperArea: paperSelectionScope == .page,
+                    choosePaperArea: { togglePaperSelection(.page) },
+                    clearPaperArea: clearCurrentPagePaperArea
                 )
                 pageSizeComparison
             } else {
@@ -235,79 +248,54 @@ struct PDFCompressionView: View {
         let adjustment = value.colorMode == .blackAndWhite
             ? String.localizedStringWithFormat(String(localized: "Threshold: %lld"), value.threshold)
             : String.localizedStringWithFormat(String(localized: "Contrast: %lld"), value.contrast)
-        return [value.level.title, value.colorMode.title, adjustment].joined(separator: " · ")
+        let cleanup = String.localizedStringWithFormat(
+            String(localized: "Paper cleanup: %lld"), value.paperCleanup
+        )
+        var parts = [value.level.title, value.colorMode.title, adjustment, cleanup]
+        if value.paperSample != nil { parts.append(String(localized: "Paper area selected")) }
+        return parts.joined(separator: " · ")
+    }
+
+    private var displayedPaperSample: PDFPaperSample? {
+        switch paperSelectionScope ?? editingScope {
+        case .document: session.options.paperSample
+        case .page: session.currentPageUsesIndividualSettings ? session.currentPageOptions.paperSample : nil
+        }
+    }
+
+    private func togglePaperSelection(_ scope: EditingScope) {
+        editingScope = scope
+        paperSelectionScope = paperSelectionScope == scope ? nil : scope
+    }
+
+    private func applyPaperSample(_ sample: PDFPaperSample) {
+        guard let scope = paperSelectionScope else { return }
+        paperSelectionScope = nil
+        switch scope {
+        case .document:
+            session.options.paperSample = sample
+        case .page:
+            var settings = session.currentPageOptions
+            settings.paperSample = sample
+            session.updateCurrentPageOptions(settings)
+        }
+    }
+
+    private func clearCurrentPagePaperArea() {
+        if paperSelectionScope == .page { paperSelectionScope = nil }
+        var settings = session.currentPageOptions
+        settings.paperSample = nil
+        session.updateCurrentPageOptions(settings)
+    }
+
+    private func clearDocumentPaperArea() {
+        if paperSelectionScope == .document { paperSelectionScope = nil }
+        session.options.paperSample = nil
     }
 
     private func unlock() {
         let value = password
         password = ""
         session.unlock(value)
-    }
-}
-
-private struct CompressionOptionsEditor: View {
-    @Binding var options: PDFCompressionOptions
-    let isLevelEnabled: (PDFCompressionOptions.Level) -> Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ViewThatFits(in: .horizontal) {
-                HStack { levelPicker; colorPicker }
-                VStack { levelPicker; colorPicker }
-            }
-            if options.colorMode == .blackAndWhite {
-                HStack {
-                    Text("Threshold")
-                    Slider(
-                        value: Binding(
-                            get: { Double(options.threshold) },
-                            set: { options.threshold = Int($0.rounded()) }
-                        ),
-                        in: 0...100, step: 1
-                    )
-                    .accessibilityLabel("Black and white threshold")
-                    Text(options.threshold.formatted())
-                        .monospacedDigit()
-                        .frame(width: 32, alignment: .trailing)
-                }
-            } else {
-                HStack {
-                    Text("Contrast")
-                    Slider(
-                        value: Binding(
-                            get: { Double(options.contrast) },
-                            set: { options.contrast = Int($0.rounded()) }
-                        ),
-                        in: -50...50, step: 1
-                    )
-                    .accessibilityLabel("Color image contrast")
-                    Text(options.contrast > 0 ? "+\(options.contrast.formatted())" : options.contrast.formatted())
-                        .monospacedDigit()
-                        .frame(width: 32, alignment: .trailing)
-                }
-            }
-        }
-    }
-
-    private var levelPicker: some View {
-        Picker("Compression", selection: $options.level) {
-            ForEach(PDFCompressionOptions.Level.allCases, id: \.self) { level in
-                Text(level.title).tag(level).disabled(!isLevelEnabled(level))
-            }
-        }
-        .pickerStyle(.segmented)
-        .frame(minWidth: 230)
-        .disabled(options.colorMode == .blackAndWhite &&
-                  PDFCompressionOptions.Level.allCases.filter(isLevelEnabled).count == 1)
-    }
-
-    private var colorPicker: some View {
-        Picker("Color", selection: $options.colorMode) {
-            ForEach(PDFCompressionOptions.ColorMode.allCases, id: \.self) {
-                Text($0.title).tag($0)
-            }
-        }
-        .pickerStyle(.segmented)
-        .frame(minWidth: 130)
     }
 }

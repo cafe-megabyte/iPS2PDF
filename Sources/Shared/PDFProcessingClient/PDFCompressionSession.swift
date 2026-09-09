@@ -91,7 +91,11 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
     var sizeDifference: String? {
         guard let candidate, input.byteCount > 0 else { return nil }
         let difference = 100 * (Double(candidate.byteCount) / Double(input.byteCount) - 1)
-        return String.localizedStringWithFormat(String(localized: "%+.1f%% compared with the original"), difference)
+        let percentageFormat = FloatingPointFormatStyle<Double>.Percent()
+            .scale(1)
+            .precision(.fractionLength(1))
+            .sign(strategy: .always(includingZero: true))
+        return String(localized: "\(difference, format: percentageFormat) compared with the original")
     }
     var currentPageSizeImpact: String? {
         guard let candidate, let standardComparisonBytes else { return nil }
@@ -136,8 +140,7 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
             case .blackAndWhite:
                 value.threshold = 75
             case .color:
-                // Contrast uses -50...50 internally. +25 places the slider at
-                // 75 percent while retaining adjustment in both directions.
+                // Each color override starts at the shared color default.
                 value.contrast = 25
             }
         }

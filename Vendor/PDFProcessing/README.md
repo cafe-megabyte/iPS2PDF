@@ -31,6 +31,14 @@ processing separate from the original document and from Ghostscript jobs. The
 native runtime is a private macOS framework and a static iOS helper dependency.
 Quick Look and thumbnail targets do not acquire this dependency.
 
+Embedded font export preserves an existing PFB, TrueType or OpenType container.
+A readable bare CFF 1 program is placed unchanged in a newly built `.otf`
+container with metrics, names and every Unicode mapping that FreeType can
+derive from its glyph names. CID and custom glyphs without a Unicode value stay
+in the CFF glyph program. Both FreeType and Apple font services must reopen the
+result before it is written. A malformed CFF that cannot be represented safely
+keeps its honest `.cff` export instead of receiving an OpenType extension.
+
 The linker first combines the native archives into a relocatable object, then
 localizes implementation symbols with Apple's `nmedit`. Only the C interface
 remains public. This prevents Ghostscript's copies of JPEG, Little CMS, FreeType
@@ -69,29 +77,44 @@ signature appearances are reused as vector content where possible.
 
 ## Compression policy and preview
 
-`PDFCompressionPolicy.cpp` is the central policy table with English comments.
-The UI exposes only Gentle / Balanced / Strong and Color / Black & White.
-Fresh sessions default to Balanced, Color, contrast 25 and threshold 75. There is
-no JPEG 2000 output, new Brotli,
-lossy JBIG2, dithering, font subsetting or image upscaling.
+`PDFCompressionPolicy.h` is the central policy table with English comments.
+The UI exposes Gentle / Balanced / Strong, Color / Black & White, contrast or
+threshold, and Paper cleanup. Fresh sessions default to Balanced, Color,
+contrast 25, threshold 75 and paper cleanup 50. There is no JPEG 2000 output,
+new Brotli, lossy JBIG2, dithering, font subsetting or image upscaling.
 
 | Target | Gentle | Balanced | Strong |
 | --- | ---: | ---: | ---: |
-| Photograph PPI | 300 | 225 | 150 |
-| Document/scan PPI | 450 | 300 | 300 |
+| Color scan PPI | 225 | 140 | 110 |
 | Monochrome PPI | 600 | 450 | 300 |
-| JPEG quality at ≥300 final PPI | 88 | 80 | 72 |
-| JPEG quality at 225 final PPI | 90 | 86 | 84 |
-| JPEG quality at ≤150 final PPI | 94 | 92 | 90 |
+| JPEG quality | 20 | 40 | 60 |
 
-Quality adapts to the minimum effective final resolution across both axes and
-all placements, including nested forms and repeated images. Downsampling starts
-only above 1.25 times the target. Scan classification is conservative; document
-JPEG quality is at least 85 at 300 PPI and 94 below it. Chroma subsampling is
-restricted to photographs. Color output chooses the smaller of JPEG and RGB
-Flate. Monochrome images use genuine one-bit CCITT Group 4; technical masks keep
-the depth necessary for transparency. Text/strokes become black, pure white
-knockouts stay white, and vector fills follow the threshold.
+The policy assumes scans/documents. Higher color resolution deliberately uses
+stronger JPEG quantization, while lower resolution keeps more sample quality so
+both losses are not maximized at once. Resolution follows the minimum effective
+placement PPI across both axes and all uses, including nested forms and repeated
+images. Color output chooses the smaller of JPEG and RGB Flate. Monochrome
+images use genuine one-bit CCITT Group 4; technical masks keep the depth needed
+for transparency. Text/strokes become black, pure white knockouts stay white,
+and vector fills follow the threshold.
+
+Paper cleanup zero uses the ordinary single-image path and performs no extra
+analysis. Higher values build a Leptonica illumination model from a thumbnail
+whose longest side is at most 512 pixels. Dark and chromatic foreground is
+excluded from that paper model. A local threshold field distinguishes print
+from broad shadows and folds by local contrast. At the default 50, correction
+and one-bit foreground separation use their balanced strengths; larger values
+classify more nearly neutral content for the monochrome layer. The user can optionally select a
+52-point screen area in the original preview. The fixed screen size means that
+zooming into a page gives a more precise paper sample. Up to three dominant
+light paper colors are learned from that area, while dark ink is rejected; the
+sample can apply to the whole document or one page and can be reset to Automatic.
+Suitable color scans become a form containing a sparse color image at the
+selected preset resolution and a neutral foreground selector at up to 300 ppi,
+stored as one-bit CCITT Group 4. The original page content streams are retained,
+so visible and invisible/OCR text remains PDF text. Full image samples are
+decoded, normalized, resampled and encoded through bounded row buffers and
+file-backed intermediates on both macOS and iOS.
 
 Each option change invalidates the old size and candidate immediately. A short
 coalescing delay prepares the visible page using the whole document's image

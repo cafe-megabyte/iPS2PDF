@@ -138,6 +138,101 @@ void runCompressionSmoke(const fs::path& fixtures, const fs::path& output) {
     std::cout << "PASS compression: color levels use 225, 140 and 110 ppi and store scans as JPEG\n";
     {
         QPDF pdf; pdf.emptyPDF();
+        constexpr int width = 600, height = 600;
+        std::string samples(size_t(width) * height * 3, '\0');
+        for (int y = 0; y < height; ++y) for (int x = 0; x < width; ++x) {
+            const bool shadow = y >= 285 && y < 420;
+            const bool greenPattern = (x / 7 + y / 7) % 2 == 0;
+            auto* pixel = reinterpret_cast<unsigned char*>(samples.data()) +
+                          (size_t(y) * width + x) * 3;
+            pixel[0] = static_cast<unsigned char>((greenPattern ? 205 : 240) - (shadow ? 45 : 0));
+            pixel[1] = static_cast<unsigned char>((greenPattern ? 232 : 220) - (shadow ? 45 : 0));
+            pixel[2] = static_cast<unsigned char>((greenPattern ? 218 : 242) - (shadow ? 45 : 0));
+            if ((y / 18) % 5 == 1 && x > 45 && x < 390)
+                pixel[0] = pixel[1] = pixel[2] = 25;
+            if (x >= 420 && x < 540 && y >= 120 && y < 260) {
+                pixel[0] = 210; pixel[1] = 30; pixel[2] = 40;
+            }
+        }
+        auto image = pdf.newStream(samples);
+        image.replaceDict(Object::parse(
+            "<< /Type /XObject /Subtype /Image /Width 600 /Height 600 "
+            "/BitsPerComponent 8 /ColorSpace /DeviceRGB >>"));
+        auto testPage = pdf.makeIndirectObject(Object::parse(
+            "<< /Type /Page /MediaBox [0 0 144 144] "
+            "/Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> >>"));
+        testPage.getKey("/Resources").replaceKey(
+            "/XObject", Object::newDictionary({{"/Image", image}}));
+        testPage.replaceKey("/Contents", pdf.newStream(
+            "q 144 0 0 144 0 0 cm /Image Do Q\n"
+            "BT /F1 10 Tf 3 Tr 10 10 Td (Invisible OCR text) Tj ET\n"));
+        QPDFPageDocumentHelper(pdf).addPage(QPDFPageObjectHelper(testPage), false);
+        const auto source = output / "Compression-Paper-Cleanup-Source.pdf";
+        const auto target = output / "Compression-Paper-Cleanup-Result.pdf";
+        save(pdf, source); fs::remove(target);
+        ips2pdf::PDFCompressionPolicy cleanupPolicy;
+        cleanupPolicy.paperCleanup = 100;
+        cleanupPolicy.paperColors[0] = {240, 220, 242};
+        cleanupPolicy.paperColors[1] = {205, 232, 218};
+        cleanupPolicy.paperColorCount = 2;
+        ips2pdf::compressPDF(source, target, "", cleanupPolicy);
+
+        QPDF reopened; reopened.processFile(target.c_str());
+        auto outputPage = QPDFPageDocumentHelper(reopened).getAllPages()[0].getObjectHandle();
+        auto replacement = outputPage.getKey("/Resources").getKey("/XObject").getKey("/Image");
+        require(replacement.getDict().getKey("/Subtype").isNameAndEquals("/Form"),
+                "Paper cleanup did not separate the scan into PDF layers");
+        auto layers = replacement.getDict().getKey("/Resources").getKey("/XObject");
+        auto black = layers.getKey("/Black"), color = layers.getKey("/Color");
+        require(black.isStream() && black.getDict().getKey("/BitsPerComponent").getIntValue() == 1 &&
+                black.getDict().getKey("/Filter").isNameAndEquals("/CCITTFaxDecode") &&
+                black.getDict().getKey("/Mask").unparse() == "[ 1 1 ]",
+                "Paper cleanup foreground is not transparent-white one-bit CCITT Group 4");
+        require(color.isStream() &&
+                (color.getDict().getKey("/Filter").isNameAndEquals("/DCTDecode") ||
+                 color.getDict().getKey("/Filter").isNameAndEquals("/FlateDecode")),
+                "Paper cleanup did not retain a compressed color layer");
+        const auto decodedColor = ips2pdf::decodePDFImage(
+            color, color.getDict().getKey("/ColorSpace"));
+        const int colorX = 480 * decodedColor.width / width;
+        const int colorY = 180 * decodedColor.height / height;
+        const auto* colorPixel = decodedColor.pixels.data() +
+            (size_t(colorY) * decodedColor.width + colorX) * 4;
+        require(colorPixel[2] > 150 && colorPixel[1] < 150 && colorPixel[0] < 150,
+                "Paper normalization erased a colored document mark");
+        const auto decodedBlack = ips2pdf::decodePDFImage(
+            black, black.getDict().getKey("/ColorSpace"));
+        const int paperX = 300 * decodedBlack.width / width;
+        const int paperY = 350 * decodedBlack.height / height;
+        const auto* blackPaperPixel = decodedBlack.pixels.data() +
+            (size_t(paperY) * decodedBlack.width + paperX) * 4;
+        require(blackPaperPixel[0] > 240 && blackPaperPixel[1] > 240 &&
+                blackPaperPixel[2] > 240,
+                "A sampled patterned paper shadow became one-bit foreground");
+        const int colorPaperX = 300 * decodedColor.width / width;
+        const int colorPaperY = 350 * decodedColor.height / height;
+        const auto* colorPaperPixel = decodedColor.pixels.data() +
+            (size_t(colorPaperY) * decodedColor.width + colorPaperX) * 4;
+        require(colorPaperPixel[0] > 220 && colorPaperPixel[1] > 220 &&
+                colorPaperPixel[2] > 220,
+                "A sampled green-white paper pattern remained in the color layer");
+        const auto content = ips2pdf::readPDFContent(reopened, outputPage);
+        bool invisible = false, text = false;
+        for (const auto& operation : content.operations) {
+            if (operation.name == "Tr" && operation.operands.size() == 1 &&
+                operation.operands[0].isInteger() && operation.operands[0].getIntValue() == 3)
+                invisible = true;
+            if (operation.name == "Tj" && operation.operands.size() == 1 &&
+                operation.operands[0].isString() &&
+                operation.operands[0].getStringValue() == "Invisible OCR text")
+                text = true;
+        }
+        require(invisible && text,
+                "Paper cleanup removed or rasterized the invisible PDF text layer");
+    }
+    std::cout << "PASS compression: RGB paper cleanup, sampled patterned paper, sparse color, true CCITT foreground and retained invisible text\n";
+    {
+        QPDF pdf; pdf.emptyPDF();
         const auto makeImage = [&](int width, unsigned seed) {
             std::string samples;
             samples.reserve(size_t(width) * width * 3);
@@ -180,8 +275,9 @@ void runCompressionSmoke(const fs::path& fixtures, const fs::path& output) {
         auto preview = output / "Compression-Page-Policies-Preview.pdf";
         save(pdf, source); fs::remove(full); fs::remove(preview);
         ips2pdf::PDFCompressionPlan plan;
-        plan.document = {ips2pdf::PDFCompressionLevel::strong, false, 75, 0};
-        plan.pages.emplace(1, ips2pdf::PDFCompressionPolicy{ips2pdf::PDFCompressionLevel::strong, true, 75, 0});
+        plan.document = {ips2pdf::PDFCompressionLevel::strong, false, 75, 0, 0};
+        plan.pages.emplace(1, ips2pdf::PDFCompressionPolicy{
+            ips2pdf::PDFCompressionLevel::strong, true, 75, 0, 0});
         const auto fullResult = ips2pdf::compressPDF(source, full, "", plan);
         const auto previewResult = ips2pdf::compressPDF(source, preview, "", plan, 1);
         require(fullResult.compression.sharedResourcesFromEarlierPages == 0 &&

@@ -17,6 +17,27 @@
 
 namespace {
 std::mutex processingMutex;
+bool copyPaperColors(ips2pdf::PDFCompressionPolicy& policy,
+                     const IPS2PDFPaperColor* colors, uint32_t count) {
+    if (count > policy.paperColors.size() || (count > 0 && !colors)) return false;
+    policy.paperColorCount = count;
+    for (uint32_t index = 0; index < count; ++index) {
+        policy.paperColors[index] = {colors[index].red, colors[index].green,
+                                     colors[index].blue};
+        if (!policy.paperColors[index].isValid()) return false;
+    }
+    return true;
+}
+
+bool copyPaperColors(ips2pdf::PDFCompressionPolicy& policy,
+                     const IPS2PDFPageCompressionOverride& item) {
+    const IPS2PDFPaperColor colors[] = {
+        item.paper_color_0, item.paper_color_1, item.paper_color_2
+    };
+    return item.paper_color_count >= 0 &&
+           copyPaperColors(policy, colors, static_cast<uint32_t>(item.paper_color_count));
+}
+
 int32_t process(const char* input, const char* output, const char* password,
                 int32_t preserve, const ips2pdf::PDFCompressionPlan* compression,
                 IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result, int previewPage = -1) {
@@ -65,35 +86,54 @@ int32_t ips2pdf_pdf_remove_metadata(const char* input, const char* output, const
 }
 int32_t ips2pdf_pdf_compress(const char* input, const char* output, const char* password,
                             int32_t level, int32_t monochrome, int32_t threshold, int32_t contrast,
+                            int32_t paperCleanup, const IPS2PDFPaperColor* paperColors,
+                            uint32_t paperColorCount,
                             const IPS2PDFPageCompressionOverride* pageOverrides, uint32_t pageOverrideCount,
                             IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result) {
     return ips2pdf_pdf_compress_preview(input, output, password, level, monochrome, threshold, contrast,
+                                        paperCleanup, paperColors, paperColorCount,
                                         pageOverrides, pageOverrideCount, -1, control, result);
 }
 int32_t ips2pdf_pdf_compress_preview(const char* input, const char* output, const char* password,
                                     int32_t level, int32_t monochrome, int32_t threshold, int32_t contrast,
+                                    int32_t paperCleanup, const IPS2PDFPaperColor* paperColors,
+                                    uint32_t paperColorCount,
                                     const IPS2PDFPageCompressionOverride* pageOverrides, uint32_t pageOverrideCount,
                                     int32_t pageIndex,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result) {
     if (level < 0 || level > 2 || monochrome < 0 || monochrome > 1 || threshold < 0 || threshold > 100 ||
-        contrast < -50 || contrast > 50 || pageIndex < -1 || pageOverrideCount > 100000 ||
+        contrast < 0 || contrast > 100 || paperCleanup < 0 || paperCleanup > 100 ||
+        pageIndex < -1 || paperColorCount > 3 || pageOverrideCount > 100000 ||
+        (paperColorCount > 0 && !paperColors) ||
         (pageOverrideCount > 0 && !pageOverrides)) {
         if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
         return IPS2PDF_PROCESSING_INVALID_REQUEST;
     }
-    ips2pdf::PDFCompressionPlan plan{{static_cast<ips2pdf::PDFCompressionLevel>(level), monochrome != 0, threshold, contrast}, {}};
+    ips2pdf::PDFCompressionPlan plan{{static_cast<ips2pdf::PDFCompressionLevel>(level), monochrome != 0,
+                                      threshold, contrast, paperCleanup}, {}};
+    if (!copyPaperColors(plan.document, paperColors, paperColorCount)) {
+        if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
+        return IPS2PDF_PROCESSING_INVALID_REQUEST;
+    }
     int32_t previousPage = -1;
     for (uint32_t index = 0; index < pageOverrideCount; ++index) {
         const auto& item = pageOverrides[index];
         if (item.page_index <= previousPage || item.level < 0 || item.level > 2 || item.monochrome < 0 || item.monochrome > 1 ||
-            item.threshold < 0 || item.threshold > 100 || item.contrast < -50 || item.contrast > 50) {
+            item.threshold < 0 || item.threshold > 100 || item.contrast < 0 || item.contrast > 100 ||
+            item.paper_cleanup < 0 || item.paper_cleanup > 100 || item.paper_color_count < 0 ||
+            item.paper_color_count > 3) {
             if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
             return IPS2PDF_PROCESSING_INVALID_REQUEST;
         }
         previousPage = item.page_index;
-        plan.pages.emplace(item.page_index, ips2pdf::PDFCompressionPolicy{
+        auto policy = ips2pdf::PDFCompressionPolicy{
             static_cast<ips2pdf::PDFCompressionLevel>(item.level), item.monochrome != 0,
-            item.threshold, item.contrast});
+            item.threshold, item.contrast, item.paper_cleanup};
+        if (!copyPaperColors(policy, item)) {
+            if (result) { *result = {}; result->version = 1; result->status = IPS2PDF_PROCESSING_INVALID_REQUEST; }
+            return IPS2PDF_PROCESSING_INVALID_REQUEST;
+        }
+        plan.pages.emplace(item.page_index, policy);
     }
     return process(input, output, password, 0, &plan, control, result, pageIndex);
 }

@@ -37,11 +37,22 @@ typedef struct {
 } IPS2PDFProcessingResult;
 
 typedef struct {
+    int32_t red;
+    int32_t green;
+    int32_t blue;
+} IPS2PDFPaperColor;
+
+typedef struct {
     int32_t page_index;
     int32_t level;
     int32_t monochrome;
     int32_t threshold;
     int32_t contrast;
+    int32_t paper_cleanup;
+    int32_t paper_color_count;
+    IPS2PDFPaperColor paper_color_0;
+    IPS2PDFPaperColor paper_color_1;
+    IPS2PDFPaperColor paper_color_2;
 } IPS2PDFPageCompressionOverride;
 
 typedef struct {
@@ -74,12 +85,17 @@ int32_t ips2pdf_pdf_remove_metadata(const char* input_path, const char* output_p
                                    IPS2PDFProcessingResult* result);
 
 // level: 0 gentle, 1 balanced, 2 strong. monochrome: 0 color, 1 black/white.
-// threshold: 0...100. contrast: -50...50 and used only for color images.
-// The same policy produces preview and accepted output.
+// threshold, contrast and paper_cleanup: 0...100. Contrast is used only for
+// color images. A paper_cleanup value of zero keeps the legacy image path.
+// Paper colors are optional RGB modes learned from one user-selected screen
+// area; one policy accepts at most three. The same policy produces preview and
+// accepted output.
 __attribute__((visibility("default")))
 int32_t ips2pdf_pdf_compress(const char* input_path, const char* output_path,
                             const char* password, int32_t level, int32_t monochrome,
-                            int32_t threshold, int32_t contrast,
+                            int32_t threshold, int32_t contrast, int32_t paper_cleanup,
+                            const IPS2PDFPaperColor* paper_colors,
+                            uint32_t paper_color_count,
                             const IPS2PDFPageCompressionOverride* page_overrides,
                             uint32_t page_override_count, IPS2PDFProcessingControl* control,
                             IPS2PDFProcessingResult* result);
@@ -87,7 +103,9 @@ int32_t ips2pdf_pdf_compress(const char* input_path, const char* output_path,
 __attribute__((visibility("default")))
 int32_t ips2pdf_pdf_compress_preview(const char* input_path, const char* output_path,
                                     const char* password, int32_t level, int32_t monochrome,
-                                    int32_t threshold, int32_t contrast,
+                                    int32_t threshold, int32_t contrast, int32_t paper_cleanup,
+                                    const IPS2PDFPaperColor* paper_colors,
+                                    uint32_t paper_color_count,
                                     const IPS2PDFPageCompressionOverride* page_overrides,
                                     uint32_t page_override_count, int32_t page_index,
                                     IPS2PDFProcessingControl* control, IPS2PDFProcessingResult* result);

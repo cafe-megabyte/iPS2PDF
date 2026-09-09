@@ -3,6 +3,7 @@
 #include "PDFStructuralWriter.h"
 #include "PDFConformityMetadata.h"
 #include "PDFCompressionPolicy.h"
+#include "PDFOpenTypeFont.h"
 
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <qpdf/QPDFWriter.hh>
@@ -90,6 +91,49 @@ std::string signatureCFF(const std::string& subsetPrefix) {
     append16(charset, 1);   // space
     append16(charset, 117); // quotesinglbase, selected by MacRoman code E2
     return header + names + dictionaries + strings + subroutines + charset + charStrings;
+}
+
+uint16_t read16(const std::vector<uint8_t>& bytes, size_t offset) {
+    require(offset + 2 <= bytes.size(), "Generated OpenType integer is out of bounds");
+    return static_cast<uint16_t>((bytes[offset] << 8) | bytes[offset + 1]);
+}
+
+uint32_t read32(const std::vector<uint8_t>& bytes, size_t offset) {
+    require(offset + 4 <= bytes.size(), "Generated OpenType integer is out of bounds");
+    uint32_t result = 0;
+    for (size_t index = 0; index < 4; ++index) result = (result << 8) | bytes[offset + index];
+    return result;
+}
+
+void openTypeCFFContainer() {
+    const std::string source = signatureCFF("ABCDEF");
+    const auto output = ips2pdf::openTypeContainerForCFF(std::span<const uint8_t>(
+        reinterpret_cast<const uint8_t*>(source.data()), source.size()));
+    require(output.size() > source.size() && std::equal(output.begin(), output.begin() + 4, "OTTO"),
+            "Bare CFF was not wrapped in an OpenType sfnt");
+    const uint16_t tableCount = read16(output, 4);
+    bool foundCFF = false;
+    for (uint16_t index = 0; index < tableCount; ++index) {
+        const size_t record = 12 + index * 16;
+        require(record + 16 <= output.size(), "Generated OpenType table record is truncated");
+        if (!std::equal(output.begin() + record, output.begin() + record + 4, "CFF ")) continue;
+        const uint32_t offset = read32(output, record + 8);
+        const uint32_t length = read32(output, record + 12);
+        require(offset <= output.size() && length <= output.size() - offset && length == source.size() &&
+                    std::equal(output.begin() + offset, output.begin() + offset + length,
+                               reinterpret_cast<const uint8_t*>(source.data())),
+                "OpenType wrapping changed the embedded CFF program");
+        foundCFF = true;
+    }
+    require(foundCFF, "Generated OpenType font has no CFF table");
+    uint32_t sum = 0;
+    for (size_t offset = 0; offset < output.size(); offset += 4) sum += read32(output, offset);
+    require(sum == 0xb1b0afba, "Generated OpenType checksum is invalid");
+    bool rejected = false;
+    try { ips2pdf::openTypeContainerForCFF(std::array<uint8_t, 4>{1, 0, 4, 0}); }
+    catch (const std::exception&) { rejected = true; }
+    require(rejected, "Malformed bare CFF was labeled as OpenType");
+    std::cout << "PASS font export: valid OpenType/CFF container, exact glyph program and malformed fallback\n";
 }
 
 std::string deflated(std::string_view bytes) {
@@ -264,6 +308,7 @@ void synthetic(const fs::path& fixtures, const fs::path& output) {
 } // namespace
 
 void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
+    openTypeCFFContainer();
     signatureFontAnonymization();
     {
         QPDF pdf; pdf.emptyPDF();
@@ -336,19 +381,31 @@ void runStructuralSmoke(const fs::path& fixtures, const fs::path& output) {
     {
         ips2pdf::PDFCompressionPolicy policy;
         require(policy.level == ips2pdf::PDFCompressionLevel::balanced && !policy.monochrome &&
-                    policy.threshold == 75 && policy.contrast == 25,
-                "Compression defaults are not Color, Balanced, threshold 75 and contrast 25");
+                    policy.threshold == 75 && policy.contrast == 25 && policy.paperCleanup == 50,
+                "Compression defaults are not Color, Balanced, threshold 75, contrast 25 and paper cleanup 50");
         policy.level = ips2pdf::PDFCompressionLevel::strong;
         require(policy.maximumPPI() == 110 && policy.jpegQuality() == 60,
                 "Strong color compression does not protect its smaller bitmap");
         require(policy.resizeScale(72) == 1 && std::abs(policy.resizeScale(225) - 110.0 / 225.0) < 0.001,
                 "Color compression did not apply its strict scan resolution cap");
         policy.level = ips2pdf::PDFCompressionLevel::gentle;
-        require(policy.maximumPPI() == 225 && policy.jpegQuality() == 10,
+        require(policy.maximumPPI() == 225 && policy.jpegQuality() == 20,
                 "Gentle color compression did not retain the high-resolution policy");
         policy.level = ips2pdf::PDFCompressionLevel::balanced;
-        require(policy.maximumPPI() == 140 && policy.jpegQuality() == 35,
+        require(policy.maximumPPI() == 140 && policy.jpegQuality() == 40,
                 "Balanced color compression lost its selected policy");
+        policy.contrast = 100;
+        policy.validate();
+        policy.contrast = -1;
+        bool invalidContrast = false;
+        try { policy.validate(); } catch (const std::exception&) { invalidContrast = true; }
+        require(invalidContrast, "Compression accepted a contrast below the UI range");
+        policy.contrast = 25;
+        policy.paperCleanup = -1;
+        bool invalidCleanup = false;
+        try { policy.validate(); } catch (const std::exception&) { invalidCleanup = true; }
+        require(invalidCleanup, "Compression accepted paper cleanup below the UI range");
+        policy.paperCleanup = 50;
         policy.monochrome = true;
         policy.level = ips2pdf::PDFCompressionLevel::strong;
         require(policy.maximumPPI() == 300 && policy.resizeScale(360) == 1,

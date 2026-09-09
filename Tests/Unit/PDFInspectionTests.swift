@@ -2,6 +2,13 @@ import Foundation
 import XCTest
 
 final class PDFInspectionTests: XCTestCase {
+    private final class InspectionFileManager: FileManager, @unchecked Sendable {
+        private let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PDFInspectionTests-\(UUID().uuidString)", isDirectory: true)
+        override var temporaryDirectory: URL { root }
+        deinit { try? FileManager.default.removeItem(at: root) }
+    }
+
     private func fixture(_ name: String) throws -> URL {
         let bundle = Bundle(for: Self.self)
         return try XCTUnwrap(bundle.url(forResource: name, withExtension: "pdf") ?? bundle.url(forResource: name, withExtension: "pdf", subdirectory: "Fixtures"))
@@ -119,6 +126,24 @@ final class PDFInspectionTests: XCTestCase {
         input = nil
         XCTAssertFalse(FileManager.default.fileExists(atPath: snapshot.path))
     }
+    func testSnapshotRemovesEmptyRootAndStartupCleanupRemovesCrashArtifacts() throws {
+        let fileManager = InspectionFileManager()
+        var input: PDFInspectionInput? = try PDFInspectionInput(
+            sourceURL: fixture("InfoPlain"),
+            fileManager: fileManager
+        )
+        XCTAssertNotNil(input)
+        let root = fileManager.temporaryDirectory.appendingPathComponent("PDFInspection", isDirectory: true)
+        XCTAssertTrue(fileManager.fileExists(atPath: root.path))
+        input = nil
+        XCTAssertFalse(fileManager.fileExists(atPath: root.path))
+
+        let abandoned = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
+        try fileManager.createDirectory(at: abandoned, withIntermediateDirectories: true)
+        try Data("abandoned".utf8).write(to: abandoned.appendingPathComponent("Document.pdf"))
+        try PDFInspectionInput.clearStaleDirectories(fileManager: fileManager)
+        XCTAssertFalse(fileManager.fileExists(atPath: root.path))
+    }
     func testEmbeddedSubsetAndFullFontAreDistinguishedWithoutWarnings() throws {
         for (fixture, status) in [("InfoEmbeddedSubset", "Embedded subset"), ("InfoEmbeddedFull", "Fully embedded (PDF declaration)")] {
             let report = try inspect(fixture)
@@ -129,7 +154,22 @@ final class PDFInspectionTests: XCTestCase {
             XCTAssertEqual(resource.kind, .font)
             XCTAssertEqual(resource.suggestedFilename.localizedCaseInsensitiveContains("subset"), fixture == "InfoEmbeddedSubset")
             XCTAssertEqual(resource.isFontSubset, fixture == "InfoEmbeddedSubset")
+            if fixture == "InfoEmbeddedSubset" {
+                XCTAssertEqual(resource.format, .openType)
+                XCTAssertTrue(resource.suggestedFilename.hasSuffix(".otf"))
+            }
         }
+    }
+    func testBareCFFPrefersOpenTypeOnlyWhenItCanBeWrapped() throws {
+        let cff = try XCTUnwrap(Data(base64Encoded: "AQAEAgABAgABABpBQkNERUYrQXBwbGVHYXJhbW9uZC1Cb29rAAECAAEAHx0AAAGHAB0AAAGIAh0AAAGJAx0AAAB+Dx0AAACDEQADAgABAAgAGwApMi4wLTEuMEFwcGxlIEdhcmFtb25kIEJvb2tBcHBsZSBHYXJhbW9uZAAAAAABAHUAAwIAAQACAAMARg4Oi4sVjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFjIwFDg=="))
+        XCTAssertTrue(PDFResourceDescriptorFactory.canWrapCFFAsOpenType(cff))
+        XCTAssertEqual(PDFResourceDescriptorFactory.fontProgramFormat(cff, key: "FontFile3", subtype: "Type1C"), .openType)
+        XCTAssertEqual(PDFResourceDescriptorFactory.filename(base: "ABCDEF+Example", format: .openType,
+                                                              fallback: "Font", subset: true),
+                       "ABCDEF+Example-subset.otf")
+        let malformed = Data([1, 0, 4, 0])
+        XCTAssertFalse(PDFResourceDescriptorFactory.canWrapCFFAsOpenType(malformed))
+        XCTAssertEqual(PDFResourceDescriptorFactory.fontProgramFormat(malformed, key: "FontFile3", subtype: "Type1C"), .cff)
     }
     func testType0ResolvesDescendantFontEmbedding() throws {
         let report = try inspect("InfoType0")

@@ -314,6 +314,9 @@
 		U20000000000000000000020 /* MacOSPDFProcessingRuntime */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOSPDFProcessingRuntime; sourceTree = "<group>"; };
 		U20000000000000000000021 /* RequestHandling */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = RequestHandling; sourceTree = "<group>"; };
 		U20000000000000000000022 /* PDFProcessingClient */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PDFProcessingClient; sourceTree = "<group>"; };
+		U20000000000000000000023 /* Native */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Native; sourceTree = "<group>"; };
+		U20000000000000000000024 /* Native */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Native; sourceTree = "<group>"; };
+		U20000000000000000000025 /* MacOS */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOS; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -544,6 +547,8 @@
 			children = (
 				U20000000000000000000019 /* Unit */,
 				U2000000000000000000001A /* Integration */,
+				U20000000000000000000024 /* Native */,
+				U20000000000000000000025 /* MacOS */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -551,6 +556,7 @@
 		W70000000000000000000001 /* PDFProcessingRuntime */ = {
 			isa = PBXGroup;
 			children = (
+				U20000000000000000000023 /* Native */,
 				U20000000000000000000021 /* RequestHandling */,
 			);
 			path = PDFProcessingRuntime;
@@ -673,6 +679,7 @@
 				R60000000000000000000004 /* Embed Frameworks */,
 				Q60000000000000000000004 /* Embed MacOS Extensions */,
 				M60000000000000000000004 /* Embed XPC Service */,
+				M60000000000000000000005 /* Preserve Legacy App Icon */,
 			);
 			buildRules = (
 			);
@@ -1310,6 +1317,23 @@
 			shellPath = /bin/bash;
 			shellScript = "mkdir -p \"$TARGET_BUILD_DIR/$XPCSERVICES_FOLDER_PATH\"\nditto \"$BUILT_PRODUCTS_DIR/iPS2PDFMacOSGhostscript.xpc\" \"$TARGET_BUILD_DIR/$XPCSERVICES_FOLDER_PATH/iPS2PDFMacOSGhostscript.xpc\"\n";
 		};
+		M60000000000000000000005 /* Preserve Legacy App Icon */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/LegacyAppIcon.icns",
+			);
+			name = "Preserve Legacy App Icon";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/bash;
+			shellScript = "/usr/libexec/PlistBuddy -c \"Set :CFBundleIconFile LegacyAppIcon\" \"$TARGET_BUILD_DIR/$INFOPLIST_PATH\"\n";
+		};
 		R60000000000000000000005 /* Install Runtime Headers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1793,7 +1817,7 @@
 		AA0000000000000000000003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon26;
 				CODE_SIGN_ENTITLEMENTS = BuildSupport/Targets/iOSApp/iPS2PDF.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
@@ -1816,7 +1840,7 @@
 		AA0000000000000000000004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon26;
 				CODE_SIGN_ENTITLEMENTS = BuildSupport/Targets/iOSApp/iPS2PDF.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
@@ -2038,7 +2062,8 @@
 		MA00000000000000000000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon26;
+				ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR = none;
 				CODE_SIGN_ENTITLEMENTS = BuildSupport/Targets/MacOSApp/iPS2PDFMacOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;
@@ -2069,7 +2094,8 @@
 		MA00000000000000000000002 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon26;
+				ASSETCATALOG_COMPILER_STANDALONE_ICON_BEHAVIOR = none;
 				CODE_SIGN_ENTITLEMENTS = BuildSupport/Targets/MacOSApp/iPS2PDFMacOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEAD_CODE_STRIPPING = YES;

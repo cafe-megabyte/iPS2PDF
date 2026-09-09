@@ -29,15 +29,14 @@ struct PDFCompressionOptions: Codable, Equatable, Sendable {
     var threshold: Int = 75
     // Color scans usually benefit from modest contrast expansion.
     var contrast: Int = 25
-
-    var isValid: Bool { (0...100).contains(threshold) && (-50...50).contains(contrast) }
-}
-
-struct PDFPageCompressionOverride: Codable, Equatable, Sendable {
-    let pageIndex: Int
-    let options: PDFCompressionOptions
+    // Paper cleanup controls background normalization and content separation.
+    var paperCleanup: Int = 50
+    // An optional sampled page area identifies removable paper colors without
+    // changing the automatic behavior for ordinary documents.
+    var paperSample: PDFPaperSample?
 
     var isValid: Bool {
-        (0...Int(Int32.max)).contains(pageIndex) && options.isValid
+        (0...100).contains(threshold) && (0...100).contains(contrast) &&
+            (0...100).contains(paperCleanup) && (paperSample?.isValid ?? true)
     }
 }
