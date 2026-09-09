@@ -4,9 +4,9 @@
 # performs no network access and never consults PATH for Homebrew tools.
 set -euo pipefail
 
-project="${SRCROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
+project="${SRCROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 vendor="$project/Vendor/PDFProcessing"
-recipe_source="$project/Scripts/PDFProcessing"
+recipe_source="$project/BuildSupport/Scripts/PDFProcessing"
 native_source="$project/Sources/Shared/PDFProcessingRuntime/Native"
 project_temp="${PROJECT_TEMP_DIR:?PROJECT_TEMP_DIR is required}"
 artifact_destination="${PDF_PROCESSING_ARTIFACT_DIR:?PDF_PROCESSING_ARTIFACT_DIR is required}"
@@ -70,8 +70,8 @@ trap '/bin/rm -f "$fingerprint_file"' EXIT
 for ((index=0; index<${#archives[@]}; ++index)); do
   printf '%s %s\n' "${component_names[$index]}" "$(content_hash "${archives[$index]}")" >> "$fingerprint_file"
 done
-printf '%s %s\n' "Scripts/build_pdf_for_xcode.sh" \
-  "$(content_hash "$project/Scripts/build_pdf_for_xcode.sh")" >> "$fingerprint_file"
+printf '%s %s\n' "BuildSupport/Scripts/build_pdf_for_xcode.sh" \
+  "$(content_hash "$project/BuildSupport/Scripts/build_pdf_for_xcode.sh")" >> "$fingerprint_file"
 /usr/bin/find "$recipe_source" "$native_source" -type f -print | /usr/bin/sort | while IFS= read -r file; do
   printf '%s %s\n' "${file#$project/}" "$(content_hash "$file")"
 done >> "$fingerprint_file"

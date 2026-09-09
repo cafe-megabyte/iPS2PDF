@@ -149,7 +149,7 @@ directory, so an upstream archive can be replaced without changing an Xcode
 setting or script constant. The human-readable download inventory is
 `Vendor/SOURCE_ARCHIVES.md`.
 
-`Scripts/build_pdf_for_xcode.sh` extracts the archives below
+`BuildSupport/Scripts/build_pdf_for_xcode.sh` extracts the archives below
 `PROJECT_TEMP_DIR`, applies the checked-in text patch and invokes the accompanying
 Makefile. It uses `xcrun` to select Apple clang, clang++, ld, libtool, nmedit and
 lipo. The archive contents, build recipe, native wrapper sources, SDK, compiler,

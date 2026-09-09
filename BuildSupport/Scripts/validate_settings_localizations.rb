@@ -2,7 +2,7 @@
 
 require "json"
 
-root = File.expand_path("..", __dir__)
+root = File.expand_path("../..", __dir__)
 catalog_path = File.join(root, "Sources/Shared/Resources/App/Localizable.xcstrings")
 catalog = JSON.parse(File.read(catalog_path)).fetch("strings")
 

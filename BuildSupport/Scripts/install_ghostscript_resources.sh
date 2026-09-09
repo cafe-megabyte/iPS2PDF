@@ -14,7 +14,7 @@ resources_stamp="$artifact_directory/resources.stamp"
 
 if [ ! -s "$resources_stamp" ]; then
     script_directory="$(cd "$(dirname "$0")" && pwd)"
-    project_root="${SRCROOT:-$(cd "$script_directory/.." && pwd)}"
+    project_root="${SRCROOT:-$(cd "$script_directory/../.." && pwd)}"
     project_temp_dir="${PROJECT_TEMP_DIR:-}"
     source_archive="${GHOSTSCRIPT_ARCHIVE_PATH:-}"
     base14_directory="$project_root/BundledResources/PostScriptBase14"

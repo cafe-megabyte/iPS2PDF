@@ -7,7 +7,7 @@ producer timestamps make byte-for-byte regeneration intentionally nondeterminist
 from pathlib import Path
 from pypdf import PdfWriter
 from pypdf.generic import DictionaryObject as D, NameObject as N, ArrayObject as A, NumberObject as I, DecodedStreamObject, TextStringObject as T
-r=Path(__file__).resolve().parents[1]/'Tests/Unit/Fixtures'
+r=Path(__file__).resolve().parents[2]/'Tests/Unit/Fixtures'
 r.mkdir(parents=True, exist_ok=True)
 def d(**kw): return D({N('/'+k):v for k,v in kw.items()})
 def stream(w,content,**kw):
@@ -48,7 +48,7 @@ w,p,f=base();w._info.get_object().pop(N('/Title'));xmp=b'''<x:xmpmeta xmlns:x="a
 
 from pathlib import Path
 import re, zlib
-root=Path(__file__).resolve().parents[1]
+root=Path(__file__).resolve().parents[2]
 r=root/'Tests/Unit/Fixtures'
 # Preserve original encrypted objects and replace only the cross-reference container.
 source=(r/'InfoEncrypted-AES-128.pdf').read_bytes()

@@ -2,7 +2,7 @@
 set -euo pipefail
 # Run sequentially, without a simulator. Uses the production AppKit view unchanged.
 scratch="${1:?Expected scratch directory}"
-project="$(cd "$(dirname "$0")/.." && pwd)"
+project="$(cd "$(dirname "$0")/../.." && pwd)"
 app="$scratch/PDFInformationLayoutSmoke.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cat > "$app/Contents/Info.plist" <<'PLIST'

@@ -4,7 +4,7 @@ set -euo pipefail
 # Usage: test_pdf_information_macos.sh <Debug products directory> <scratch directory>
 products="${1:?Expected Debug products directory}"
 scratch="${2:?Expected scratch directory}"
-project="$(cd "$(dirname "$0")/.." && pwd)"
+project="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$scratch"
 xcrun swiftc -swift-version 6 -F "$products" -framework GhostscriptRuntime \
     -Xlinker -rpath -Xlinker "$products" \

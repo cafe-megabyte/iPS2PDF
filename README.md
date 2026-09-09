@@ -26,18 +26,18 @@ The shared encryption reader only lexes bounded trailer dictionaries; Core Graph
 
 Bookmarks and page labels are read directly from the independently unlocked Core Graphics document, including Unicode-password files that PDFKit cannot unlock. Resource inheritance is retained when scanning Form XObjects; direct Device color operators are also recorded. Form fields include inherited properties and qualified names. The effective PDF version is the higher valid value from header and catalog. Images inside Type-3 glyphs retain their pixel properties, but effective PPI is explicitly unknown because the full text rendering matrix is not evaluated.
 
-Validation fixtures are in `Tests/Unit/Fixtures` (see its README). iOS integration tests exercise the real Ghostscript extension, password cases, incoming-file routing, sheet presentation and RTF/plain-text equivalence. After a MacOS build, `Scripts/test_pdf_information_macos.sh <Debug-products> <scratch-directory>` tests the bundled MacOS Ghostscript framework and report sharing without provisioning; a signed app/XPC run must still be checked separately. `Scripts/test_pdf_information_layout_macos.sh <scratch-directory>` checks the production AppKit view with 35 notices, its Details button and minimum-size layout without a simulator.
+Validation fixtures are in `Tests/Unit/Fixtures` (see its README). iOS integration tests exercise the real Ghostscript extension, password cases, incoming-file routing, sheet presentation and RTF/plain-text equivalence. After a MacOS build, `BuildSupport/Scripts/test_pdf_information_macos.sh <Debug-products> <scratch-directory>` tests the bundled MacOS Ghostscript framework and report sharing without provisioning; a signed app/XPC run must still be checked separately. `BuildSupport/Scripts/test_pdf_information_layout_macos.sh <scratch-directory>` checks the production AppKit view with 35 notices, its Details button and minimum-size layout without a simulator.
 
 ## PDF signatures
 
 The PDF information view offers **Sign PDF** beside compression and metadata removal. The shared SwiftUI editor uses the platform PDFKit view for paging and zooming. Clicking or tapping inserts U+201A from the signature font at 50 pt; placed signatures can be selected, moved, resized, or removed until **Apply** creates a flattened PDF revision. This is a visible signature, not a cryptographic digital signature. All placements in one result reference one embedded CFF font program.
 
-The publishable fallback font is `BundledResources/Signature/SignatureFont-Dummy.otf`. It contains only one visible character, U+201A, whose outline reads as three X marks and has approximately the same 50 pt bounds as the private signature. `Scripts/generate_dummy_signature_font.py` recreates it deterministically, and the build validates it before use.
+The publishable fallback font is `BundledResources/Signature/SignatureFont-Dummy.otf`. It contains only one visible character, U+201A, whose outline reads as three X marks and has approximately the same 50 pt bounds as the private signature. `BuildSupport/Scripts/generate_dummy_signature_font.py` recreates it deterministically, and the build validates it before use.
 
 For a private build, put the real font at `BundledResources/Signature/SignatureFont.otf`, or install it with:
 
 ```sh
-Scripts/install_private_signature_font.sh /path/to/SignatureFont.otf
+BuildSupport/Scripts/install_private_signature_font.sh /path/to/SignatureFont.otf
 ```
 
 That exact private path is ignored by Git. Never replace or copy private signature data into `SignatureFont-Dummy.otf`. Each iOS and MacOS build validates both the dummy contract and any private override, chooses the private font when present, otherwise chooses the dummy, and installs the selected file into the app bundle as `SignatureFont.otf`. Both fonts must be OpenType/CFF, permit embedding, map the signature to U+201A, and have no other visible mapped character.
@@ -58,7 +58,7 @@ Vendor/Ghostscript/ghostscript-10.07.1.tar.gz
 
 The `GHOSTSCRIPT_ARCHIVE_PATH` build settings of the Ghostscript aggregate targets point to `Vendor/Ghostscript`. The build scripts resolve the single `*.tar.gz` archive in that directory, so Ghostscript upgrades only require replacing the archive.
 
-The archive does not need to be unpacked manually and no unpacked Ghostscript tree belongs in the repository. `Build Ghostscript` extracts it into a disposable directory, creates a patched working copy of Ghostscript's official iOS build script, and publishes the iOS artifacts under `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`. `Build Ghostscript MacOS` does the same with the upstream `toolbin/macos_build_uni_dylib.sh`: it copies and applies the small deterministic `Scripts/ghostscript_MacOS_static.patch`, builds static `arm64` and `x86_64` slices with the selected Xcode SDK and a MacOS 15 deployment target, then combines them into a universal `libgs.a`. The original `.tar.gz` remains unchanged.
+The archive does not need to be unpacked manually and no unpacked Ghostscript tree belongs in the repository. `Build Ghostscript` extracts it into a disposable directory, creates a patched working copy of Ghostscript's official iOS build script, and publishes the iOS artifacts under `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/`. `Build Ghostscript MacOS` does the same with the upstream `toolbin/macos_build_uni_dylib.sh`: it copies and applies the small deterministic `BuildSupport/Scripts/ghostscript_MacOS_static.patch`, builds static `arm64` and `x86_64` slices with the selected Xcode SDK and a MacOS 15 deployment target, then combines them into a universal `libgs.a`. The original `.tar.gz` remains unchanged.
 
 Xcode input/output dependency analysis and the build scripts' content fingerprints reuse unchanged artifacts. Changing the archive, build script, patch, SDK, or deployment target rebuilds the affected variant; deleting Derived Data forces a complete rebuild.
 

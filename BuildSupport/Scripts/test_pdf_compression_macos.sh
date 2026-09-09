@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 scratch="${1:?Expected scratch directory}"
-project="$(cd "$(dirname "$0")/.." && pwd)"
+project="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$scratch"
 pdf_layout_sources=()
 while IFS= read -r pdf_layout_source; do
@@ -18,6 +18,6 @@ xcrun swiftc -swift-version 6 \
     "$project"/Sources/Shared/IPC/MacOSXPC/*.swift \
     "$project/Sources/Targets/MacOSApp/MacOSGhostscriptService.swift" \
     "$project/Sources/Targets/MacOSApp/MacOSPDFReportSharing.swift" \
-    "$project/Tests/MacOS/PDFCompressionViewSmoke.swift" \
-    -o "$scratch/PDFCompressionViewSmoke"
-"$scratch/PDFCompressionViewSmoke" "${2:?Expected native compression fixture output directory}"
+    "$project/Tests/MacOS/PDFCompressionSessionSmoke.swift" \
+    -o "$scratch/PDFCompressionSessionSmoke"
+"$scratch/PDFCompressionSessionSmoke" "$project/Tests/Unit/Fixtures"

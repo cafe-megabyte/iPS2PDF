@@ -278,7 +278,6 @@
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		28D58F593031FACE00668A85 /* Vendor */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Vendor; sourceTree = "<group>"; };
-		28D58F5C3031FAD500668A85 /* Scripts */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Scripts; sourceTree = "<group>"; };
 		B00000000000000000000001 /* BuildSupport */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BuildSupport; sourceTree = "<group>"; };
 		E00000000000000000000002 /* BundledResources */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BundledResources; sourceTree = "<group>"; };
 		U20000000000000000000001 /* iOSApp */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = iOSApp; sourceTree = "<group>"; };
@@ -417,7 +416,6 @@
 			children = (
 				S00000000000000000000001 /* Sources */,
 				B00000000000000000000001 /* BuildSupport */,
-				28D58F5C3031FAD500668A85 /* Scripts */,
 				E00000000000000000000002 /* BundledResources */,
 				28D58F593031FACE00668A85 /* Vendor */,
 				T70000000000000000000001 /* Tests */,
@@ -1081,8 +1079,8 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_signature_font_resource.sh",
-				"$(SRCROOT)/Scripts/validate_signature_font.py",
+				"$(SRCROOT)/BuildSupport/Scripts/install_signature_font_resource.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/validate_signature_font.py",
 				"$(SRCROOT)/BundledResources/Signature/SignatureFont-Dummy.otf",
 			);
 			name = "Install Signature Font";
@@ -1091,7 +1089,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_signature_font_resource.sh\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_signature_font_resource.sh\"\n";
 		};
 		Z60000000000000000000002 /* Install Signature Font */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1100,8 +1098,8 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_signature_font_resource.sh",
-				"$(SRCROOT)/Scripts/validate_signature_font.py",
+				"$(SRCROOT)/BuildSupport/Scripts/install_signature_font_resource.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/validate_signature_font.py",
 				"$(SRCROOT)/BundledResources/Signature/SignatureFont-Dummy.otf",
 			);
 			name = "Install Signature Font";
@@ -1110,7 +1108,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_signature_font_resource.sh\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_signature_font_resource.sh\"\n";
 		};
 		28037B25303F6B6B005B1F70 /* Package Ghostscript iOS */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1121,8 +1119,8 @@
 				"$(SRCROOT)/BuildSupport/FileLists/BundledPostScriptBase14.xcfilelist",
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/package_ghostscript_resources.sh",
-				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/package_ghostscript_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/Shared/ghostscript_fingerprint.sh",
 				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
 			);
 			name = "Package Ghostscript iOS";
@@ -1137,7 +1135,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/Scripts/package_ghostscript_resources.sh\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BundledResources/PostScriptBase14\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/package_ghostscript_resources.sh\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BundledResources/PostScriptBase14\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
 		};
 		28037B26303F6C05005B1F70 /* Package Ghostscript MacOS */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1148,8 +1146,8 @@
 				"$(SRCROOT)/BuildSupport/FileLists/BundledPostScriptBase14.xcfilelist",
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/package_ghostscript_resources.sh",
-				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/package_ghostscript_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/Shared/ghostscript_fingerprint.sh",
 				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
 			);
 			name = "Package Ghostscript MacOS";
@@ -1164,7 +1162,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"$SRCROOT/Scripts/package_ghostscript_resources.sh\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BundledResources/PostScriptBase14\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/package_ghostscript_resources.sh\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BundledResources/PostScriptBase14\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
 		};
 		A60000000000000000000006 /* Remove Spurious Extension Point Output */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1189,7 +1187,7 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/generate_build_number.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/generate_build_number.sh",
 			);
 			name = "Generate Build Number";
 			outputPaths = (
@@ -1205,9 +1203,9 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/build_ghostscript_iOS.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/build_ghostscript_iOS.sh",
 				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
-				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/Shared/ghostscript_fingerprint.sh",
 			);
 			name = "Build Ghostscript iOS";
 			outputPaths = (
@@ -1218,7 +1216,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/build_ghostscript_iOS.sh\" \"$PLATFORM_NAME\" \"$ARCHS\" \"$IPHONEOS_DEPLOYMENT_TARGET\" \"$SDK_NAME\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/build_ghostscript_iOS.sh\" \"$PLATFORM_NAME\" \"$ARCHS\" \"$IPHONEOS_DEPLOYMENT_TARGET\" \"$SDK_NAME\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\"\n";
 		};
 		D60000000000000000000002 /* Build Ghostscript MacOS */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1226,10 +1224,10 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/build_ghostscript_MacOS.sh",
-				"$(SRCROOT)/Scripts/ghostscript_MacOS_static.patch",
+				"$(SRCROOT)/BuildSupport/Scripts/build_ghostscript_MacOS.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/ghostscript_MacOS_static.patch",
 				"$(GHOSTSCRIPT_ARCHIVE_PATH)",
-				"$(SRCROOT)/Scripts/Shared/ghostscript_fingerprint.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/Shared/ghostscript_fingerprint.sh",
 			);
 			name = "Build Ghostscript MacOS";
 			outputPaths = (
@@ -1240,7 +1238,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/build_ghostscript_MacOS.sh\" \"$MACOSX_DEPLOYMENT_TARGET\" \"$SDK_NAME\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/Scripts/ghostscript_MacOS_static.patch\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/build_ghostscript_MacOS.sh\" \"$MACOSX_DEPLOYMENT_TARGET\" \"$SDK_NAME\" \"$PROJECT_TEMP_DIR\" \"$GHOSTSCRIPT_ARCHIVE_PATH\" \"$SRCROOT/BuildSupport/Scripts/ghostscript_MacOS_static.patch\" \"$GHOSTSCRIPT_ARTIFACT_DIR\"\n";
 		};
 		E00000000000000000000003 /* Install Joboptions */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1251,7 +1249,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_bundled_resources.sh",
 			);
 			name = "Install Joboptions";
 			outputPaths = (
@@ -1259,7 +1257,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\" joboptions\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\" joboptions\n";
 		};
 		F60000000000000000000008 /* Install Profiles */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1270,7 +1268,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_bundled_resources.sh",
 			);
 			name = "Install Profiles";
 			outputFileListPaths = (
@@ -1280,7 +1278,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\" profiles\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\" profiles\n";
 		};
 		F6000000000000000000000A /* Install Ghostscript Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1288,7 +1286,7 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_ghostscript_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_ghostscript_resources.sh",
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources.stamp",
 			);
 			name = "Install Ghostscript Resources";
@@ -1297,7 +1295,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_ghostscript_resources.sh\" \"$GHOSTSCRIPT_ARTIFACT_DIR\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_ghostscript_resources.sh\" \"$GHOSTSCRIPT_ARTIFACT_DIR\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
 		};
 		M60000000000000000000004 /* Embed XPC Service */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1322,7 +1320,7 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_ghostscript_runtime_headers.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_ghostscript_runtime_headers.sh",
 				"$(SRCROOT)/Sources/Targets/MacOSGhostscriptRuntime/GhostscriptRuntime.h",
 				"$(SRCROOT)/Sources/Targets/MacOSGhostscriptRuntime/GhostscriptRuntimeBundleMarker.h",
 				"$(SRCROOT)/Sources/Shared/GhostscriptRuntime/GhostscriptBridge/GhostscriptBridge.h",
@@ -1335,7 +1333,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_ghostscript_runtime_headers.sh\" \"$SRCROOT\" \"$TARGET_BUILD_DIR/$PUBLIC_HEADERS_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_ghostscript_runtime_headers.sh\" \"$SRCROOT\" \"$TARGET_BUILD_DIR/$PUBLIC_HEADERS_FOLDER_PATH\"\n";
 		};
 		R60000000000000000000006 /* Install Joboptions and Profiles */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1346,7 +1344,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_bundled_resources.sh",
 			);
 			name = "Install Joboptions and Profiles";
 			outputPaths = (
@@ -1355,7 +1353,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
 		};
 		R60000000000000000000007 /* Install Ghostscript Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1363,7 +1361,7 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_ghostscript_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_ghostscript_resources.sh",
 				"$(GHOSTSCRIPT_ARTIFACT_DIR)/resources.stamp",
 			);
 			name = "Install Ghostscript Resources";
@@ -1372,7 +1370,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_ghostscript_resources.sh\" \"$GHOSTSCRIPT_ARTIFACT_DIR\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_ghostscript_resources.sh\" \"$GHOSTSCRIPT_ARTIFACT_DIR\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
 		};
 		R60000000000000000000008 /* Remove Legacy Runtime Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1381,14 +1379,14 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/Shared/remove_legacy_runtime_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/Shared/remove_legacy_runtime_resources.sh",
 			);
 			name = "Remove Legacy Runtime Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/Shared/remove_legacy_runtime_resources.sh\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/Shared/remove_legacy_runtime_resources.sh\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
 		};
 		R60000000000000000000009 /* Remove Legacy Runtime Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1397,14 +1395,14 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/Shared/remove_legacy_runtime_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/Shared/remove_legacy_runtime_resources.sh",
 			);
 			name = "Remove Legacy Runtime Resources";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/Shared/remove_legacy_runtime_resources.sh\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/Shared/remove_legacy_runtime_resources.sh\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n";
 		};
 		T60000000000000000000003 /* Install Unit Test Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1415,7 +1413,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/install_bundled_resources.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/install_bundled_resources.sh",
 			);
 			name = "Install Unit Test Resources";
 			outputPaths = (
@@ -1424,7 +1422,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n/usr/bin/ditto \"$SRCROOT/Tests/Unit/Fixtures\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Fixtures\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/install_bundled_resources.sh\" \"$SRCROOT/BundledResources\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH\"\n/usr/bin/ditto \"$SRCROOT/Tests/Unit/Fixtures\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Fixtures\"\n";
 		};
 		W60000000000000000000004 /* Build Native PDF Runtime */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1433,8 +1431,8 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/build_pdf_for_xcode.sh",
-				"$(SRCROOT)/Scripts/PDFProcessing",
+				"$(SRCROOT)/BuildSupport/Scripts/build_pdf_for_xcode.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/PDFProcessing",
 				"$(SRCROOT)/Sources/Shared/PDFProcessingRuntime/Native",
 				"$(SRCROOT)/Vendor/PDFProcessing",
 			);
@@ -1446,7 +1444,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/build_pdf_for_xcode.sh\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/build_pdf_for_xcode.sh\"\n";
 		};
 		W60000000000000000000005 /* Build Native PDF Runtime iOS */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1455,8 +1453,8 @@
 			files = (
 			);
 			inputPaths = (
-				"$(SRCROOT)/Scripts/build_pdf_for_xcode.sh",
-				"$(SRCROOT)/Scripts/PDFProcessing",
+				"$(SRCROOT)/BuildSupport/Scripts/build_pdf_for_xcode.sh",
+				"$(SRCROOT)/BuildSupport/Scripts/PDFProcessing",
 				"$(SRCROOT)/Sources/Shared/PDFProcessingRuntime/Native",
 				"$(SRCROOT)/Vendor/PDFProcessing",
 			);
@@ -1468,7 +1466,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "\"$SRCROOT/Scripts/build_pdf_for_xcode.sh\"\n";
+			shellScript = "\"$SRCROOT/BuildSupport/Scripts/build_pdf_for_xcode.sh\"\n";
 		};
 		W60000000000000000000006 /* Install Native PDF Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1486,7 +1484,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "/bin/bash \"$SRCROOT/Scripts/install_pdf_runtime_resources.sh\"\n";
+			shellScript = "/bin/bash \"$SRCROOT/BuildSupport/Scripts/install_pdf_runtime_resources.sh\"\n";
 		};
 		W60000000000000000000007 /* Install Native PDF Resources iOS */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1502,7 +1500,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/bash;
-			shellScript = "/bin/bash \"$SRCROOT/Scripts/install_pdf_runtime_resources.sh\"\n";
+			shellScript = "/bin/bash \"$SRCROOT/BuildSupport/Scripts/install_pdf_runtime_resources.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

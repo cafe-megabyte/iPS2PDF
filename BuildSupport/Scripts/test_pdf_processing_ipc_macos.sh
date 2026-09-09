@@ -2,7 +2,7 @@
 set -euo pipefail
 scratch="${1:?Expected a scratch directory}"
 frameworks="${2:?Expected built macOS frameworks directory}"
-project="$(cd "$(dirname "$0")/.." && pwd)"
+project="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$scratch"
 xcrun swiftc -swift-version 6 -parse-as-library -target "$(uname -m)-apple-macos15" \
     -module-cache-path "$scratch/ModuleCache" \

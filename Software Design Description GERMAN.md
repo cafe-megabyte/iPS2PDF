@@ -853,7 +853,7 @@ Ein gemeinsames Xcode-Aggregate-Target `Build Ghostscript` ist eine Dependency d
 Das Build-Script deklariert mindestens folgende Inputs:
 
 ```text
-Scripts/build_ghostscript_iOS.sh
+BuildSupport/Scripts/build_ghostscript_iOS.sh
 Vendor/Ghostscript/
 ```
 
@@ -1386,10 +1386,11 @@ Sources/
     ├── MacOSQuickLookPreview/
     └── MacOSThumbnailExtension/
 BuildSupport/
+├── Scripts/        # Build-, Packaging-, Installations- und Test-Hilfsskripte
 └── Targets/        # Info.plist und Entitlements ohne Target-Membership
 ```
 
-Die physische Struktur und Xcodes Navigatorstruktur sind identisch. `Sources` ist als eine einzige blaue `PBXFileSystemSynchronizedRootGroup` eingebunden; `Shared`, `Targets` und alle fachlichen Zwischenordner erscheinen dadurch ebenfalls durchgehend als reale, synchronisierte Ordner. `BuildSupport`, `Scripts`, `BundledResources`, `Vendor` und `Tests` bleiben ebenfalls synchronisierte Root-Gruppen. Alle von mehreren Targets kompilierten Quellen stehen sichtbar unter `Sources/Shared`, targetspezifische Implementierungen unter `Sources/Targets`. Plists und Entitlements liegen im nicht kompilierten `BuildSupport/Targets`-Baum und erzeugen dadurch keine impliziten Resource-Memberships.
+Die physische Struktur und Xcodes Navigatorstruktur sind identisch. `Sources` ist als eine einzige blaue `PBXFileSystemSynchronizedRootGroup` eingebunden; `Shared`, `Targets` und alle fachlichen Zwischenordner erscheinen dadurch ebenfalls durchgehend als reale, synchronisierte Ordner. `BuildSupport`, `BundledResources`, `Vendor` und `Tests` bleiben ebenfalls synchronisierte Root-Gruppen; `Scripts` erscheint als realer Unterordner von `BuildSupport`. Alle von mehreren Targets kompilierten Quellen stehen sichtbar unter `Sources/Shared`, targetspezifische Implementierungen unter `Sources/Targets`. Plists und Entitlements liegen im nicht kompilierten `BuildSupport/Targets`-Baum und erzeugen dadurch keine impliziten Resource-Memberships.
 
 Jedes Produkt-Target verwendet ausschließlich die konkreten synchronisierten Komponenten, die es kompiliert. Diese Build-Wurzeln werden nicht zusätzlich im Navigator angezeigt. Die globale `Sources`-Navigatorwurzel ist bei keinem Target Build-Eingang. Es gibt weder `EXCLUDED_SOURCE_FILE_NAMES`-/`INCLUDED_SOURCE_FILE_NAMES`-Filter noch `PBXFileSystemSynchronizedBuildFileExceptionSet`-Objekte. Jede Swift-Datei enthält höchstens einen obersten nominalen Typ; Erweiterungen werden bei Bedarf in einer eigenen `Typ+Rolle.swift`-Datei abgelegt.
 
@@ -1399,7 +1400,6 @@ Weitere unveränderte Projektbereiche:
 
 ```text
 BundledResources/
-Scripts/
 Tests/
 Vendor/
 └── Ghostscript/
@@ -1678,7 +1678,7 @@ Auch MacOS erhält Ghostscript ausschließlich als unverändertes `.tar.gz` unte
 
 1. Archiv in ein temporäres Buildverzeichnis entpacken;
 2. das offizielle Upstream-Script `toolbin/macos_build_uni_dylib.sh` in eine Arbeitskopie kopieren;
-3. die kleine deterministische Patchdatei `Scripts/ghostscript_MacOS_static.patch` auf diese Kopie anwenden;
+3. die kleine deterministische Patchdatei `BuildSupport/Scripts/ghostscript_MacOS_static.patch` auf diese Kopie anwenden;
 4. statische Slices für `x86_64` und `arm64` mit Xcodes ausgewähltem MacOS-SDK und Deployment-Target 15.0 bauen;
 5. beide Slices mit `lipo` zu einer universellen `libgs.a` verbinden;
 6. Library, öffentliche Header und erforderliche Ressourcen atomar unter `$(PROJECT_TEMP_DIR)/GhostscriptArtifacts/` veröffentlichen.

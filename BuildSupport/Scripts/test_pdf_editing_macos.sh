@@ -3,7 +3,7 @@ set -euo pipefail
 # The immutable editing model and the actual PDF inspector run without a UI,
 # signing identity, simulator, or Ghostscript build.
 scratch="${1:?Expected an explicit scratch directory}"
-project="$(cd "$(dirname "$0")/.." && pwd)"
+project="$(cd "$(dirname "$0")/../.." && pwd)"
 mkdir -p "$scratch"
 pdf_test_architecture="$(uname -m)"
 xcrun swiftc -swift-version 6 -parse-as-library -target "${pdf_test_architecture}-apple-macos15" \

@@ -1,7 +1,7 @@
 # PDF-information test fixtures
 
 These small PDFs contain synthetic test text only. They are not user documents.
-Generate them with `python3 Scripts/generate_pdf_information_fixtures.py` from the project root. This optional developer script requires `pypdf[crypto]`, Ghostscript on PATH and macOS's system sRGB profile; none is a new application runtime dependency. Existing fixtures were generated using pypdf 6.10 and Ghostscript 10.07.1. Regeneration changes encryption salts and timestamps.
+Generate them with `python3 BuildSupport/Scripts/generate_pdf_information_fixtures.py` from the project root. This optional developer script requires `pypdf[crypto]`, Ghostscript on PATH and macOS's system sRGB profile; none is a new application runtime dependency. Existing fixtures were generated using pypdf 6.10 and Ghostscript 10.07.1. Regeneration changes encryption salts and timestamps.
 
 | Fixtures | Purpose |
 | --- | --- |
