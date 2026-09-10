@@ -25,8 +25,7 @@ namespace ips2pdf {
 namespace {
 using Object = QPDFObjectHandle;
 
-std::string streamFingerprint(Object stream,
-                              qpdf_stream_decode_level_e level = qpdf_dl_generalized) {
+std::string streamFingerprint(Object stream, qpdf_stream_decode_level_e level) {
     Pl_SHA2 digest(256);
     bool filteringAttempted = false;
     if (!stream.pipeStreamData(&digest, &filteringAttempted, 0, level, true, false))
@@ -190,7 +189,10 @@ std::vector<ImageMatch> matchingImages(QPDF& pdf, const std::filesystem::path& i
                 return wantedValue <= 0 || value.isInteger() && value.getIntValueAsInt() == wantedValue;
             };
             auto fingerprint = streamingPDFImageFingerprint(input, object, pdf.isEncrypted());
-            if (!fingerprint) fingerprint = streamFingerprint(object);
+            // CGPDFStreamCopyData decodes lossless specialized filters such as
+            // RunLengthDecode. Use the matching QPDF level while preserving
+            // lossy JPEG/JPEG 2000 payloads in their encoded representation.
+            if (!fingerprint) fingerprint = streamFingerprint(object, qpdf_dl_specialized);
             if (*fingerprint == wanted && integerMatches("/Width", width) && integerMatches("/Height", height) && integerMatches("/BitsPerComponent", bits)) {
                 auto space = dictionary.getKey("/ColorSpace");
                 if (!space.isNull()) space = resolvePDFColorSpace(space, resources);

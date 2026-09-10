@@ -133,6 +133,38 @@ struct PDFProcessingIPCSmoke {
         result.append(Data("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
         return result
     }
+    static func pdfWithRunLengthImage() -> Data {
+        // Two one-byte monochrome rows encoded as one RunLengthDecode literal
+        // packet followed by the end-of-data marker.
+        let pixels = Data([1, 0x00, 0xff, 128])
+        var result = Data("%PDF-1.7\n%âãÏÓ\n".utf8)
+        var offsets = [Int](repeating: 0, count: 6)
+        func appendObject(_ number: Int, _ body: Data) {
+            offsets[number] = result.count
+            result.append(Data("\(number) 0 obj\n".utf8))
+            result.append(body)
+            result.append(Data("\nendobj\n".utf8))
+        }
+        appendObject(1, Data("<< /Type /Catalog /Pages 2 0 R >>".utf8))
+        appendObject(2, Data("<< /Type /Pages /Kids [3 0 R] /Count 1 >>".utf8))
+        appendObject(3, Data("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 8 2] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>".utf8))
+        var image = Data("<< /Type /XObject /Subtype /Image /Width 8 /Height 2 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter [/RunLengthDecode] /Length \(pixels.count) >>\nstream\n".utf8)
+        image.append(pixels)
+        image.append(Data("\nendstream".utf8))
+        appendObject(4, image)
+        let content = Data("q 8 0 0 2 0 0 cm /Im0 Do Q".utf8)
+        var contentStream = Data("<< /Length \(content.count) >>\nstream\n".utf8)
+        contentStream.append(content)
+        contentStream.append(Data("\nendstream".utf8))
+        appendObject(5, contentStream)
+        let xref = result.count
+        result.append(Data("xref\n0 6\n0000000000 65535 f \n".utf8))
+        for offset in offsets.dropFirst() {
+            result.append(Data(String(format: "%010d 00000 n \n", offset).utf8))
+        }
+        result.append(Data("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+        return result
+    }
     static func main() throws {
         guard CommandLine.arguments.count == 3 else {
             throw NSError(domain: "PDFProcessingIPCSmoke", code: 2,
@@ -296,6 +328,21 @@ struct PDFProcessingIPCSmoke {
         let predictorImage = try CGImageSourceCreateImageAtIndex(predictorSource, 0, nil).unwrap("Predictor PNG could not be decoded")
         try require(predictorImage.width == 4 && predictorImage.height == 2, "Predictor PNG dimensions changed")
 
+        let runLengthURL = directory.appendingPathComponent("RunLengthImage.pdf")
+        try pdfWithRunLengthImage().write(to: runLengthURL)
+        let runLengthReport = try PDFInspectionService.inspect(url: runLengthURL, fileName: "RunLengthImage.pdf", password: nil)
+        let runLengthResource = try runLengthReport.exportableResources.first { $0.kind == .image }.unwrap("Run-length image resource missing")
+        try require(runLengthResource.format == .png && runLengthResource.pixelWidth == 8 &&
+                    runLengthResource.pixelHeight == 2 && runLengthResource.bitsPerComponent == 1,
+                    "Run-length image descriptor changed")
+        let runLengthJob = try PDFProcessingJobDirectory.create(root: root)
+        try FileManager.default.copyItem(at: runLengthURL, to: runLengthJob.inputURL)
+        let runLengthReply = try send(runLengthJob, operation: .extractResource, resource: runLengthResource)
+        try require(runLengthReply.status == .success, "Run-length image extraction failed")
+        let runLengthSource = try CGImageSourceCreateWithURL(runLengthJob.outputURL as CFURL, nil).unwrap("Run-length PNG could not be opened")
+        let runLengthImage = try CGImageSourceCreateImageAtIndex(runLengthSource, 0, nil).unwrap("Run-length PNG could not be decoded")
+        try require(runLengthImage.width == 8 && runLengthImage.height == 2, "Run-length PNG dimensions changed")
+
         let largeImageURL = directory.appendingPathComponent("LargeImage.pdf")
         try pdfWithLargeImage().write(to: largeImageURL)
         let largeImageReport = try PDFInspectionService.inspect(url: largeImageURL, fileName: "LargeImage.pdf", password: nil)
@@ -348,7 +395,7 @@ struct PDFProcessingIPCSmoke {
         let convertedFont = try CGFont(provider).unwrap("Generated OpenType font was rejected by Apple font services")
         try require(openType.starts(with: Data("OTTO".utf8)) && convertedFont.numberOfGlyphs == 3,
                     "Generated OpenType font lost its CFF glyphs")
-        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression, previews, shared signature-font embedding, ICC, inline, TIFF-predictor and large image, attachment and OpenType font extraction")
+        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression, previews, shared signature-font embedding, ICC, inline, TIFF-predictor, run-length and large image, attachment and OpenType font extraction")
     }
 }
 
