@@ -119,7 +119,7 @@ struct FrontConversionView: View {
     private var postScriptCard: some View {
         toolButton(
             title: LocalizedStringResource("Convert to PS…"),
-            subtitle: LocalizedStringResource("PDF · PostScript · EPS → PostScript"),
+            subtitle: LocalizedStringResource("PDF · EPS · PostScript → PostScript"),
             systemImage: "doc.badge.arrow.up",
             action: onOpenPostScriptFile
         )

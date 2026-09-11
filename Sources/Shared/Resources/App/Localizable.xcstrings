@@ -1599,6 +1599,16 @@
         }
       }
     },
+    "Convert suitable images to indexed color" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geeignete Bilder in indizierte Farben konvertieren"
+          }
+        }
+      }
+    },
     "Convert to PDF…" : {
       "localizations" : {
         "de" : {
@@ -1615,16 +1625,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Zu PS konvertieren …"
-          }
-        }
-      }
-    },
-    "Convert suitable images to indexed color" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Geeignete Bilder in indizierte Farben konvertieren"
           }
         }
       }
@@ -5230,6 +5230,9 @@
         }
       }
     },
+    "PDF · EPS · PostScript → PostScript" : {
+      "shouldTranslate" : false
+    },
     "PDF changed" : {
       "localizations" : {
         "de" : {
@@ -5366,9 +5369,6 @@
           }
         }
       }
-    },
-    "PDF · PostScript · EPS → PostScript" : {
-      "shouldTranslate" : false
     },
     "pdf_version" : {
       "localizations" : {
@@ -5987,6 +5987,9 @@
         }
       }
     },
+    "PostScript · EPS · PDF → PDF" : {
+      "shouldTranslate" : false
+    },
     "PostScript conversion" : {
       "localizations" : {
         "de" : {
@@ -5996,9 +5999,6 @@
           }
         }
       }
-    },
-    "PostScript · EPS · PDF → PDF" : {
-      "shouldTranslate" : false
     },
     "PostScript value" : {
       "localizations" : {
