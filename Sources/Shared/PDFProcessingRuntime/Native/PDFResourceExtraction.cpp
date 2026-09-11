@@ -33,6 +33,16 @@ std::string streamFingerprint(Object stream, qpdf_stream_decode_level_e level) {
     return digest.getHexDigest();
 }
 
+std::optional<std::string> decodedStreamFingerprint(
+    Object stream, qpdf_stream_decode_level_e level) {
+    Pl_SHA2 digest(256);
+    bool filteringAttempted = false;
+    if (!stream.pipeStreamData(&digest, &filteringAttempted, 0, level, true, false))
+        throw std::runtime_error("Could not read the PDF resource stream");
+    if (!filteringAttempted) return std::nullopt;
+    return digest.getHexDigest();
+}
+
 class ResourceOutputPipeline final : public Pipeline {
 public:
     explicit ResourceOutputPipeline(const std::filesystem::path& output)
@@ -189,10 +199,11 @@ std::vector<ImageMatch> matchingImages(QPDF& pdf, const std::filesystem::path& i
                 return wantedValue <= 0 || value.isInteger() && value.getIntValueAsInt() == wantedValue;
             };
             auto fingerprint = streamingPDFImageFingerprint(input, object, pdf.isEncrypted());
-            // CGPDFStreamCopyData decodes lossless specialized filters such as
-            // RunLengthDecode. Use the matching QPDF level while preserving
-            // lossy JPEG/JPEG 2000 payloads in their encoded representation.
-            if (!fingerprint) fingerprint = streamFingerprint(object, qpdf_dl_specialized);
+            // QPDF passes an undecodable stream through unchanged and reports
+            // filteringAttempted=false. Hashing those encoded bytes does not
+            // match CGPDFStreamCopyData for lossless filters such as CCITT.
+            if (!fingerprint) fingerprint = decodedStreamFingerprint(object, qpdf_dl_specialized);
+            if (!fingerprint) fingerprint = coreGraphicsPDFImageFingerprint(object);
             if (*fingerprint == wanted && integerMatches("/Width", width) && integerMatches("/Height", height) && integerMatches("/BitsPerComponent", bits)) {
                 auto space = dictionary.getKey("/ColorSpace");
                 if (!space.isNull()) space = resolvePDFColorSpace(space, resources);

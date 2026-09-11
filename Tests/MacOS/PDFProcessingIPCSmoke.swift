@@ -165,6 +165,38 @@ struct PDFProcessingIPCSmoke {
         result.append(Data("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
         return result
     }
+    static func pdfWithCCITTImage() -> Data {
+        // Synthetic 257 x 65 split-tone bitmap encoded as CCITT Group 4.
+        // Keep this generated fixture independent of any user document.
+        let pixels = Data(base64Encoded: "JqGQG////////////////////////////////8AEAEA=")!
+        var result = Data("%PDF-1.7\n%âãÏÓ\n".utf8)
+        var offsets = [Int](repeating: 0, count: 6)
+        func appendObject(_ number: Int, _ body: Data) {
+            offsets[number] = result.count
+            result.append(Data("\(number) 0 obj\n".utf8))
+            result.append(body)
+            result.append(Data("\nendobj\n".utf8))
+        }
+        appendObject(1, Data("<< /Type /Catalog /Pages 2 0 R >>".utf8))
+        appendObject(2, Data("<< /Type /Pages /Kids [3 0 R] /Count 1 >>".utf8))
+        appendObject(3, Data("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 257 65] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>".utf8))
+        var image = Data("<< /Type /XObject /Subtype /Image /Width 257 /Height 65 /ColorSpace /DeviceGray /BitsPerComponent 1 /Filter /CCITTFaxDecode /DecodeParms << /K -1 /Columns 257 >> /Length \(pixels.count) >>\nstream\n".utf8)
+        image.append(pixels)
+        image.append(Data("\nendstream".utf8))
+        appendObject(4, image)
+        let content = Data("q 257 0 0 65 0 0 cm /Im0 Do Q".utf8)
+        var contentStream = Data("<< /Length \(content.count) >>\nstream\n".utf8)
+        contentStream.append(content)
+        contentStream.append(Data("\nendstream".utf8))
+        appendObject(5, contentStream)
+        let xref = result.count
+        result.append(Data("xref\n0 6\n0000000000 65535 f \n".utf8))
+        for offset in offsets.dropFirst() {
+            result.append(Data(String(format: "%010d 00000 n \n", offset).utf8))
+        }
+        result.append(Data("trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+        return result
+    }
     static func main() throws {
         guard CommandLine.arguments.count == 3 else {
             throw NSError(domain: "PDFProcessingIPCSmoke", code: 2,
@@ -343,6 +375,21 @@ struct PDFProcessingIPCSmoke {
         let runLengthImage = try CGImageSourceCreateImageAtIndex(runLengthSource, 0, nil).unwrap("Run-length PNG could not be decoded")
         try require(runLengthImage.width == 8 && runLengthImage.height == 2, "Run-length PNG dimensions changed")
 
+        let ccittURL = directory.appendingPathComponent("CCITTImage.pdf")
+        try pdfWithCCITTImage().write(to: ccittURL)
+        let ccittReport = try PDFInspectionService.inspect(url: ccittURL, fileName: "CCITTImage.pdf", password: nil)
+        let ccittResource = try ccittReport.exportableResources.first { $0.kind == .image }.unwrap("CCITT image resource missing")
+        try require(ccittResource.format == .png && ccittResource.pixelWidth == 257 &&
+                    ccittResource.pixelHeight == 65 && ccittResource.bitsPerComponent == 1,
+                    "CCITT image descriptor changed")
+        let ccittJob = try PDFProcessingJobDirectory.create(root: root)
+        try FileManager.default.copyItem(at: ccittURL, to: ccittJob.inputURL)
+        let ccittReply = try send(ccittJob, operation: .extractResource, resource: ccittResource)
+        try require(ccittReply.status == .success, "CCITT image extraction failed")
+        let ccittSource = try CGImageSourceCreateWithURL(ccittJob.outputURL as CFURL, nil).unwrap("CCITT PNG could not be opened")
+        let ccittImage = try CGImageSourceCreateImageAtIndex(ccittSource, 0, nil).unwrap("CCITT PNG could not be decoded")
+        try require(ccittImage.width == 257 && ccittImage.height == 65, "CCITT PNG dimensions changed")
+
         let largeImageURL = directory.appendingPathComponent("LargeImage.pdf")
         try pdfWithLargeImage().write(to: largeImageURL)
         let largeImageReport = try PDFInspectionService.inspect(url: largeImageURL, fileName: "LargeImage.pdf", password: nil)
@@ -395,7 +442,7 @@ struct PDFProcessingIPCSmoke {
         let convertedFont = try CGFont(provider).unwrap("Generated OpenType font was rejected by Apple font services")
         try require(openType.starts(with: Data("OTTO".utf8)) && convertedFont.numberOfGlyphs == 3,
                     "Generated OpenType font lost its CFF glyphs")
-        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression, previews, shared signature-font embedding, ICC, inline, TIFF-predictor, run-length and large image, attachment and OpenType font extraction")
+        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression, previews, shared signature-font embedding, ICC, inline, TIFF-predictor, run-length, CCITT and large image, attachment and OpenType font extraction")
     }
 }
 

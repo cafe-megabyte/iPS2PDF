@@ -27,6 +27,11 @@ PDFDecodedImage decodePDFImage(QPDFObjectHandle image, QPDFObjectHandle colorSpa
 std::optional<std::string> streamingPDFImageFingerprint(
     const std::filesystem::path& input, QPDFObjectHandle image, bool encrypted);
 
+// Reproduce CGPDFStreamCopyData's payload representation for filters that
+// QPDF cannot decode. This keeps resource discovery and native lookup on the
+// same Apple-platform byte representation without rendering a document page.
+std::string coreGraphicsPDFImageFingerprint(QPDFObjectHandle image);
+
 void writePDFImagePNG(const std::filesystem::path& input, QPDFObjectHandle image,
                       QPDFObjectHandle colorSpace, const std::filesystem::path& output,
                       bool encrypted);

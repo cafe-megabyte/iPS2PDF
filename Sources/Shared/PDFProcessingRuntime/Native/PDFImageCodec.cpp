@@ -9,6 +9,8 @@
 #include <qpdf/QPDFPageDocumentHelper.hh>
 #include <qpdf/QPDFWriter.hh>
 #include <qpdf/QUtil.hh>
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreGraphics/CoreGraphics.h>
 #include <public/fpdf_edit.h>
 #include <public/fpdfview.h>
 #include <core/fpdfapi/page/cpdf_colorspace.h>
@@ -69,6 +71,10 @@ struct FileCloser {
     void operator()(FILE* file) const { if (file) std::fclose(file); }
 };
 using FileHandle = std::unique_ptr<FILE, FileCloser>;
+
+struct CFReleaseDeleter {
+    void operator()(const void* value) const { if (value) CFRelease(value); }
+};
 
 class TemporaryFile {
 public:
@@ -1017,6 +1023,74 @@ std::optional<std::string> streamingPDFImageFingerprint(
     if (encrypted) return std::nullopt;
     Pl_SHA2 digest(256);
     if (!pipeDirectImageSamples(input, image, digest)) return std::nullopt;
+    return digest.getHexDigest();
+}
+
+std::string coreGraphicsPDFImageFingerprint(Object image) {
+    if (!image.isStream()) throw std::runtime_error("Invalid PDF image");
+    auto dictionary = image.getDict();
+    auto width = dictionary.getKey("/Width");
+    auto height = dictionary.getKey("/Height");
+    if (!width.isInteger() || !height.isInteger())
+        throw std::runtime_error("Invalid PDF image dimensions");
+    dimensions(width.getIntValueAsInt(), height.getIntValueAsInt());
+
+    QPDF wrapper;
+    wrapper.emptyPDF();
+    auto copied = wrapper.copyForeignObject(image);
+    auto pageObject = wrapper.makeIndirectObject(
+        Object::parse("<< /Type /Page /MediaBox [0 0 1 1] >>"));
+    pageObject.replaceKey("/Resources", Object::newDictionary({
+        {"/XObject", Object::newDictionary({{"/Image", copied}})}}));
+    pageObject.replaceKey("/Contents", wrapper.newStream("/Image Do\n"));
+    QPDFPageDocumentHelper(wrapper).addPage(QPDFPageObjectHelper(pageObject), false);
+
+    auto storage = TemporaryFile::create();
+    auto file = storage->openForWriting();
+    TemporaryFilePipeline pipeline(file.get());
+    QPDFWriter writer(wrapper);
+    writer.setOutputPipeline(&pipeline);
+    writer.setPreserveEncryption(false);
+    writer.write();
+    if (std::fflush(file.get()) || std::ferror(file.get()))
+        throw std::runtime_error("Could not finish private image storage");
+    file.reset();
+
+    const auto& path = storage->path();
+    using URLHandle = std::unique_ptr<std::remove_pointer_t<CFURLRef>, CFReleaseDeleter>;
+    URLHandle url(CFURLCreateFromFileSystemRepresentation(
+        kCFAllocatorDefault, reinterpret_cast<const UInt8*>(path.data()),
+        static_cast<CFIndex>(path.size()), false));
+    if (!url) throw std::runtime_error("The PDF image fingerprint could not be prepared");
+    using DocumentHandle = std::unique_ptr<std::remove_pointer_t<CGPDFDocumentRef>, CFReleaseDeleter>;
+    DocumentHandle document(CGPDFDocumentCreateWithURL(url.get()));
+    auto page = document ? CGPDFDocumentGetPage(document.get(), 1) : nullptr;
+    auto pageDictionary = page ? CGPDFPageGetDictionary(page) : nullptr;
+    CGPDFDictionaryRef resources = nullptr;
+    CGPDFDictionaryRef xObjects = nullptr;
+    CGPDFStreamRef stream = nullptr;
+    if (!pageDictionary ||
+        !CGPDFDictionaryGetDictionary(pageDictionary, "Resources", &resources) ||
+        !CGPDFDictionaryGetDictionary(resources, "XObject", &xObjects) ||
+        !CGPDFDictionaryGetStream(xObjects, "Image", &stream))
+        throw std::runtime_error("The PDF image fingerprint could not be read");
+    CGPDFDataFormat format = CGPDFDataFormatRaw;
+    using DataHandle = std::unique_ptr<std::remove_pointer_t<CFDataRef>, CFReleaseDeleter>;
+    DataHandle data(CGPDFStreamCopyData(stream, &format));
+    if (!data) throw std::runtime_error("The PDF image fingerprint could not be decoded");
+    const auto length = CFDataGetLength(data.get());
+    const auto* bytes = CFDataGetBytePtr(data.get());
+    if (length <= 0 || !bytes) throw std::runtime_error("The PDF image fingerprint is empty");
+    Pl_SHA2 digest(256);
+    size_t offset = 0;
+    const auto count = static_cast<size_t>(length);
+    while (offset < count) {
+        checkPDFProcessing();
+        const size_t amount = std::min<size_t>(count - offset, 1024 * 1024);
+        digest.write(bytes + offset, amount);
+        offset += amount;
+    }
+    digest.finish();
     return digest.getHexDigest();
 }
 
