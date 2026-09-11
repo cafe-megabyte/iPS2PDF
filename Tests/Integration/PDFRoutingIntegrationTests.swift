@@ -25,6 +25,35 @@ final class PDFRoutingIntegrationTests: XCTestCase {
         deinit { try? FileManager.default.removeItem(at: root) }
     }
 
+    private actor EncryptedExportConverter: FileConverting {
+        private(set) var postScriptConversions = 0
+
+        func validateJoboptions(at joboptionsURL: URL) async throws {}
+
+        func convert(
+            sourceURL: URL,
+            outputURL: URL,
+            joboptionsURL: URL,
+            standard: PDFStandard,
+            securityLimitsEnabled: Bool,
+            postScriptRandomSeed: Int,
+            inputPassword: String?
+        ) async throws {}
+
+        func convertToPostScript(
+            sourceURL: URL,
+            outputURL: URL,
+            securityLimitsEnabled: Bool,
+            postScriptRandomSeed: Int,
+            inputPassword: String?
+        ) async throws {
+            postScriptConversions += 1
+            try Data(
+                "%!PS-Adobe-3.0\n72 720 moveto (Converted PDF payload 9817) show\nshowpage\n".utf8
+            ).write(to: outputURL)
+        }
+    }
+
     @MainActor private func model(converter: RoutingConverter = RoutingConverter()) -> ConversionViewModel {
         ConversionViewModel(workingDirectoryService: WorkingDirectoryService(fileManager: RoutingFileManager()), converter: converter)
     }
@@ -128,6 +157,76 @@ final class PDFRoutingIntegrationTests: XCTestCase {
         XCTAssertNotNil(host.presentedViewController, "The completed PostScript conversion must present its save dialog")
     }
 
+    @MainActor func testPrimaryFileImporterStillPresentsWhenEncryptionFlowIsInstalled() async throws {
+        let model = model()
+        model.presentFileImporter(for: .pdfInformation)
+        XCTAssertTrue(model.isFileImporterPresented)
+        let scene = try XCTUnwrap(
+            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        )
+        let window = try XCTUnwrap(scene.windows.first { $0.isKeyWindow })
+        let previous = window.rootViewController
+        let host = UIHostingController(rootView: ContentView(viewModel: model))
+        window.rootViewController = host
+        host.view.setNeedsLayout()
+        host.view.layoutIfNeeded()
+        defer {
+            host.dismiss(animated: false)
+            window.rootViewController = previous
+        }
+
+        try await Task.sleep(for: .milliseconds(500))
+
+        let presentedViewControllers = scene.windows.flatMap {
+            presentedViewControllerHierarchy(from: $0.rootViewController)
+        }
+        XCTAssertTrue(
+            presentedViewControllers.contains { $0 is UIDocumentPickerViewController },
+            "Installing the PostScript encryption flow must not disable the existing file importer. isPresented=\(model.isFileImporterPresented), purpose=\(String(describing: model.fileImportPurpose)), controlsDisabled=\(model.controlsAreDisabled), presented=\(presentedViewControllers.map { String(describing: type(of: $0)) })"
+        )
+    }
+
+    @MainActor func testEncryptedPDFExportConvertsBeforeEncrypting() async throws {
+        let converter = EncryptedExportConverter()
+        let runtimeSettings = GhostscriptRuntimeSettings()
+        let session = PostScriptEncryptionSession(
+            runtimeSettings: runtimeSettings,
+            converter: converter
+        )
+        let sourceURL = try fixture(extension: "pdf")
+        defer {
+            session.cancel()
+            try? FileManager.default.removeItem(at: sourceURL.deletingLastPathComponent())
+        }
+
+        session.preparePDFExport(
+            sourceURL: sourceURL,
+            sourceName: "Current.pdf",
+            inputPassword: nil
+        )
+        XCTAssertTrue(session.isPasswordPromptPresented)
+
+        let ready = expectation(description: "Encrypted PostScript is ready to save")
+        let observation = session.$artifact.compactMap { $0 }.prefix(1).sink { _ in
+            ready.fulfill()
+        }
+        session.encrypt(password: "Export password 42!")
+        await fulfillment(of: [ready], timeout: 10)
+        observation.cancel()
+
+        let artifact = try XCTUnwrap(session.artifact)
+        let encrypted = try String(contentsOf: artifact.url, encoding: .utf8)
+        let conversionCount = await converter.postScriptConversions
+        XCTAssertEqual(conversionCount, 1)
+        XCTAssertEqual(artifact.url.lastPathComponent, "Current.encrypted.ps")
+        XCTAssertFalse(encrypted.contains("Converted PDF payload 9817"))
+        XCTAssertTrue(
+            encrypted.contains(
+                "/wrongPasswordMessage <57726f6e672050617373776f7264> def"
+            )
+        )
+    }
+
     @MainActor func testMissingFontInformationPresentationAndLayout() async throws {
         try await checkInformationLayout(missingFont: true)
     }
@@ -193,5 +292,14 @@ final class PDFRoutingIntegrationTests: XCTestCase {
         attachment.name = missingFont ? "PDF information — visible font warning" : "PDF information — iOS sheet"
         attachment.lifetime = .keepAlways
         add(attachment)
+    }
+
+    @MainActor private func presentedViewControllerHierarchy(
+        from root: UIViewController?
+    ) -> [UIViewController] {
+        guard let root else { return [] }
+        return [root]
+            + root.children.flatMap { presentedViewControllerHierarchy(from: $0) }
+            + presentedViewControllerHierarchy(from: root.presentedViewController)
     }
 }

@@ -108,6 +108,10 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections><action selector="openPostScriptConversion:" target="Voe-Tx-rLC" id="PS-Cnv-Act"/></connections>
                             </menuItem>
+                            <menuItem title="Encrypt PostScript…" id="PS-Enc-Open">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="encryptPostScript:" target="Voe-Tx-rLC" id="PS-Enc-Act"/></connections>
+                            </menuItem>
                             <menuItem title="Compress PDF…" id="PDF-Cmp-Open">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections><action selector="compressPDF:" target="-1" id="PDF-Cmp-Act"/></connections>

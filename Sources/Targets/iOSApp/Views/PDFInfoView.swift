@@ -5,6 +5,7 @@ struct PDFInfoView: View {
     @ObservedObject var session: PDFInspectionSession
     @StateObject private var actions: PDFEditingActions
     @StateObject private var postScriptExport: PostScriptExportSession
+    @StateObject private var postScriptEncryption: PostScriptEncryptionSession
     private let ownsInspection: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var category = PDFInfoCategory.overview
@@ -36,6 +37,9 @@ struct PDFInfoView: View {
         _actions = StateObject(wrappedValue: PDFEditingActions(inspection: session, editing: editing))
         _postScriptExport = StateObject(
             wrappedValue: PostScriptExportSession(runtimeSettings: runtimeSettings)
+        )
+        _postScriptEncryption = StateObject(
+            wrappedValue: PostScriptEncryptionSession(runtimeSettings: runtimeSettings)
         )
     }
 
@@ -170,6 +174,8 @@ struct PDFInfoView: View {
                         Divider()
                         Button("Export as PostScript…", action: exportPostScript)
                             .disabled(postScriptExport.isProcessing)
+                        Button("Export as Encrypted PostScript…", action: exportEncryptedPostScript)
+                            .disabled(postScriptEncryption.isProcessing)
                         if let editing = actions.editing, editing.isEdited, let revision = editing.current {
                             Button("Export edited PDF…") { sharedRevision = revision }
                         }
@@ -255,11 +261,15 @@ struct PDFInfoView: View {
         .onChange(of: actions.notice) { _, value in if let value { message = value; actions.notice = nil } }
         .onDisappear {
             if !showsExport && sharedRevision == nil && compression == nil && signature == nil
-                && !selectsResourceFolder && !postScriptExport.isFileExporterPresented {
+                && !selectsResourceFolder && !postScriptExport.isFileExporterPresented
+                && !postScriptEncryption.isFileExporterPresented
+                && !postScriptEncryption.isPasswordPromptPresented
+                && !postScriptEncryption.isProcessing {
                 close()
                 removeExport()
             }
         }
+        .modifier(PostScriptEncryptionFlowModifier(session: postScriptEncryption))
     }
 
     private var bottomActionBar: some View {
@@ -328,7 +338,7 @@ struct PDFInfoView: View {
         }
     }
 
-    private func close() { actions.cancel(); postScriptExport.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; if ownsInspection { session.cancel() } }
+    private func close() { actions.cancel(); postScriptExport.cancel(); postScriptEncryption.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; if ownsInspection { session.cancel() } }
     private func unlock() { let value = password; password = ""; session.unlock(value) }
     private func removeMetadata() {
         if session.report.hasConformityDeclaration { asksConformity = true }
@@ -341,6 +351,14 @@ struct PDFInfoView: View {
     private func exportPostScript() {
         guard let input = actions.editing?.current?.input ?? session.currentInput else { return }
         postScriptExport.start(
+            sourceURL: input.url,
+            sourceName: input.fileName,
+            inputPassword: actions.editing?.passwordForProcessing ?? session.unlockedPassword
+        )
+    }
+    private func exportEncryptedPostScript() {
+        guard let input = actions.editing?.current?.input ?? session.currentInput else { return }
+        postScriptEncryption.preparePDFExport(
             sourceURL: input.url,
             sourceName: input.fileName,
             inputPassword: actions.editing?.passwordForProcessing ?? session.unlockedPassword

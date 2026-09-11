@@ -254,6 +254,9 @@
 /* Class = "NSMenu"; title = "File"; ObjectID = "bib-Uj-vzu"; */
 "bib-Uj-vzu.title" = "File";
 
+/* Class = "NSMenuItem"; title = "Encrypt PostScript…"; ObjectID = "PS-Enc-Open"; */
+"PS-Enc-Open.title" = "Encrypt PostScript…";
+
 /* Class = "NSMenuItem"; title = "Use Selection for Find"; ObjectID = "buJ-ug-pKt"; */
 "buJ-ug-pKt.title" = "Use Selection for Find";
 

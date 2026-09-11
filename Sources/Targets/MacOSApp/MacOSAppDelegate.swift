@@ -49,6 +49,12 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         MacOSApplicationModel.shared.postScriptExportController.exportCurrent()
     }
 
+    @IBAction func encryptPostScript(_ sender: Any?) {
+        MacOSApplicationModel.shared.postScriptEncryptionController.presentOpenPanel(
+            parentWindow: NSApp.keyWindow
+        )
+    }
+
     @IBAction func openPDFInformation(_ sender: Any?) {
         MacOSPDFInfoWindowController.openPanel()
     }
@@ -155,6 +161,9 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         }
         if menuItem.action == #selector(exportCurrentAsPostScript(_:)) {
             return MacOSApplicationModel.shared.postScriptExportController.canExportCurrent
+        }
+        if menuItem.action == #selector(encryptPostScript(_:)) {
+            return MacOSApplicationModel.shared.postScriptEncryptionController.canPresent
         }
         guard menuItem.action == #selector(prepareContainerReset(_:)) else { return true }
         return MacOSApplicationModel.shared.activeConversionCount == 0

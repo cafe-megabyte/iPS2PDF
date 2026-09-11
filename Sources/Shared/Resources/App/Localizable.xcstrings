@@ -3007,6 +3007,16 @@
         }
       }
     },
+    "Export as Encrypted PostScript…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als verschlüsseltes PostScript exportieren …"
+          }
+        }
+      }
+    },
     "Export complete report" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -8682,6 +8692,266 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Yes"
+          }
+        }
+      }
+    },
+    "Confirm password" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Passwort bestätigen"
+          }
+        }
+      }
+    },
+    "Encrypt" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verschlüsseln"
+          }
+        }
+      }
+    },
+    "Encrypt PostScript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript verschlüsseln"
+          }
+        }
+      }
+    },
+    "Encrypt PostScript…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript verschlüsseln …"
+          }
+        }
+      }
+    },
+    "Encrypting PostScript…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript wird verschlüsselt …"
+          }
+        }
+      }
+    },
+    "Enter a password." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Geben Sie ein Passwort ein."
+          }
+        }
+      }
+    },
+    "Paste" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Einfügen"
+          }
+        }
+      }
+    },
+    "PostScript encryption" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Verschlüsselung"
+          }
+        }
+      }
+    },
+    "PostScript encryption failed" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Verschlüsselung fehlgeschlagen"
+          }
+        }
+      }
+    },
+    "PostScript file" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Datei"
+          }
+        }
+      }
+    },
+    "Secure random data could not be generated." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sichere Zufallsdaten konnten nicht erzeugt werden."
+          }
+        }
+      }
+    },
+    "Select a PostScript or EPS file to encrypt." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie eine PostScript- oder EPS-Datei zum Verschlüsseln aus."
+          }
+        }
+      }
+    },
+    "The encrypted file contains a password placeholder. Replace it with this password before opening or converting the file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die verschlüsselte Datei enthält einen Passwort-Platzhalter. Ersetzen Sie ihn vor dem Öffnen oder Konvertieren der Datei durch dieses Passwort."
+          }
+        }
+      }
+    },
+    "The encrypted PostScript file already exists." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die verschlüsselte PostScript-Datei ist bereits vorhanden."
+          }
+        }
+      }
+    },
+    "The encrypted PostScript file could not be created." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die verschlüsselte PostScript-Datei konnte nicht erstellt werden."
+          }
+        }
+      }
+    },
+    "The encrypted PostScript file could not be written completely." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die verschlüsselte PostScript-Datei konnte nicht vollständig geschrieben werden."
+          }
+        }
+      }
+    },
+    "The encryption key could not be derived." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Der Schlüssel für die Verschlüsselung konnte nicht abgeleitet werden."
+          }
+        }
+      }
+    },
+    "The password may contain at most 1,023 characters." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das Passwort darf höchstens 1.023 Zeichen enthalten."
+          }
+        }
+      }
+    },
+    "The passwords do not match." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Passwörter stimmen nicht überein."
+          }
+        }
+      }
+    },
+    "The PostScript encryption request is invalid." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Anfrage zur PostScript-Verschlüsselung ist ungültig."
+          }
+        }
+      }
+    },
+    "The PostScript file could not be encrypted." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PostScript-Datei konnte nicht verschlüsselt werden."
+          }
+        }
+      }
+    },
+    "The PostScript file could not be read completely." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die PostScript-Datei konnte nicht vollständig gelesen werden."
+          }
+        }
+      }
+    },
+    "The selected file is not a PostScript or EPS file." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ausgewählte Datei ist keine PostScript- oder EPS-Datei."
+          }
+        }
+      }
+    },
+    "The selected PostScript file could not be read." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die ausgewählte PostScript-Datei konnte nicht gelesen werden."
+          }
+        }
+      }
+    },
+    "This password is reserved. Choose a different password." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dieses Passwort ist reserviert. Wählen Sie ein anderes Passwort."
+          }
+        }
+      }
+    },
+    "Use printable ASCII characters except parentheses and backslashes." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verwenden Sie druckbare ASCII-Zeichen außer Klammern und umgekehrten Schrägstrichen."
           }
         }
       }

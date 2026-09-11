@@ -47,6 +47,16 @@ actor MacOSDocumentWorkspace {
         )
     }
 
+    func postScriptEncryptionOutputURL(sourceName: String) throws -> URL {
+        try FileManager.default.createDirectory(
+            at: directoryURL,
+            withIntermediateDirectories: true
+        )
+        return directoryURL.appendingPathComponent(
+            PostScriptEncryptor.outputFilename(for: sourceName)
+        )
+    }
+
     func validatePDF(at url: URL) throws {
         let values = try url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
         guard values.isRegularFile == true else { throw ConversionFailure.outputMissing }

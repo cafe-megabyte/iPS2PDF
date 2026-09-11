@@ -13,6 +13,10 @@ final class MacOSApplicationModel: ObservableObject {
         coordinator: conversionCoordinator,
         runtimeSettings: runtimeSettings
     )
+    lazy var postScriptEncryptionController = MacOSPostScriptEncryptionController(
+        coordinator: conversionCoordinator,
+        runtimeSettings: runtimeSettings
+    )
 
     private(set) var activeConversionCount = 0
     private var idleActions: [() -> Void] = []

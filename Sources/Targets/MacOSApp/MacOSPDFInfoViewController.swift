@@ -12,6 +12,16 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
     private let signatureButton = NSButton(title: String(localized: "Sign PDF…"), target: nil, action: nil)
     private let savePDFButton = NSButton(title: String(localized: "Export edited PDF…"), target: nil, action: nil)
     private let moreButton = NSPopUpButton(frame: .zero, pullsDown: true)
+    private let postScriptMenuItem = NSMenuItem(
+        title: String(localized: "Export as PostScript…"),
+        action: nil,
+        keyEquivalent: ""
+    )
+    private let encryptedPostScriptMenuItem = NSMenuItem(
+        title: String(localized: "Export as Encrypted PostScript…"),
+        action: nil,
+        keyEquivalent: ""
+    )
     private let undoPDFButton = NSButton(title: "", target: nil, action: nil)
     private let redoPDFButton = NSButton(title: "", target: nil, action: nil)
     private let cancelProcessingButton = NSButton(title: String(localized: "Cancel"), target: nil, action: nil)
@@ -135,13 +145,12 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
             systemSymbolName: "ellipsis",
             accessibilityDescription: String(localized: "More export options")
         )
-        let postScriptItem = NSMenuItem(
-            title: String(localized: "Export as PostScript…"),
-            action: #selector(exportAsPostScript),
-            keyEquivalent: ""
-        )
-        postScriptItem.target = self
-        moreButton.menu?.addItem(postScriptItem)
+        postScriptMenuItem.action = #selector(exportAsPostScript)
+        postScriptMenuItem.target = self
+        moreButton.menu?.addItem(postScriptMenuItem)
+        encryptedPostScriptMenuItem.action = #selector(exportAsEncryptedPostScript)
+        encryptedPostScriptMenuItem.target = self
+        moreButton.menu?.addItem(encryptedPostScriptMenuItem)
         moreButton.setAccessibilityLabel(String(localized: "More export options"))
         undoPDFButton.image = NSImage(systemSymbolName: "arrow.uturn.backward", accessibilityDescription: String(localized: "Undo PDF edit"))
         redoPDFButton.image = NSImage(systemSymbolName: "arrow.uturn.forward", accessibilityDescription: String(localized: "Redo PDF edit"))
@@ -194,7 +203,11 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
         savePDFButton.isEnabled = actions.editing?.isEdited == true && !actions.isProcessing
         compressionButton.isEnabled = metadataButton.isEnabled
         signatureButton.isEnabled = metadataButton.isEnabled
-        moreButton.isEnabled = postScriptExportInput != nil
+        postScriptMenuItem.isEnabled = postScriptExportInput != nil
+        encryptedPostScriptMenuItem.isEnabled =
+            postScriptExportInput != nil
+                && MacOSApplicationModel.shared.postScriptEncryptionController.canPresent
+        moreButton.isEnabled = postScriptMenuItem.isEnabled || encryptedPostScriptMenuItem.isEnabled
         cancelProcessingButton.isHidden = !actions.isProcessing && !isExportingResources
         processingStatus.stringValue = isExportingResources ? resourceExportStatus : (actions.isProcessing ? String(localized: "Removing metadata…") : "")
         categoryButtons.enumerated().forEach { $0.element.state = PDFInfoCategory.allCases[$0.offset] == category ? .on : .off }
@@ -277,6 +290,17 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
     }
     @objc private func exportAsPostScript() {
         MacOSApplicationModel.shared.postScriptExportController.export(using: self)
+    }
+
+    @objc private func exportAsEncryptedPostScript() {
+        guard let input = postScriptExportInput else {
+            NSSound.beep()
+            return
+        }
+        MacOSApplicationModel.shared.postScriptEncryptionController.exportEncrypted(
+            input: input,
+            parentWindow: view.window
+        )
     }
 
     var postScriptExportInput: MacOSPostScriptExportInput? {
@@ -426,6 +450,11 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
         if menuItem.action == #selector(exportAllPDFResources(_:)) { return exportResourcesButton.isEnabled }
+        if menuItem.action == #selector(exportAsPostScript) { return postScriptExportInput != nil }
+        if menuItem.action == #selector(exportAsEncryptedPostScript) {
+            return postScriptExportInput != nil
+                && MacOSApplicationModel.shared.postScriptEncryptionController.canPresent
+        }
         return true
     }
     func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {

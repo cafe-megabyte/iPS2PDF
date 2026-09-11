@@ -6,6 +6,7 @@ struct FrontConversionView: View {
     let onShowPDFInfo: () -> Void
     let onOpenFile: () -> Void
     let onOpenPostScriptFile: () -> Void
+    let onEncryptPostScriptFile: () -> Void
     let onShowGhostscriptSettings: () -> Void
 
     var body: some View {
@@ -117,12 +118,43 @@ struct FrontConversionView: View {
     }
 
     private var postScriptCard: some View {
-        toolButton(
-            title: LocalizedStringResource("Convert to PS…"),
-            subtitle: LocalizedStringResource("PDF · EPS · PostScript → PostScript"),
-            systemImage: "doc.badge.arrow.up",
-            action: onOpenPostScriptFile
-        )
+        VStack(spacing: 0) {
+            toolButton(
+                title: LocalizedStringResource("Convert to PS…"),
+                subtitle: LocalizedStringResource("PDF · EPS · PostScript → PostScript"),
+                systemImage: "doc.badge.arrow.up",
+                action: onOpenPostScriptFile
+            )
+
+            Divider()
+                .padding(.leading, 18)
+
+            Button(action: onEncryptPostScriptFile) {
+                HStack(spacing: 12) {
+                    Image(systemName: "lock.doc")
+                        .font(.body.weight(.medium))
+                        .foregroundStyle(.tint)
+                        .frame(width: 38, height: 38)
+                        .background(Color.appTint.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    Text("Encrypt PostScript…")
+                        .font(.body)
+                        .foregroundStyle(.primary)
+
+                    Spacer(minLength: 8)
+
+                    Image(systemName: "chevron.right")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.horizontal, 18)
+                .frame(maxWidth: .infinity, minHeight: 64)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(viewModel.controlsAppearDisabled)
+        }
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 8, y: 3)

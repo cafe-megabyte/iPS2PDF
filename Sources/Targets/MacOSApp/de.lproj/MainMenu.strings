@@ -316,6 +316,9 @@
 /* Class = "NSMenu"; title = "File"; ObjectID = "bib-Uj-vzu"; */
 "bib-Uj-vzu.title" = "Ablage";
 
+/* Class = "NSMenuItem"; title = "Encrypt PostScript…"; ObjectID = "PS-Enc-Open"; */
+"PS-Enc-Open.title" = "PostScript verschlüsseln …";
+
 /* Class = "NSMenu"; title = "Open Recent"; ObjectID = "oas-Oc-fiZ"; */
 "oas-Oc-fiZ.title" = "Benutzte Dokumente";
 

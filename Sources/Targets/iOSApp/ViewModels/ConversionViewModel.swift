@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import UniformTypeIdentifiers
 
 @MainActor
 final class ConversionViewModel: ObservableObject {
@@ -7,6 +8,7 @@ final class ConversionViewModel: ObservableObject {
     @Published private(set) var isPDFVersionConstrained = false
     @Published var selectedPDFACompatibility: PDFACompatibility
     @Published var isFileImporterPresented = false
+    @Published private(set) var fileImportPurpose: FileImportPurpose?
     @Published var isPostScriptFileExporterPresented = false
     @Published private(set) var postScriptExportArtifact: PostScriptExportArtifact?
     @Published private(set) var isProcessing = false
@@ -125,6 +127,19 @@ final class ConversionViewModel: ObservableObject {
         }
     }
 
+    func presentFileImporter(for purpose: FileImportPurpose) {
+        guard !controlsAreDisabled, !isFileImporterPresented else { return }
+        fileImportPurpose = purpose
+        isFileImporterPresented = true
+    }
+
+    func completeFileImportPresentation() -> FileImportPurpose? {
+        let purpose = fileImportPurpose
+        fileImportPurpose = nil
+        isFileImporterPresented = false
+        return purpose
+    }
+
     func postScriptFileExporterDidFinish(_ result: Result<URL, Error>) {
         isPostScriptFileExporterPresented = false
         postScriptExportArtifact = nil
@@ -143,11 +158,13 @@ final class ConversionViewModel: ObservableObject {
 
     func handleIncomingFiles(_ urls: [URL]) {
         isFileImporterPresented = false
+        fileImportPurpose = nil
         acceptFiles(urls)
     }
 
     func handleOpenURL(_ url: URL) {
         isFileImporterPresented = false
+        fileImportPurpose = nil
         guard PendingShareDocument.isTriggerURL(url) else {
             acceptFiles([url])
             return
@@ -428,6 +445,26 @@ final class ConversionViewModel: ObservableObject {
 
         await withCheckedContinuation { continuation in
             viewerDismissalWaiters.append(continuation)
+        }
+    }
+
+    enum FileImportPurpose {
+        case pdfInformation
+        case pdfConversion
+        case postScriptConversion
+        case postScriptEncryption
+
+        var allowedContentTypes: [UTType] {
+            switch self {
+            case .pdfInformation:
+                [.pdf]
+            case .pdfConversion:
+                [.data, .joboptions]
+            case .postScriptConversion:
+                [.item]
+            case .postScriptEncryption:
+                PostScriptEncryptor.supportedContentTypes
+            }
         }
     }
 

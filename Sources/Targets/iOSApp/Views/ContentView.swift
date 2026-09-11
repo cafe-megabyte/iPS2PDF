@@ -7,17 +7,31 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var showsBack = false
-    @State private var fileImportPurpose: FileImportPurpose?
     @State private var showsGhostscriptSettings = false
+    @StateObject private var postScriptEncryption: PostScriptEncryptionSession
+
+    init(viewModel: ConversionViewModel) {
+        self.viewModel = viewModel
+        _postScriptEncryption = StateObject(
+            wrappedValue: PostScriptEncryptionSession(
+                runtimeSettings: viewModel.runtimeSettings
+            )
+        )
+    }
 
     var body: some View {
         ZStack {
             FrontConversionView(
                 viewModel: viewModel,
                 onShowSettings: { setBackVisible(true) },
-                onShowPDFInfo: { presentFileImporter(for: .pdfInformation) },
-                onOpenFile: { presentFileImporter(for: .pdfConversion) },
-                onOpenPostScriptFile: { presentFileImporter(for: .postScriptConversion) },
+                onShowPDFInfo: { viewModel.presentFileImporter(for: .pdfInformation) },
+                onOpenFile: { viewModel.presentFileImporter(for: .pdfConversion) },
+                onOpenPostScriptFile: {
+                    viewModel.presentFileImporter(for: .postScriptConversion)
+                },
+                onEncryptPostScriptFile: {
+                    viewModel.presentFileImporter(for: .postScriptEncryption)
+                },
                 onShowGhostscriptSettings: { showsGhostscriptSettings = true }
             )
             .opacity(showsBack ? 0 : 1)
@@ -49,12 +63,11 @@ struct ContentView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
-        .fileImporter(
-            isPresented: $viewModel.isFileImporterPresented,
-            allowedContentTypes: fileImportPurpose?.allowedContentTypes ?? [.item],
-            allowsMultipleSelection: false
-        ) { result in
-            handleFileImport(result)
+        .sheet(isPresented: $viewModel.isFileImporterPresented) {
+            FileImportDocumentPicker(
+                allowedContentTypes: viewModel.fileImportPurpose?.allowedContentTypes ?? [.item],
+                completion: handleFileImport
+            )
         }
         .sheet(
             isPresented: $viewModel.isPostScriptFileExporterPresented,
@@ -124,6 +137,7 @@ struct ContentView: View {
                 )
             }
         }
+        .modifier(PostScriptEncryptionFlowModifier(session: postScriptEncryption))
     }
 
     private func setBackVisible(_ visible: Bool) {
@@ -132,16 +146,8 @@ struct ContentView: View {
         }
     }
 
-    private func presentFileImporter(for purpose: FileImportPurpose) {
-        guard !viewModel.controlsAreDisabled else { return }
-        fileImportPurpose = purpose
-        viewModel.isFileImporterPresented = true
-    }
-
     private func handleFileImport(_ result: Result<[URL], Error>) {
-        let purpose = fileImportPurpose
-        fileImportPurpose = nil
-        viewModel.isFileImporterPresented = false
+        let purpose = viewModel.completeFileImportPresentation()
         guard case let .success(urls) = result, let url = urls.first else { return }
 
         switch purpose {
@@ -151,6 +157,8 @@ struct ContentView: View {
             viewModel.handleSelectedFile(url)
         case .postScriptConversion:
             viewModel.handleSelectedPostScriptFile(url)
+        case .postScriptEncryption:
+            postScriptEncryption.selectPostScriptSource(url)
         case nil:
             break
         }
@@ -214,20 +222,4 @@ struct ContentView: View {
         return true
     }
 
-    private enum FileImportPurpose {
-        case pdfInformation
-        case pdfConversion
-        case postScriptConversion
-
-        var allowedContentTypes: [UTType] {
-            switch self {
-            case .pdfInformation:
-                return [.pdf]
-            case .pdfConversion:
-                return [.data, .joboptions]
-            case .postScriptConversion:
-                return [.item]
-            }
-        }
-    }
 }
