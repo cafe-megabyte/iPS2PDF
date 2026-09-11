@@ -1043,27 +1043,9 @@ final class MacOSDistillerEditorViewController: NSViewController, NSWindowDelega
         ) { [weak self] value in
             self?.apply(SemanticJoboptions.changeEmbedsOutputIntentProfile(value))
         }
-        let limits = ActionButton.checkbox(
-            title: String(localized: "Security limits"),
-            state: session.securityLimitsEnabled
-        ) { [weak self] value in self?.session.setSecurityLimitsEnabled(value) }
-        let automatic = ActionButton.checkbox(
-            title: String(localized: "Automatic random seed"),
-            state: session.automaticRandomSeed
-        ) { [weak self] value in
-            self?.session.setAutomaticRandomSeed(value)
-            self?.buildSelectedCategory()
-        }
-        var appRows: [NSView] = [embedOutputIntentProfile, limits, automatic]
-        if !session.automaticRandomSeed {
-            let seed = CommitTextField(String(session.manualRandomSeed)) { [weak self] text in
-                guard let value = Int(text) else { return false }
-                self?.session.setManualRandomSeed(value)
-                return true
-            }
-            appRows.append(labeledRow(String(localized: "Seed"), seed))
-        }
-        formStack.addArrangedSubview(makeSection(title: "iPS2PDF", rows: appRows))
+        formStack.addArrangedSubview(
+            makeSection(title: "iPS2PDF", rows: [embedOutputIntentProfile])
+        )
 
         let knownAdditional = DistillerOptionCatalog.options
             .filter { $0.classification == .knownAdditional }

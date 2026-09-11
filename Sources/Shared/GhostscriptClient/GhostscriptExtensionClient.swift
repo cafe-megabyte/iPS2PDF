@@ -136,6 +136,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
         var request = runRequest(
             validationOnly: true,
+            outputFormat: .pdf,
             standard: .none,
             limitsEnabled: true,
             allowTransparency: prepared.allowTransparency,
@@ -188,6 +189,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
         var request = runRequest(
             validationOnly: false,
+            outputFormat: .pdf,
             standard: standard,
             limitsEnabled: limitsEnabled,
             allowTransparency: prepared.allowTransparency,
@@ -207,16 +209,80 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         }
         if let inputPassword, !inputPassword.isEmpty { diagnostics = diagnostics?.replacingOccurrences(of: inputPassword, with: "[redacted]") }
         try requireSuccess(reply, diagnostics: diagnostics)
-        try copyOutput(to: outputURL)
+        try copyOutput(to: outputURL, format: .pdf)
 
         if limitsEnabled {
             let outputSize = try outputURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
             guard Int64(outputSize) <= maximumOutputBytes else {
                 throw ConversionFailure.ghostscriptConversion(
                     returnCode: -1002,
-                    diagnostics: "The generated PDF exceeds the 2 GB safety limit."
+                    diagnostics: "The generated output exceeds the 2 GB safety limit."
                 )
             }
+        }
+    }
+
+    func convertToPostScript(
+        inputURL: URL,
+        outputURL: URL,
+        limitsEnabled: Bool,
+        postScriptRandomSeed: Int,
+        inputPassword: String? = nil
+    ) async throws {
+        if limitsEnabled {
+            let inputSize = try inputURL.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+            guard Int64(inputSize) <= maximumInputBytes else {
+                throw ConversionFailure.ghostscriptConversion(
+                    returnCode: -1003,
+                    diagnostics: "The input exceeds the 1 GB safety limit."
+                )
+            }
+        }
+
+        let inputFileHandle: FileHandle?
+#if os(macOS)
+        inputFileHandle = try openInputFileHandle(at: inputURL)
+        defer { try? inputFileHandle?.close() }
+        try prepareInputWorkspace(inputURL: inputURL, stagesInputFile: false)
+#else
+        inputFileHandle = nil
+        try prepareInputWorkspace(inputURL: inputURL, stagesInputFile: true)
+#endif
+        defer { try? AppGroupWorkspace.clearConversionDirectories() }
+
+        var request = runRequest(
+            validationOnly: false,
+            outputFormat: .postScript,
+            standard: .none,
+            limitsEnabled: limitsEnabled,
+            allowTransparency: false,
+            epsCrop: true,
+            postScriptRandomSeed: postScriptRandomSeed
+        )
+        if let inputPassword {
+            request[GhostscriptExtensionEnvelope.inputPDFPassword] = inputPassword
+        }
+        let reply = try await sendRun(request, inputFileHandle: inputFileHandle)
+        var diagnostics = journalText()
+        let lower = (diagnostics ?? "").lowercased()
+        if ["requires a password for access", "password did not work", "incorrect password", "invalid password"]
+            .contains(where: lower.contains) {
+            throw ConversionFailure.inputPasswordRequired
+        }
+        if let inputPassword, !inputPassword.isEmpty {
+            diagnostics = diagnostics?.replacingOccurrences(of: inputPassword, with: "[redacted]")
+        }
+        try requireSuccess(reply, diagnostics: diagnostics)
+        try copyOutput(to: outputURL, format: .postScript)
+
+        let values = try outputURL.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey])
+        guard values.isRegularFile == true else { throw ConversionFailure.outputMissing }
+        guard (values.fileSize ?? 0) > 0 else { throw ConversionFailure.outputEmpty }
+        if limitsEnabled, Int64(values.fileSize ?? 0) > maximumOutputBytes {
+            throw ConversionFailure.ghostscriptConversion(
+                returnCode: -1002,
+                diagnostics: "The generated output exceeds the 2 GB safety limit."
+            )
         }
     }
 
@@ -295,6 +361,21 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
                 .value(forKey: "PDFXOutputConditionIdentifier")?.textualValue,
             pdfXRegistryName: document.value(forKey: "PDFXRegistryName")?.textualValue,
             pdfXTrapped: document.value(forKey: "PDFXTrapped")?.textualValue
+        )
+    }
+
+    private func prepareInputWorkspace(inputURL: URL, stagesInputFile: Bool) throws {
+        try AppGroupWorkspace.prepareConversionDirectories()
+        let inputDirectory = try AppGroupWorkspace.inputDirectoryURL()
+        if stagesInputFile {
+            try AppGroupWorkspace.publishFile(
+                from: inputURL,
+                to: inputDirectory.appendingPathComponent(AppGroupWorkspace.inputFileName)
+            )
+        }
+        try Data().write(
+            to: inputDirectory.appendingPathComponent(AppGroupWorkspace.readyFileName),
+            options: [.atomic]
         )
     }
 
@@ -396,6 +477,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
     private func runRequest(
         validationOnly: Bool,
+        outputFormat: GhostscriptOutputFormat,
         standard: PDFStandard,
         limitsEnabled: Bool,
         allowTransparency: Bool,
@@ -404,6 +486,7 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
     ) -> XPCDictionary {
         var request = baseRequest(operation: GhostscriptExtensionEnvelope.run)
         request[GhostscriptExtensionEnvelope.validate] = validationOnly
+        request[GhostscriptExtensionEnvelope.outputFormat] = outputFormat.rawValue
         request[GhostscriptExtensionEnvelope.standard] = standard.rawValue
         request[GhostscriptExtensionEnvelope.limitsEnabled] = limitsEnabled
         request[GhostscriptExtensionEnvelope.allowTransparency] = allowTransparency
@@ -447,9 +530,16 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         }
     }
 
-    private func copyOutput(to destinationURL: URL) throws {
+    private func copyOutput(
+        to destinationURL: URL,
+        format: GhostscriptOutputFormat
+    ) throws {
         let sourceURL = try AppGroupWorkspace.outputDirectoryURL()
-            .appendingPathComponent(AppGroupWorkspace.outputFileName)
+            .appendingPathComponent(
+                format == .pdf
+                    ? AppGroupWorkspace.outputFileName
+                    : AppGroupWorkspace.postScriptOutputFileName
+            )
         guard FileManager.default.fileExists(atPath: sourceURL.path) else {
             throw ConversionFailure.outputMissing
         }
@@ -473,7 +563,12 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         inputFileHandle: FileHandle? = nil
     ) async throws -> XPCDictionary {
         do {
-            return try await send(request, inputFileHandle: inputFileHandle)
+            let limitsEnabled: Bool = request[GhostscriptExtensionEnvelope.limitsEnabled] ?? true
+            return try await send(
+                request,
+                inputFileHandle: inputFileHandle,
+                enforcesSafetyTimeout: limitsEnabled
+            )
         } catch let failure as ConversionFailure {
             throw failure
         } catch {
@@ -517,13 +612,18 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
     private func send(
         _ request: XPCDictionary,
-        inputFileHandle: FileHandle? = nil
+        inputFileHandle: FileHandle? = nil,
+        enforcesSafetyTimeout: Bool = true
     ) async throws -> XPCDictionary {
         let serializer = GhostscriptExtensionRequestSerializer.shared
         await serializer.wait()
         do {
             try Task.checkCancellation()
-            let reply = try await sendUnlocked(request, inputFileHandle: inputFileHandle)
+            let reply = try await sendUnlocked(
+                request,
+                inputFileHandle: inputFileHandle,
+                enforcesSafetyTimeout: enforcesSafetyTimeout
+            )
             try Task.checkCancellation()
             await serializer.signal()
             return reply
@@ -535,7 +635,8 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
 
     private func sendUnlocked(
         _ request: XPCDictionary,
-        inputFileHandle: FileHandle? = nil
+        inputFileHandle: FileHandle? = nil,
+        enforcesSafetyTimeout: Bool
     ) async throws -> XPCDictionary {
 #if os(macOS)
         let requestData = try MacOSXPCMessageCodec.encode(request)
@@ -554,11 +655,13 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
             (continuation: CheckedContinuation<Data, Error>) in
             let gate = MacOSReplyGate(continuation: continuation, connection: connection)
             cancellation.install(gate)
-            gate.installTimeoutTask(Task { [timeout] in
-                try? await Task.sleep(for: .seconds(timeout))
-                guard !Task.isCancelled else { return }
-                gate.finish(.failure(MacOSConnectionError.timedOut))
-            })
+            if enforcesSafetyTimeout {
+                gate.installTimeoutTask(Task { [timeout] in
+                    try? await Task.sleep(for: .seconds(timeout))
+                    guard !Task.isCancelled else { return }
+                    gate.finish(.failure(MacOSConnectionError.timedOut))
+                })
+            }
             let proxy = connection.remoteObjectProxyWithErrorHandler { error in
                 gate.finish(.failure(error))
             }
@@ -596,14 +699,16 @@ final class GhostscriptExtensionClient: @unchecked Sendable {
         let session = try process.makeXPCSession()
         let processHandle = AppExtensionProcessHandle(process: process)
         try session.activate()
-        let timeoutTask = Task { [timeout] in
-            try? await Task.sleep(for: .seconds(timeout))
-            guard !Task.isCancelled else { return }
-            session.cancel(reason: "Request deadline exceeded")
-            processHandle.invalidate()
-        }
+        let timeoutTask: Task<Void, Never>? = enforcesSafetyTimeout
+            ? Task { [timeout] in
+                try? await Task.sleep(for: .seconds(timeout))
+                guard !Task.isCancelled else { return }
+                session.cancel(reason: "Request deadline exceeded")
+                processHandle.invalidate()
+            }
+            : nil
         defer {
-            timeoutTask.cancel()
+            timeoutTask?.cancel()
             session.cancel(reason: "Request completed")
             processHandle.invalidate()
         }

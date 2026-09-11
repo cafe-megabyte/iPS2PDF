@@ -13,6 +13,10 @@ final class PDFRoutingIntegrationTests: XCTestCase {
             calls += 1
             try FileManager.default.copyItem(at: sourceURL, to: outputURL)
         }
+        func convertToPostScript(sourceURL: URL, outputURL: URL, securityLimitsEnabled: Bool, postScriptRandomSeed: Int, inputPassword: String?) async throws {
+            calls += 1
+            try FileManager.default.copyItem(at: sourceURL, to: outputURL)
+        }
     }
 
     private final class RoutingFileManager: FileManager, @unchecked Sendable {
@@ -98,9 +102,68 @@ final class PDFRoutingIntegrationTests: XCTestCase {
         XCTAssertNil(model.alert)
         XCTAssertNotNil(model.presentedPDFInfo)
     }
+
+    @MainActor func testCompletedPostScriptConversionPresentsFileExporter() async throws {
+        let model = model()
+        let url = try fixture(extension: "pdf")
+        let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first)
+        let window = try XCTUnwrap(scene.windows.first { $0.isKeyWindow })
+        let previous = window.rootViewController
+        let host = UIHostingController(rootView: ContentView(viewModel: model))
+        window.rootViewController = host
+        host.view.setNeedsLayout()
+        host.view.layoutIfNeeded()
+        defer {
+            model.postScriptFileExporterDidFinish(.failure(CocoaError(.userCancelled)))
+            host.dismiss(animated: false)
+            window.rootViewController = previous
+            try? FileManager.default.removeItem(at: url.deletingLastPathComponent())
+        }
+
+        try await Task.sleep(for: .milliseconds(100))
+        await finish(model) { model.handleSelectedPostScriptFile(url) }
+        try await Task.sleep(for: .milliseconds(500))
+
+        XCTAssertTrue(model.isPostScriptFileExporterPresented)
+        XCTAssertNotNil(host.presentedViewController, "The completed PostScript conversion must present its save dialog")
+    }
+
     @MainActor func testMissingFontInformationPresentationAndLayout() async throws {
         try await checkInformationLayout(missingFont: true)
     }
+
+    func testWorkingDirectoryCleanupRemovesAbandonedPostScriptExports() async throws {
+        let service = WorkingDirectoryService(fileManager: RoutingFileManager())
+        try await service.clearWorkingDirectory()
+        let outputURL = try await service.postScriptOutputURL(sourceName: "Abandoned.pdf")
+        try Data("%!PS-Adobe-3.0\n".utf8).write(to: outputURL)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: outputURL.path))
+
+        try await service.clearWorkingDirectory()
+        XCTAssertFalse(FileManager.default.fileExists(atPath: outputURL.path))
+    }
+
+    @MainActor func testGlobalGhostscriptSettingsPreserveExistingDefaults() throws {
+        let suiteName = "GhostscriptRuntimeSettingsTests-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        defaults.set(true, forKey: "initializedSecurityLimits")
+        defaults.set(false, forKey: "securityLimitsEnabled")
+        defaults.set(false, forKey: "automaticRandomSeed")
+        defaults.set(42, forKey: "manualRandomSeed")
+
+        let settings = GhostscriptRuntimeSettings(defaults: defaults)
+        XCTAssertFalse(settings.securityLimitsEnabled)
+        XCTAssertFalse(settings.automaticRandomSeed)
+        XCTAssertEqual(settings.manualRandomSeed, 42)
+        XCTAssertEqual(settings.snapshot().postScriptRandomSeed, 42)
+
+        settings.securityLimitsEnabled = true
+        settings.setAutomaticRandomSeed(true)
+        XCTAssertTrue(defaults.bool(forKey: "securityLimitsEnabled"))
+        XCTAssertTrue(defaults.bool(forKey: "automaticRandomSeed"))
+    }
+
     @MainActor private func checkInformationLayout(missingFont: Bool) async throws {
         let model = model()
         let url = try fixture(extension: "pdf", missingFont: missingFont)

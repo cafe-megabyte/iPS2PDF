@@ -10,6 +10,7 @@ actor MacOSConversionCoordinator {
         outputURL: URL,
         joboptionsURL: URL,
         settings: ConversionSettingsSnapshot,
+        runtimeSettings: GhostscriptRuntimeSettingsSnapshot,
         inputPassword: String? = nil
     ) async throws {
         await acquireWorkspace()
@@ -19,8 +20,25 @@ actor MacOSConversionCoordinator {
             outputURL: outputURL,
             joboptionsURL: joboptionsURL,
             standard: settings.standard,
-            limitsEnabled: settings.securityLimitsEnabled,
-            postScriptRandomSeed: settings.postScriptRandomSeed,
+            limitsEnabled: runtimeSettings.securityLimitsEnabled,
+            postScriptRandomSeed: runtimeSettings.postScriptRandomSeed,
+            inputPassword: inputPassword
+        )
+    }
+
+    func convertToPostScript(
+        inputURL: URL,
+        outputURL: URL,
+        runtimeSettings: GhostscriptRuntimeSettingsSnapshot,
+        inputPassword: String? = nil
+    ) async throws {
+        await acquireWorkspace()
+        defer { releaseWorkspace() }
+        try await client.convertToPostScript(
+            inputURL: inputURL,
+            outputURL: outputURL,
+            limitsEnabled: runtimeSettings.securityLimitsEnabled,
+            postScriptRandomSeed: runtimeSettings.postScriptRandomSeed,
             inputPassword: inputPassword
         )
     }

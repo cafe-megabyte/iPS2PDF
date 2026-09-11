@@ -3,7 +3,7 @@ import PDFKit
 import UniformTypeIdentifiers
 
 @MainActor
-final class MacOSConversionDocument: NSDocument {
+final class MacOSConversionDocument: NSDocument, MacOSPostScriptExportProviding {
     private static var nextCascadeTopLeft = NSPoint.zero
 
     private let viewModel = MacOSDocumentViewModel()
@@ -43,6 +43,7 @@ final class MacOSConversionDocument: NSDocument {
 
         let windowController = NSWindowController(window: window)
         addWindowController(windowController)
+        MacOSApplicationModel.shared.postScriptExportController.register(self)
         windowController.synchronizeWindowTitleWithDocumentName()
         window.standardWindowButton(.closeButton)?.isEnabled = false
         conversionIsActive = true
@@ -146,8 +147,23 @@ final class MacOSConversionDocument: NSDocument {
     }
 
     override func close() {
+        MacOSApplicationModel.shared.postScriptExportController.unregister(self)
         super.close()
         viewModel.clearWorkspace()
+    }
+
+    var postScriptExportInput: MacOSPostScriptExportInput? {
+        guard let revision = viewModel.editingSession?.current else { return nil }
+        return MacOSPostScriptExportInput(
+            url: revision.input.url,
+            sourceName: revision.input.fileName,
+            inputPassword: viewModel.editingSession?.passwordForProcessing,
+            retainedInput: revision.input
+        )
+    }
+
+    var postScriptExportWindow: NSWindow? {
+        windowControllers.first?.window
     }
 
     private func showInitialWindowIfNeeded() {

@@ -7,6 +7,8 @@ final class ConversionViewModel: ObservableObject {
     @Published private(set) var isPDFVersionConstrained = false
     @Published var selectedPDFACompatibility: PDFACompatibility
     @Published var isFileImporterPresented = false
+    @Published var isPostScriptFileExporterPresented = false
+    @Published private(set) var postScriptExportArtifact: PostScriptExportArtifact?
     @Published private(set) var isProcessing = false
     @Published private(set) var showsProgressOverlay = false
     @Published private(set) var preservesFileImporterSelectionAppearance = false
@@ -20,6 +22,7 @@ final class ConversionViewModel: ObservableObject {
     @Published var presentedPDFInfo: PDFInspectionSession?
 
     let joboptionsRepository: JoboptionsRepository
+    let runtimeSettings: GhostscriptRuntimeSettings
 
     private let workingDirectoryService: WorkingDirectoryService
     private let converter: any FileConverting
@@ -36,12 +39,14 @@ final class ConversionViewModel: ObservableObject {
 
     init(
         joboptionsRepository: JoboptionsRepository? = nil,
+        runtimeSettings: GhostscriptRuntimeSettings? = nil,
         workingDirectoryService: WorkingDirectoryService = WorkingDirectoryService(),
         converter: any FileConverting = GhostscriptConverter(),
         documentRouter: IncomingDocumentRouter = IncomingDocumentRouter()
     ) {
         let joboptionsRepository = joboptionsRepository ?? JoboptionsRepository()
         self.joboptionsRepository = joboptionsRepository
+        self.runtimeSettings = runtimeSettings ?? GhostscriptRuntimeSettings()
         self.workingDirectoryService = workingDirectoryService
         self.converter = converter
         self.documentRouter = documentRouter
@@ -64,7 +69,8 @@ final class ConversionViewModel: ObservableObject {
     }
 
     var controlsAreDisabled: Bool {
-        isProcessing || isShareSheetPresented || presentedPDFInfo != nil || alert != nil
+        isProcessing || isShareSheetPresented || isPostScriptFileExporterPresented
+            || presentedPDFInfo != nil || alert != nil
     }
 
     var controlsAppearDisabled: Bool {
@@ -110,6 +116,29 @@ final class ConversionViewModel: ObservableObject {
 
     func handleSelectedFile(_ url: URL) {
         acceptFiles([url], preservesSelectionAppearance: true, purpose: .conversion)
+    }
+
+    func handleSelectedPostScriptFile(_ url: URL) {
+        guard beginPostScriptConversion() else { return }
+        Task { [weak self] in
+            await self?.runPostScriptConversion(sourceURL: url)
+        }
+    }
+
+    func postScriptFileExporterDidFinish(_ result: Result<URL, Error>) {
+        isPostScriptFileExporterPresented = false
+        postScriptExportArtifact = nil
+        if case let .failure(error) = result,
+           (error as NSError).code != CocoaError.userCancelled.rawValue {
+            alert = AppAlert(
+                kind: .error,
+                title: String(localized: "conversion_failed"),
+                message: error.localizedDescription
+            )
+        }
+        Task.detached(priority: .utility) { [workingDirectoryService] in
+            try? await workingDirectoryService.clearWorkingDirectory()
+        }
     }
 
     func handleIncomingFiles(_ urls: [URL]) {
@@ -284,6 +313,7 @@ final class ConversionViewModel: ObservableObject {
                 // Capture only after the readiness gate, and keep this immutable
                 // for the lifetime of the conversion.
                 let settingsSnapshot = try joboptionsRepository.snapshot()
+                let runtimeSnapshot = runtimeSettings.snapshot()
                 let outputURL = try await workingDirectoryService.outputURL(for: inputURL)
                 let snapshotURL = try await workingDirectoryService.writeJoboptionsSnapshot(
                     settingsSnapshot.effectiveJoboptionsData
@@ -296,8 +326,8 @@ final class ConversionViewModel: ObservableObject {
                             outputURL: outputURL,
                             joboptionsURL: snapshotURL,
                             standard: settingsSnapshot.standard,
-                            securityLimitsEnabled: settingsSnapshot.securityLimitsEnabled,
-                            postScriptRandomSeed: settingsSnapshot.postScriptRandomSeed,
+                            securityLimitsEnabled: runtimeSnapshot.securityLimitsEnabled,
+                            postScriptRandomSeed: runtimeSnapshot.postScriptRandomSeed,
                             inputPassword: inputPassword
                         )
                         break
@@ -320,6 +350,70 @@ final class ConversionViewModel: ObservableObject {
             await finishWithFailure(failure)
         } catch {
             await finishWithFailure(.joboptions(diagnostics: error.localizedDescription))
+        }
+    }
+
+    private func beginPostScriptConversion() -> Bool {
+        guard !controlsAreDisabled else {
+            presentNotice(
+                title: String(localized: "notice_busy_title"),
+                message: String(localized: "notice_busy_message")
+            )
+            return false
+        }
+        isProcessing = true
+        showsProgressOverlay = false
+        startProgressDelay()
+        return true
+    }
+
+    private func runPostScriptConversion(sourceURL: URL) async {
+        do {
+            do {
+                try await startupCleanupTask.value
+            } catch {
+                throw ConversionFailure.startupCleanup
+            }
+            try await workingDirectoryService.clearWorkingDirectory()
+            let localSourceURL = try await workingDirectoryService.copySourceFile(from: sourceURL)
+            let outputURL = try await workingDirectoryService.postScriptOutputURL(
+                sourceName: sourceURL.lastPathComponent
+            )
+            let settings = runtimeSettings.snapshot()
+            var inputPassword = try await passwordController.password(for: localSourceURL)
+            while true {
+                do {
+                    try await converter.convertToPostScript(
+                        sourceURL: localSourceURL,
+                        outputURL: outputURL,
+                        securityLimitsEnabled: settings.securityLimitsEnabled,
+                        postScriptRandomSeed: settings.postScriptRandomSeed,
+                        inputPassword: inputPassword
+                    )
+                    break
+                } catch ConversionFailure.inputPasswordRequired {
+                    inputPassword = try await passwordController.password(
+                        for: localSourceURL,
+                        force: true
+                    )
+                }
+            }
+            inputPassword = nil
+            try? AppGroupWorkspace.clearAll()
+            postScriptExportArtifact = PostScriptExportArtifact(url: outputURL)
+            finishProcessing(preservesSelectionAppearance: true)
+            isPostScriptFileExporterPresented = true
+        } catch is CancellationError {
+            try? await workingDirectoryService.clearWorkingDirectory()
+            try? AppGroupWorkspace.clearAll()
+            finishProcessing()
+        } catch let failure as ConversionFailure {
+            await finishWithFailure(failure)
+        } catch {
+            await finishWithFailure(.ghostscriptConversion(
+                returnCode: 0,
+                diagnostics: error.localizedDescription
+            ))
         }
     }
 
@@ -357,7 +451,7 @@ final class ConversionViewModel: ObservableObject {
     private func startProgressDelay() {
         progressTask?.cancel()
         progressTask = Task { [weak self] in
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            try? await Task.sleep(for: ConversionProgressDelay.duration)
             guard !Task.isCancelled, self?.isProcessing == true else { return }
             self?.showsProgressOverlay = true
         }
@@ -384,26 +478,7 @@ final class ConversionViewModel: ObservableObject {
     }
 
     private func makeErrorAlert(for failure: ConversionFailure) -> AppAlert {
-        var messageParts = [failure.localizedMessage]
-        var detailsParts: [String] = []
-        if let diagnostics = failure.diagnostics {
-            let format = String(localized: "error_diagnostics_format")
-            let tail = String(diagnostics.suffix(8_000))
-            messageParts.append(String(format: format, tail))
-            detailsParts.append(diagnostics)
-        }
-        if let returnCode = failure.returnCode {
-            let format = String(localized: "error_return_code_format")
-            messageParts.append(String(format: format, returnCode))
-            detailsParts.insert(String(format: format, returnCode), at: 0)
-        }
-
-        return AppAlert(
-            kind: .error,
-            title: String(localized: "conversion_failed"),
-            message: messageParts.joined(separator: "\n\n"),
-            details: detailsParts.isEmpty ? nil : detailsParts.joined(separator: "\n\n")
-        )
+        failure.appAlert
     }
 
     private func synchronizeFrontSettings() {

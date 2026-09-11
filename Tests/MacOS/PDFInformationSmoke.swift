@@ -41,8 +41,8 @@ struct PDFInformationSmoke {
             let run: (UnsafePointer<CChar>?) -> Int32 = { passwordPointer in
                 resources.path.withCString { resourcePointer in
                     profiles.path.withCString { profilePointer in
-                        gs_run_joboptions_with_fds(input.fileDescriptor, output.fileDescriptor, options.fileDescriptor, journal.fileDescriptor,
-                            0, 1, 0, 1, 0, 0, "1.7", "none", nil, resourcePointer, profilePointer, nil, nil, nil, passwordPointer,
+                        gs_run_conversion_with_fds(input.fileDescriptor, output.fileDescriptor, options.fileDescriptor, journal.fileDescriptor,
+                            0, Int32(GS_BRIDGE_OUTPUT_PDF.rawValue), 1, 0, 1, 0, 0, "1.7", "none", nil, resourcePointer, profilePointer, nil, nil, nil, passwordPointer,
                             1, 1, Int64(Date().addingTimeInterval(60).timeIntervalSince1970), 100_000_000, &code, &stage)
                     }
                 }
@@ -84,6 +84,25 @@ struct PDFInformationSmoke {
         precondition(pasteboard.pasteboardItems?.count == 1)
         precondition(pasteboard.string(forType: .string) == report.plainText)
         precondition(pasteboard.data(forType: .rtf) != nil)
-        print("PASS: 9 macOS Ghostscript password cases; inspection of converted PDFs; RTF round trip including recipient redaction, warning color and one-item clipboard.")
+
+        let postScriptDestination = directory.appendingPathComponent("Desktop-style-output.ps")
+        let partialDestination = postScriptDestination.appendingPathExtension("partial")
+        let firstPostScript = Data("%!PS-Adobe-3.0\n% first\n".utf8)
+        let firstSource = directory.appendingPathComponent("first-source.ps")
+        try firstPostScript.write(to: firstSource)
+        try MacOSPostScriptDestinationWriter.publish(sourceURL: firstSource, destinationURL: postScriptDestination)
+        let writtenPostScript = try Data(contentsOf: postScriptDestination)
+        precondition(writtenPostScript == firstPostScript, "New PostScript destination was not written")
+        precondition(!FileManager.default.fileExists(atPath: partialDestination.path), "PostScript export created an unauthorized sibling file")
+
+        let replacementPostScript = Data("%!PS-Adobe-3.0\n% replacement\n".utf8)
+        let replacementSource = directory.appendingPathComponent("replacement-source.ps")
+        try replacementPostScript.write(to: replacementSource)
+        try MacOSPostScriptDestinationWriter.publish(sourceURL: replacementSource, destinationURL: postScriptDestination)
+        let replacedPostScript = try Data(contentsOf: postScriptDestination)
+        precondition(replacedPostScript == replacementPostScript, "Existing PostScript destination was not replaced")
+        precondition(!FileManager.default.fileExists(atPath: partialDestination.path), "PostScript replacement created an unauthorized sibling file")
+
+        print("PASS: 9 macOS Ghostscript password cases; inspection of converted PDFs; RTF round trip including recipient redaction, warning color and one-item clipboard; exact-destination PostScript save.")
     }
 }

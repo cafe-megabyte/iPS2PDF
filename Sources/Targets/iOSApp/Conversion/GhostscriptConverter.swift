@@ -39,4 +39,20 @@ final class GhostscriptConverter: FileConverting, @unchecked Sendable {
         )
     }
 
+    func convertToPostScript(
+        sourceURL: URL,
+        outputURL: URL,
+        securityLimitsEnabled: Bool,
+        postScriptRandomSeed: Int,
+        inputPassword: String? = nil
+    ) async throws {
+        try await helper.convertToPostScript(
+            inputURL: sourceURL,
+            outputURL: outputURL,
+            limitsEnabled: securityLimitsEnabled,
+            postScriptRandomSeed: postScriptRandomSeed,
+            inputPassword: inputPassword
+        )
+    }
+
 }

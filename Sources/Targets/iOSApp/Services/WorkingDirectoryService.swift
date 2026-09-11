@@ -98,6 +98,30 @@ actor WorkingDirectoryService {
             .appendingPathExtension("pdf")
     }
 
+    func postScriptOutputURL(sourceName: String) throws -> URL {
+        let outputDirectoryURL = postScriptExportsDirectoryURL
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        do {
+            try fileManager.createDirectory(
+                at: outputDirectoryURL,
+                withIntermediateDirectories: true
+            )
+        } catch {
+            throw ConversionFailure.workingDirectoryCleanup
+        }
+        return outputDirectoryURL.appendingPathComponent(
+            PostScriptOutputNaming.filename(for: sourceName)
+        )
+    }
+
+    func removePostScriptExport(at outputURL: URL) {
+        let exportDirectoryURL = outputURL.standardizedFileURL.deletingLastPathComponent()
+        guard exportDirectoryURL.deletingLastPathComponent() == postScriptExportsDirectoryURL else {
+            return
+        }
+        try? fileManager.removeItem(at: exportDirectoryURL)
+    }
+
     func writeJoboptionsSnapshot(_ data: Data) throws -> URL {
         let snapshotURL = directoryURL.appendingPathComponent("Active.joboptions")
         do {
@@ -127,5 +151,11 @@ actor WorkingDirectoryService {
         guard PDFDocument(url: outputURL) != nil else {
             throw ConversionFailure.invalidPDF
         }
+    }
+
+    private var postScriptExportsDirectoryURL: URL {
+        directoryURL
+            .appendingPathComponent("PostScript Exports", isDirectory: true)
+            .standardizedFileURL
     }
 }

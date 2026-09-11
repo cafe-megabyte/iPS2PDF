@@ -11,6 +11,7 @@ xcrun swiftc -swift-version 6 -F "$products" -framework GhostscriptRuntime \
     "$project"/Sources/Shared/AppCore/PDFInspection/*.swift \
     "$project"/Sources/Shared/ICCMetadata/*.swift \
     "$project/Sources/Shared/GhostscriptRuntime/Resources/GhostscriptRuntimeResources.swift" \
+    "$project/Sources/Targets/MacOSApp/MacOSPostScriptDestinationWriter.swift" \
     "$project/Sources/Targets/MacOSApp/MacOSPDFReportSharing.swift" \
     "$project/Tests/MacOS/PDFInformationSmoke.swift" -o "$scratch/pdf-information-smoke"
 "$scratch/pdf-information-smoke" "$project/Tests/Unit/Fixtures"

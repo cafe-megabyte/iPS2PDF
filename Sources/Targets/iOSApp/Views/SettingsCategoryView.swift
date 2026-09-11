@@ -107,33 +107,6 @@ struct SettingsCategoryView: View {
                 }
             ))
 
-            Toggle("Security limits", isOn: Binding(
-                get: { repository.securityLimitsEnabled },
-                set: { repository.securityLimitsEnabled = $0 }
-            ))
-            Text("Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-
-            Toggle("Random numbers", isOn: Binding(
-                get: { repository.automaticRandomSeed },
-                set: { repository.setAutomaticRandomSeed($0) }
-            ))
-
-            if !repository.automaticRandomSeed {
-                LabeledContent("Seed") {
-                    TextField(
-                        "Seed",
-                        value: manualRandomSeedBinding,
-                        formatter: randomSeedFormatter
-                    )
-                    .keyboardType(.numberPad)
-                    .multilineTextAlignment(.trailing)
-                }
-                Text(Self.randomSeedRangeDescription)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
         }
     }
 
@@ -199,13 +172,6 @@ struct SettingsCategoryView: View {
         return value?.textualValue ?? value?.postScript ?? "none"
     }
 
-    private var manualRandomSeedBinding: Binding<Int> {
-        Binding(
-            get: { repository.manualRandomSeed },
-            set: { repository.setManualRandomSeed($0) }
-        )
-    }
-
     private var errorIsPresented: Binding<Bool> {
         Binding(
             get: { repository.lastError != nil },
@@ -213,29 +179,4 @@ struct SettingsCategoryView: View {
         )
     }
 
-    private var randomSeedFormatter: NumberFormatter {
-        Self.makeRandomSeedFormatter()
-    }
-
-    private static func makeRandomSeedFormatter() -> NumberFormatter {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.usesGroupingSeparator = true
-        formatter.allowsFloats = false
-        formatter.minimum = NSNumber(value: PostScriptRandomSeedSettings.range.lowerBound)
-        formatter.maximum = NSNumber(value: PostScriptRandomSeedSettings.range.upperBound)
-        return formatter
-    }
-
-    private static func formattedSeed(_ seed: Int) -> String {
-        makeRandomSeedFormatter().string(from: NSNumber(value: seed)) ?? String(seed)
-    }
-
-    private static var randomSeedRangeDescription: String {
-        String(
-            format: String(localized: "Allowed range: %@ - %@"),
-            formattedSeed(PostScriptRandomSeedSettings.range.lowerBound),
-            formattedSeed(PostScriptRandomSeedSettings.range.upperBound)
-        )
-    }
 }

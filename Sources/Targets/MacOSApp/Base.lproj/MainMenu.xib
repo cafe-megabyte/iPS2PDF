@@ -100,9 +100,13 @@
                                 <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                 <connections><action selector="openPDFInformation:" target="-1" id="PDF-Inf-Act"/></connections>
                             </menuItem>
-                            <menuItem title="Open for Conversion…" id="PDF-Cnv-Open">
+                            <menuItem title="Open for PDF Conversion…" id="PDF-Cnv-Open">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections><action selector="openConversionDocument:" target="-1" id="PDF-Cnv-Act"/></connections>
+                            </menuItem>
+                            <menuItem title="Open for PostScript Conversion…" id="PS-Cnv-Open">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="openPostScriptConversion:" target="Voe-Tx-rLC" id="PS-Cnv-Act"/></connections>
                             </menuItem>
                             <menuItem title="Compress PDF…" id="PDF-Cmp-Open">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -115,6 +119,10 @@
                             <menuItem title="Export All Resources…" id="PDF-Res-Export">
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections><action selector="exportAllPDFResources:" target="-1" id="PDF-Res-Export-Act"/></connections>
+                            </menuItem>
+                            <menuItem title="Export as PostScript…" id="PS-Cur-Export">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections><action selector="exportCurrentAsPostScript:" target="Voe-Tx-rLC" id="PS-Cur-Export-Act"/></connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="m54-Is-iLE"/>
                             <menuItem title="Close" keyEquivalent="w" id="DVo-aG-piG">

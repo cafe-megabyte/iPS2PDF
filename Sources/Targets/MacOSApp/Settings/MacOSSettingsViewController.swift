@@ -4,23 +4,35 @@ import Combine
 @MainActor
 final class MacOSSettingsViewController: NSViewController {
     private let repository: JoboptionsRepository
+    private let runtimeSettings: GhostscriptRuntimeSettings
     private let joboptionsPopup = NSPopUpButton()
     private let versionPopup = NSPopUpButton()
     private let pdfaPopup = NSPopUpButton()
     private let configureButton = NSButton()
     private let manageButton = NSButton()
+    private let securityLimitsButton = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let automaticRandomButton = NSButton(checkboxWithTitle: "", target: nil, action: nil)
+    private let randomSeedField = NSTextField()
     private var observation: AnyCancellable?
+    private var runtimeObservation: AnyCancellable?
     private var detailWindowController: NSWindowController?
     private var managementWindowController: NSWindowController?
 
-    init(repository: JoboptionsRepository) {
+    init(repository: JoboptionsRepository, runtimeSettings: GhostscriptRuntimeSettings) {
         self.repository = repository
+        self.runtimeSettings = runtimeSettings
         super.init(nibName: nil, bundle: nil)
         JoboptionsEditingSession.cleanupStaleDirectories()
         observation = repository.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in
                 await Task.yield()
                 self?.reload()
+            }
+        }
+        runtimeObservation = runtimeSettings.objectWillChange.sink { [weak self] _ in
+            Task { @MainActor [weak self] in
+                await Task.yield()
+                self?.reloadRuntimeSettings()
             }
         }
     }
@@ -34,6 +46,16 @@ final class MacOSSettingsViewController: NSViewController {
         configurePopup(joboptionsPopup, action: #selector(selectJoboptions(_:)))
         configurePopup(versionPopup, action: #selector(selectVersion(_:)))
         configurePopup(pdfaPopup, action: #selector(selectPDFA(_:)))
+
+        securityLimitsButton.target = self
+        securityLimitsButton.action = #selector(toggleSecurityLimits(_:))
+        automaticRandomButton.target = self
+        automaticRandomButton.action = #selector(toggleAutomaticRandomNumbers(_:))
+        randomSeedField.target = self
+        randomSeedField.action = #selector(changeRandomSeed(_:))
+        randomSeedField.formatter = Self.randomSeedFormatter()
+        randomSeedField.alignment = .right
+        randomSeedField.widthAnchor.constraint(greaterThanOrEqualToConstant: 120).isActive = true
 
         configureButton.title = String(localized: "Configure...")
         configureButton.bezelStyle = .rounded
@@ -56,6 +78,27 @@ final class MacOSSettingsViewController: NSViewController {
         grid.column(at: 1).xPlacement = .fill
         grid.translatesAutoresizingMaskIntoConstraints = false
 
+        let runtimeGrid = NSGridView(views: [
+            [label(String(localized: "Security limits")), securityLimitsButton],
+            [label(String(localized: "Automatic random seed")), automaticRandomButton],
+            [label(String(localized: "Seed")), randomSeedField]
+        ])
+        runtimeGrid.rowSpacing = 10
+        runtimeGrid.columnSpacing = 16
+        runtimeGrid.column(at: 0).xPlacement = .trailing
+        runtimeGrid.column(at: 1).xPlacement = .leading
+        runtimeGrid.translatesAutoresizingMaskIntoConstraints = false
+
+        let ghostscriptTitle = label(String(localized: "Ghostscript"))
+        ghostscriptTitle.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
+        ghostscriptTitle.alignment = .left
+        let runtimeDescription = NSTextField(wrappingLabelWithString: String(localized: "Enabled by default: 15 minutes, 1 GB input and 2 GB output. Process isolation, SAFER, diagnostics and cancellation always remain active."))
+        runtimeDescription.textColor = .secondaryLabelColor
+        runtimeDescription.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        let pdfTitle = label(String(localized: "PDF conversion"))
+        pdfTitle.font = .boldSystemFont(ofSize: NSFont.systemFontSize)
+        pdfTitle.alignment = .left
+
         let buttonRow = NSStackView(views: [manageButton, NSView(), configureButton])
         buttonRow.orientation = .horizontal
         buttonRow.spacing = 10
@@ -63,9 +106,23 @@ final class MacOSSettingsViewController: NSViewController {
         buttonRow.translatesAutoresizingMaskIntoConstraints = false
         buttonRow.views[1].setContentHuggingPriority(.defaultLow, for: .horizontal)
 
-        let stack = NSStackView(views: [grid, buttonRow])
+        let separator = NSBox()
+        separator.boxType = .separator
+
+        let stack = NSStackView(views: [
+            ghostscriptTitle,
+            runtimeGrid,
+            runtimeDescription,
+            separator,
+            pdfTitle,
+            grid,
+            buttonRow
+        ])
         stack.orientation = .vertical
         stack.spacing = 24
+        stack.setCustomSpacing(10, after: ghostscriptTitle)
+        stack.setCustomSpacing(8, after: runtimeGrid)
+        stack.setCustomSpacing(16, after: pdfTitle)
         stack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(stack)
 
@@ -83,7 +140,10 @@ final class MacOSSettingsViewController: NSViewController {
         versionPopup.nextKeyView = pdfaPopup
         pdfaPopup.nextKeyView = manageButton
         manageButton.nextKeyView = configureButton
-        configureButton.nextKeyView = joboptionsPopup
+        configureButton.nextKeyView = securityLimitsButton
+        securityLimitsButton.nextKeyView = automaticRandomButton
+        automaticRandomButton.nextKeyView = randomSeedField
+        randomSeedField.nextKeyView = joboptionsPopup
     }
 
     override func viewDidLoad() {
@@ -96,10 +156,18 @@ final class MacOSSettingsViewController: NSViewController {
     }
 
     private func reload() {
+        reloadRuntimeSettings()
         reloadJoboptions()
         reloadVersions()
         reloadPDFA()
         configureButton.isEnabled = repository.activeDocument != nil
+    }
+
+    private func reloadRuntimeSettings() {
+        securityLimitsButton.state = runtimeSettings.securityLimitsEnabled ? .on : .off
+        automaticRandomButton.state = runtimeSettings.automaticRandomSeed ? .on : .off
+        randomSeedField.isEnabled = !runtimeSettings.automaticRandomSeed
+        randomSeedField.stringValue = String(runtimeSettings.manualRandomSeed)
     }
 
     private func reloadJoboptions() {
@@ -222,6 +290,24 @@ final class MacOSSettingsViewController: NSViewController {
         catch { present(error) }
     }
 
+    @objc private func toggleSecurityLimits(_ sender: NSButton) {
+        runtimeSettings.securityLimitsEnabled = sender.state == .on
+    }
+
+    @objc private func toggleAutomaticRandomNumbers(_ sender: NSButton) {
+        runtimeSettings.setAutomaticRandomSeed(sender.state == .on)
+        reloadRuntimeSettings()
+    }
+
+    @objc private func changeRandomSeed(_ sender: NSTextField) {
+        guard let value = Int(sender.stringValue) else {
+            reloadRuntimeSettings()
+            return
+        }
+        runtimeSettings.setManualRandomSeed(value)
+        reloadRuntimeSettings()
+    }
+
     @objc private func showDetailEditor(_ sender: Any?) {
         guard detailWindowController == nil, let parentWindow = view.window else { return }
         do {
@@ -290,5 +376,15 @@ final class MacOSSettingsViewController: NSViewController {
         repository.lastError = error.localizedDescription
         guard let window = view.window else { return }
         NSAlert(error: error).beginSheetModal(for: window)
+    }
+
+    private static func randomSeedFormatter() -> NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.usesGroupingSeparator = true
+        formatter.allowsFloats = false
+        formatter.minimum = NSNumber(value: PostScriptRandomSeedSettings.range.lowerBound)
+        formatter.maximum = NSNumber(value: PostScriptRandomSeedSettings.range.upperBound)
+        return formatter
     }
 }

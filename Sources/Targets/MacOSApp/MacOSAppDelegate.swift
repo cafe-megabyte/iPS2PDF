@@ -41,6 +41,14 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         MacOSApplicationModel.shared.presentOpenPanel(purpose: .conversion)
     }
 
+    @IBAction func openPostScriptConversion(_ sender: Any?) {
+        MacOSApplicationModel.shared.postScriptExportController.presentOpenPanel()
+    }
+
+    @IBAction func exportCurrentAsPostScript(_ sender: Any?) {
+        MacOSApplicationModel.shared.postScriptExportController.exportCurrent()
+    }
+
     @IBAction func openPDFInformation(_ sender: Any?) {
         MacOSPDFInfoWindowController.openPanel()
     }
@@ -67,7 +75,8 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         }
 
         let viewController = MacOSSettingsViewController(
-            repository: MacOSApplicationModel.shared.joboptionsRepository
+            repository: MacOSApplicationModel.shared.joboptionsRepository,
+            runtimeSettings: MacOSApplicationModel.shared.runtimeSettings
         )
         let window = NSWindow(contentViewController: viewController)
         window.title = String(localized: "Settings")
@@ -141,6 +150,12 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
     }
 
     func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(openPostScriptConversion(_:)) {
+            return !MacOSApplicationModel.shared.postScriptExportController.isProcessing
+        }
+        if menuItem.action == #selector(exportCurrentAsPostScript(_:)) {
+            return MacOSApplicationModel.shared.postScriptExportController.canExportCurrent
+        }
         guard menuItem.action == #selector(prepareContainerReset(_:)) else { return true }
         return MacOSApplicationModel.shared.activeConversionCount == 0
     }

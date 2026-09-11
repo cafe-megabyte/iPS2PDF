@@ -369,7 +369,9 @@
 
 "PDF-Inf-Open.title" = "Für PDF-Informationen öffnen …";
 "PDF-Inf-This.title" = "Informationen zu diesem PDF";
-"PDF-Cnv-Open.title" = "Zur Konvertierung öffnen …";
+"PDF-Cnv-Open.title" = "Zur PDF-Konvertierung öffnen …";
+"PS-Cnv-Open.title" = "Zur PostScript-Konvertierung öffnen …";
 "PDF-Cmp-Open.title" = "PDF komprimieren…";
 "PDF-Res-Export.title" = "Alle Ressourcen exportieren …";
+"PS-Cur-Export.title" = "Als PostScript exportieren …";
 "PDF-Lic-Open.title" = "Lizenzen der PDF-Verarbeitung…";

@@ -2,11 +2,12 @@ import Foundation
 
 /// Keys shared by the app-side Ghostscript extension client.
 enum GhostscriptExtensionEnvelope {
-    static let version: Int64 = 5
+    static let version: Int64 = 6
     static let inputPDFPassword = "inputPDFPassword"
     static let operation = "operation"
     static let envelopeVersion = "envelopeVersion"
     static let validate = "validate"
+    static let outputFormat = "outputFormat"
     static let profiles = "profiles"
     static let run = "run"
     static let limitsEnabled = "limitsEnabled"

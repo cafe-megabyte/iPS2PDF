@@ -11,24 +11,15 @@ final class JoboptionsEditingSession {
 
     private(set) var document: LosslessJoboptionsDocument
     private(set) var issues: [JoboptionsConsistencyIssue] = []
-    private(set) var securityLimitsEnabled: Bool
-    private(set) var automaticRandomSeed: Bool
-    private(set) var manualRandomSeed: Int
 
     var onChange: (() -> Void)?
 
     private let repository: JoboptionsRepository
     private let fileManager: FileManager
-    private let originalSecurityLimitsEnabled: Bool
-    private let originalAutomaticRandomSeed: Bool
-    private let originalManualRandomSeed: Int
     private var isFinished = false
 
     var isDirty: Bool {
         document.data != originalData
-            || securityLimitsEnabled != originalSecurityLimitsEnabled
-            || automaticRandomSeed != originalAutomaticRandomSeed
-            || manualRandomSeed != originalManualRandomSeed
     }
 
     init(
@@ -44,13 +35,6 @@ final class JoboptionsEditingSession {
         originalRecord = record
         originalData = activeDocument.data
         document = activeDocument
-        originalSecurityLimitsEnabled = repository.securityLimitsEnabled
-        originalAutomaticRandomSeed = repository.automaticRandomSeed
-        originalManualRandomSeed = repository.manualRandomSeed
-        securityLimitsEnabled = repository.securityLimitsEnabled
-        automaticRandomSeed = repository.automaticRandomSeed
-        manualRandomSeed = repository.manualRandomSeed
-
         let root = Self.rootDirectory(fileManager: fileManager)
         try fileManager.createDirectory(at: root, withIntermediateDirectories: true)
         workingDirectoryURL = root.appendingPathComponent(UUID().uuidString, isDirectory: true)
@@ -86,21 +70,6 @@ final class JoboptionsEditingSession {
         onChange?()
     }
 
-    func setSecurityLimitsEnabled(_ value: Bool) {
-        securityLimitsEnabled = value
-        onChange?()
-    }
-
-    func setAutomaticRandomSeed(_ value: Bool) {
-        automaticRandomSeed = value
-        onChange?()
-    }
-
-    func setManualRandomSeed(_ value: Int) {
-        manualRandomSeed = PostScriptRandomSeedSettings.clampedSeed(value)
-        onChange?()
-    }
-
     func setStandard(_ standard: PDFStandard) throws {
         try apply(SemanticJoboptions.changeStandard(standard))
     }
@@ -112,15 +81,6 @@ final class JoboptionsEditingSession {
             originalRecord: originalRecord,
             originalData: originalData
         )
-        if securityLimitsEnabled != originalSecurityLimitsEnabled {
-            repository.securityLimitsEnabled = securityLimitsEnabled
-        }
-        if automaticRandomSeed != originalAutomaticRandomSeed {
-            repository.setAutomaticRandomSeed(automaticRandomSeed)
-        }
-        if manualRandomSeed != originalManualRandomSeed {
-            repository.setManualRandomSeed(manualRandomSeed)
-        }
         isFinished = true
         cleanup()
     }

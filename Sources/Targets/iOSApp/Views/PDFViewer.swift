@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PDFViewer: View {
     let url: URL
+    let runtimeSettings: GhostscriptRuntimeSettings
     let onClose: () -> Void
     let onShareStarted: () -> Void
     let onShareFinished: () -> Void
@@ -12,9 +13,11 @@ struct PDFViewer: View {
     @State private var infoSession: PDFInspectionSession?
     @State private var sharedRevision: PDFEditingRevision?
 
-    init(url: URL, onClose: @escaping () -> Void, onShareStarted: @escaping () -> Void,
+    init(url: URL, runtimeSettings: GhostscriptRuntimeSettings,
+         onClose: @escaping () -> Void, onShareStarted: @escaping () -> Void,
          onShareFinished: @escaping () -> Void) {
         self.url = url
+        self.runtimeSettings = runtimeSettings
         self.onClose = onClose
         self.onShareStarted = onShareStarted
         self.onShareFinished = onShareFinished
@@ -60,7 +63,13 @@ struct PDFViewer: View {
                     }
                 }
         }
-        .sheet(item: $infoSession) { session in PDFInfoView(session: session, editing: editing) }
+        .sheet(item: $infoSession) { session in
+            PDFInfoView(
+                session: session,
+                editing: editing,
+                runtimeSettings: runtimeSettings
+            )
+        }
         .sheet(isPresented: $isShowingShareSheet, onDismiss: { sharedRevision = nil; onShareFinished() }) {
             if let sharedRevision {
                 ActivityView(activityItems: [sharedRevision.input.url]) {

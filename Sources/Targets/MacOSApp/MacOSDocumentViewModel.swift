@@ -38,6 +38,7 @@ final class MacOSDocumentViewModel {
 
     private let workspace = MacOSDocumentWorkspace()
     private let repository: JoboptionsRepository
+    private let runtimeSettings: GhostscriptRuntimeSettings
     private let coordinator: MacOSConversionCoordinator
     private let router = IncomingDocumentRouter()
     private var didStart = false
@@ -47,9 +48,11 @@ final class MacOSDocumentViewModel {
 
     init(
         repository: JoboptionsRepository = MacOSApplicationModel.shared.joboptionsRepository,
+        runtimeSettings: GhostscriptRuntimeSettings = MacOSApplicationModel.shared.runtimeSettings,
         coordinator: MacOSConversionCoordinator = MacOSApplicationModel.shared.conversionCoordinator
     ) {
         self.repository = repository
+        self.runtimeSettings = runtimeSettings
         self.coordinator = coordinator
     }
 
@@ -85,6 +88,7 @@ final class MacOSDocumentViewModel {
                 case let .conversionInput(inputURL), let .pdfInformation(inputURL):
                     phase = .converting
                     let settings = try repository.snapshot()
+                    let runtimeSnapshot = runtimeSettings.snapshot()
                     let joboptionsURL = try await workspace.writeJoboptions(
                         settings.effectiveJoboptionsData
                     )
@@ -107,6 +111,7 @@ final class MacOSDocumentViewModel {
                                 outputURL: outputURL,
                                 joboptionsURL: joboptionsURL,
                                 settings: settings,
+                                runtimeSettings: runtimeSnapshot,
                                 inputPassword: inputPassword
                             )
                             break
@@ -136,7 +141,7 @@ final class MacOSDocumentViewModel {
             } catch is CancellationError {
                 finish(with: .cancelled)
             } catch let failure as ConversionFailure {
-                finish(with: .failed(Self.message(for: failure)))
+                finish(with: .failed(failure.macOSPresentation))
             } catch {
                 finish(with: .failed(error.localizedDescription))
             }
@@ -151,7 +156,7 @@ final class MacOSDocumentViewModel {
 
     private func startSpinnerDelay() {
         Task { [weak self] in
-            try? await Task.sleep(for: .milliseconds(500))
+            try? await Task.sleep(for: ConversionProgressDelay.duration)
             guard let self, pdfURL == nil else { return }
             switch phase {
             case .preparing, .converting:
@@ -172,19 +177,4 @@ final class MacOSDocumentViewModel {
         onTerminalState?()
     }
 
-    private static func message(for failure: ConversionFailure) -> String {
-        var parts = [failure.localizedMessage]
-        if let code = failure.returnCode {
-            parts.append(
-                String.localizedStringWithFormat(
-                    String(localized: "Ghostscript return code: %lld"),
-                    code
-                )
-            )
-        }
-        if let diagnostics = failure.diagnostics {
-            parts.append(String(diagnostics.suffix(8_000)))
-        }
-        return parts.joined(separator: "\n\n")
-    }
 }

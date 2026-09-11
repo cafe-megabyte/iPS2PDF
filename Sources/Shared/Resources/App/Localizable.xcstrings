@@ -1599,19 +1599,22 @@
         }
       }
     },
-    "Convert file…" : {
-      "extractionState" : "manual",
+    "Convert to PDF…" : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Datei konvertieren …"
+            "value" : "Zu PDF konvertieren …"
           }
-        },
-        "en" : {
+        }
+      }
+    },
+    "Convert to PS…" : {
+      "localizations" : {
+        "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Convert file…"
+            "value" : "Zu PS konvertieren …"
           }
         }
       }
@@ -2522,12 +2525,12 @@
         }
       }
     },
-    "Enabled by default: 15 minutes, 1 GB PostScript input and 2 GB PDF output. Process isolation, SAFER, diagnostics, cancellation and PDF validation always remain active." : {
+    "Enabled by default: 15 minutes, 1 GB input and 2 GB output. Process isolation, SAFER, diagnostics and cancellation always remain active." : {
       "localizations" : {
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Standardmäßig aktiviert: 15 Minuten, 1 GB PostScript-Eingabe und 2 GB PDF-Ausgabe. Prozessisolierung, SAFER, Diagnose, Abbruch und PDF-Validierung bleiben immer aktiv."
+            "value" : "Standardmäßig aktiviert: 15 Minuten, 1 GB Eingabe und 2 GB Ausgabe. Prozessisolierung, SAFER, Diagnose und Abbruch bleiben immer aktiv."
           }
         }
       }
@@ -2990,6 +2993,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Alle Ressourcen exportieren …"
+          }
+        }
+      }
+    },
+    "Export as PostScript…" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Als PostScript exportieren …"
           }
         }
       }
@@ -3486,6 +3499,16 @@
         }
       }
     },
+    "Ghostscript" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript"
+          }
+        }
+      }
+    },
     "Ghostscript return code: %lld" : {
       "localizations" : {
         "de" : {
@@ -3498,6 +3521,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ghostscript return code: %lld"
+          }
+        }
+      }
+    },
+    "Ghostscript settings" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ghostscript-Einstellungen"
           }
         }
       }
@@ -4460,6 +4493,16 @@
         }
       }
     },
+    "More export options" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weitere Exportoptionen"
+          }
+        }
+      }
+    },
     "Name" : {
       "localizations" : {
         "de" : {
@@ -5207,6 +5250,16 @@
         }
       }
     },
+    "PDF conversion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF-Konvertierung"
+          }
+        }
+      }
+    },
     "PDF information" : {
       "extractionState" : "manual",
       "localizations" : {
@@ -5313,6 +5366,9 @@
           }
         }
       }
+    },
+    "PDF · PostScript · EPS → PostScript" : {
+      "shouldTranslate" : false
     },
     "pdf_version" : {
       "localizations" : {
@@ -5931,6 +5987,16 @@
         }
       }
     },
+    "PostScript conversion" : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PostScript-Konvertierung"
+          }
+        }
+      }
+    },
     "PostScript · EPS · PDF → PDF" : {
       "shouldTranslate" : false
     },
@@ -6333,22 +6399,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Property"
-          }
-        }
-      }
-    },
-    "Random numbers" : {
-      "localizations" : {
-        "de" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Zufallszahlen"
-          }
-        },
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Random numbers"
           }
         }
       }
@@ -6813,6 +6863,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Seed"
+          }
+        }
+      }
+    },
+    "Select a file to convert to PostScript." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wählen Sie eine Datei für die Konvertierung zu PostScript aus."
           }
         }
       }

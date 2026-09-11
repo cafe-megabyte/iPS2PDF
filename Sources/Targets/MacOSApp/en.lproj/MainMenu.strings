@@ -394,6 +394,8 @@
 
 "PDF-Inf-Open.title" = "Open for PDF Information…";
 "PDF-Inf-This.title" = "Information for This PDF";
-"PDF-Cnv-Open.title" = "Open for Conversion…";
+"PDF-Cnv-Open.title" = "Open for PDF Conversion…";
+"PS-Cnv-Open.title" = "Open for PostScript Conversion…";
 "PDF-Cmp-Open.title" = "Compress PDF…";
 "PDF-Res-Export.title" = "Export All Resources…";
+"PS-Cur-Export.title" = "Export as PostScript…";

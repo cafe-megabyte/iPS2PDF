@@ -9,17 +9,23 @@ typedef enum GSBridgeStage {
     GS_BRIDGE_STAGE_CONVERSION = 3
 } GSBridgeStage;
 
+typedef enum GSBridgeOutputFormat {
+    GS_BRIDGE_OUTPUT_PDF = 0,
+    GS_BRIDGE_OUTPUT_POSTSCRIPT = 1
+} GSBridgeOutputFormat;
+
 /*
  * Descriptor-only entry point used by the Ghostscript extension. No path
  * from the host process crosses the XPC boundary. Joboptions are executed
  * before the input stream and diagnostics are written directly to journal_fd.
  */
-int gs_run_joboptions_with_fds(
+int gs_run_conversion_with_fds(
     int input_fd,
     int output_fd,
     int joboptions_fd,
     int journal_fd,
     int validation_only,
+    int output_format,
     int allow_transparency,
     int eps_crop,
     int embed_substitute_fonts,

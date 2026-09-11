@@ -110,12 +110,13 @@ enum GhostscriptRuntimeConversion {
                     withOptionalPath(profilesDirectory) { profileDirectoryPointer in
                         withOptionalCString(profileOverrides) { profileOverridesPointer in
                             withOptionalCString(blendConversionStrategy) { blendPointer in
-                                gs_run_joboptions_with_fds(
+                                gs_run_conversion_with_fds(
                                     input,
                                     output,
                                     joboptions,
                                     journal,
                                     0,
+                                    Int32(GS_BRIDGE_OUTPUT_PDF.rawValue),
                                     allowTransparency ? 1 : 0,
                                     epsCrop ? 1 : 0,
                                     embedSubstituteFonts ? 1 : 0,

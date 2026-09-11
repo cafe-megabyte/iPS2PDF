@@ -104,6 +104,75 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         XCTAssertEqual(document.pageCount, 1)
     }
 
+    func testDefaultPostScriptRoundTripUsesSquareCropBox() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iPS2PDF-PostScript-RoundTrip-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let sourceURL = directory.appendingPathComponent("Page-Boxes.pdf")
+        let postScriptURL = directory.appendingPathComponent("Page-Boxes.ps")
+        let roundTripURL = directory.appendingPathComponent("Page-Boxes-RoundTrip.pdf")
+        try Self.squarePagePDFData().write(to: sourceURL)
+
+        let sourceDocument = try XCTUnwrap(PDFDocument(url: sourceURL))
+        let sourcePage = try XCTUnwrap(sourceDocument.page(at: 0))
+        XCTAssertEqual(sourcePage.bounds(for: .mediaBox), CGRect(x: 0, y: 0, width: 720, height: 720))
+        XCTAssertEqual(sourcePage.bounds(for: .cropBox), CGRect(x: 30, y: 30, width: 660, height: 660))
+
+        let client = GhostscriptExtensionClient()
+        try await client.convertToPostScript(
+            inputURL: sourceURL,
+            outputURL: postScriptURL,
+            limitsEnabled: true,
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
+        )
+
+        let postScript = try String(contentsOf: postScriptURL, encoding: .isoLatin1)
+        XCTAssertTrue(postScript.hasPrefix("%!PS-Adobe-"))
+        XCTAssertTrue(postScript.contains("%%LanguageLevel: 2"))
+        XCTAssertTrue(postScript.contains("%%BoundingBox: 0 0 660 660"))
+        XCTAssertTrue(postScript.contains("%%PageBoundingBox: 0 0 660 660"))
+
+        let normalJoboptionsURL = try XCTUnwrap(
+            GhostscriptRuntimeResources.normalJoboptionsURL,
+            "The bundled Normal.joboptions must be used for the round trip."
+        )
+        try await client.convert(
+            inputURL: postScriptURL,
+            outputURL: roundTripURL,
+            joboptionsURL: normalJoboptionsURL,
+            standard: .none,
+            limitsEnabled: true,
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
+        )
+
+        let document = try XCTUnwrap(PDFDocument(url: roundTripURL))
+        let page = try XCTUnwrap(document.page(at: 0))
+        let mediaBox = page.bounds(for: .mediaBox)
+        let cropBox = page.bounds(for: .cropBox)
+        XCTAssertEqual(mediaBox.width, 660, accuracy: 0.1)
+        XCTAssertEqual(mediaBox.height, 660, accuracy: 0.1)
+        XCTAssertEqual(mediaBox.width, mediaBox.height, accuracy: 0.1)
+        XCTAssertEqual(cropBox, mediaBox)
+    }
+
+    func testPostScriptAndEPSInputsCanBeConvertedToPostScript() async throws {
+        let postScript = try await convertToPostScript(
+            input: Data(Self.simplePostScript.utf8),
+            inputFileName: "Existing.ps"
+        )
+        XCTAssertTrue(String(decoding: postScript.prefix(32), as: UTF8.self).hasPrefix("%!PS-Adobe-"))
+
+        let eps = try await convertToPostScript(
+            input: Data(Self.boundedEPS.utf8),
+            inputFileName: "Bounded.eps"
+        )
+        let epsText = String(decoding: eps, as: UTF8.self)
+        XCTAssertTrue(epsText.hasPrefix("%!PS-Adobe-"))
+        XCTAssertTrue(epsText.contains("%%BoundingBox: 0 0 100 200"))
+    }
+
     func testAutoPositionEPSFilesAppliesTheEPSBoundingBox() async throws {
         let cropped = try await convert(
             input: Data(Self.boundedEPS.utf8),
@@ -335,6 +404,24 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
         return try Data(contentsOf: outputURL)
     }
 
+    private func convertToPostScript(input: Data, inputFileName: String) async throws -> Data {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("iPS2PDF-PostScript-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: false)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let inputURL = directory.appendingPathComponent(inputFileName)
+        let outputURL = directory.appendingPathComponent("Output.ps")
+        try input.write(to: inputURL)
+        try await GhostscriptExtensionClient().convertToPostScript(
+            inputURL: inputURL,
+            outputURL: outputURL,
+            limitsEnabled: true,
+            postScriptRandomSeed: PostScriptRandomSeedSettings.defaultManualSeed
+        )
+        return try Data(contentsOf: outputURL)
+    }
+
     private func outputIntent(in data: Data) throws -> OutputIntent? {
         guard let provider = CGDataProvider(data: data as CFData),
               let document = CGPDFDocument(provider),
@@ -440,6 +527,29 @@ final class GhostscriptExtensionIntegrationTests: XCTestCase {
     20 20 160 160 rectfill
     showpage
     """
+
+    private static func squarePagePDFData() throws -> Data {
+        let bounds = CGRect(x: 0, y: 0, width: 720, height: 720)
+        let data = UIGraphicsPDFRenderer(bounds: bounds).pdfData { context in
+            context.beginPage()
+            UIColor.white.setFill()
+            UIRectFill(bounds)
+            for (index, inset) in [0, 30, 60, 90, 120].enumerated() {
+                let rect = bounds.insetBy(dx: CGFloat(inset), dy: CGFloat(inset))
+                UIColor(
+                    hue: CGFloat(index) / 5,
+                    saturation: 0.35,
+                    brightness: 0.95,
+                    alpha: 1
+                ).setFill()
+                UIRectFill(rect)
+            }
+        }
+        let document = try XCTUnwrap(PDFDocument(data: data))
+        let page = try XCTUnwrap(document.page(at: 0))
+        page.setBounds(CGRect(x: 30, y: 30, width: 660, height: 660), for: .cropBox)
+        return try XCTUnwrap(document.dataRepresentation())
+    }
 
     private struct OutputIntent {
         let identifier: String?

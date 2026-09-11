@@ -12,4 +12,12 @@ protocol FileConverting: Sendable {
         postScriptRandomSeed: Int,
         inputPassword: String?
     ) async throws
+
+    func convertToPostScript(
+        sourceURL: URL,
+        outputURL: URL,
+        securityLimitsEnabled: Bool,
+        postScriptRandomSeed: Int,
+        inputPassword: String?
+    ) async throws
 }

@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct PDFInfoView: View {
     @ObservedObject var session: PDFInspectionSession
     @StateObject private var actions: PDFEditingActions
+    @StateObject private var postScriptExport: PostScriptExportSession
     private let ownsInspection: Bool
     @Environment(\.dismiss) private var dismiss
     @State private var category = PDFInfoCategory.overview
@@ -25,10 +26,17 @@ struct PDFInfoView: View {
 
     private var isExportingResources: Bool { resourceExportTask != nil }
 
-    init(session: PDFInspectionSession, editing: PDFEditingSession? = nil) {
+    init(
+        session: PDFInspectionSession,
+        editing: PDFEditingSession? = nil,
+        runtimeSettings: GhostscriptRuntimeSettings
+    ) {
         self.session = session
         ownsInspection = editing == nil
         _actions = StateObject(wrappedValue: PDFEditingActions(inspection: session, editing: editing))
+        _postScriptExport = StateObject(
+            wrappedValue: PostScriptExportSession(runtimeSettings: runtimeSettings)
+        )
     }
 
     var body: some View {
@@ -140,6 +148,9 @@ struct PDFInfoView: View {
                 }
             }
             .background(Color(uiColor: .systemGroupedBackground))
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                bottomActionBar
+            }
             .navigationTitle(session.report.fileName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -156,8 +167,10 @@ struct PDFInfoView: View {
                         Divider()
                         Button("Export All Resources…") { selectsResourceFolder = true }
                             .disabled(!session.report.allowsResourceExporting || session.report.exportableResources.isEmpty || isExportingResources)
+                        Divider()
+                        Button("Export as PostScript…", action: exportPostScript)
+                            .disabled(postScriptExport.isProcessing)
                         if let editing = actions.editing, editing.isEdited, let revision = editing.current {
-                            Divider()
                             Button("Export edited PDF…") { sharedRevision = revision }
                         }
                     } label: { Image(systemName: "square.and.arrow.up") }
@@ -167,30 +180,17 @@ struct PDFInfoView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { close(); dismiss() } label: { Image(systemName: "xmark") }.accessibilityLabel("close")
                 }
-                ToolbarItemGroup(placement: .bottomBar) {
-                    Button { removeMetadata() } label: { Image(systemName: "eraser") }
-                        .accessibilityLabel("Remove metadata")
-                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
-                    Button {
-                        do { compression = try PDFCompressionSession(editing: actions.editingSession()) }
-                        catch { message = error.localizedDescription }
-                    } label: { Image(systemName: "arrow.down.right.and.arrow.up.left") }
-                        .accessibilityLabel("Compress PDF")
-                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
-                    Button {
-                        do { signature = try PDFSignatureEditingSession(editing: actions.editingSession()) }
-                        catch { message = error.localizedDescription }
-                    } label: { Image(systemName: "signature") }
-                        .accessibilityLabel("Sign PDF")
-                        .disabled(session.isReading || session.report.isLocked || session.errorMessage != nil || actions.isProcessing || isExportingResources)
-                    Spacer()
-                    Button { actions.editing?.undo() } label: { Image(systemName: "arrow.uturn.backward") }
-                        .accessibilityLabel("Undo PDF edit")
-                        .disabled(actions.editing?.canUndo != true || actions.isProcessing)
-                    Button { actions.editing?.redo() } label: { Image(systemName: "arrow.uturn.forward") }
-                        .accessibilityLabel("Redo PDF edit")
-                        .disabled(actions.editing?.canRedo != true || actions.isProcessing)
-                }
+            }
+        }
+        .sheet(
+            isPresented: $postScriptExport.isFileExporterPresented,
+            onDismiss: cancelPostScriptExportIfNeeded
+        ) {
+            if let artifact = postScriptExport.artifact {
+                PostScriptDocumentExporter(
+                    sourceURL: artifact.url,
+                    onCompletion: postScriptExport.fileExporterDidFinish
+                )
             }
         }
         .sheet(isPresented: $showsExport, onDismiss: removeExport) {
@@ -198,6 +198,32 @@ struct PDFInfoView: View {
         }
         .sheet(item: $sharedRevision) { revision in
             ActivityView(activityItems: [revision.input.url]) { sharedRevision = nil }
+        }
+        .overlay {
+            if postScriptExport.showsProgress {
+                ProcessingOverlay()
+            }
+        }
+        .sheet(item: $postScriptExport.diagnosticDetails) { presentation in
+            DiagnosticDetailsView(presentation: presentation)
+        }
+        .alert(item: $postScriptExport.alert) { alert in
+            if alert.details != nil {
+                Alert(
+                    title: Text(alert.title),
+                    message: Text(alert.message),
+                    primaryButton: .default(Text("Details")) {
+                        postScriptExport.showDetails(for: alert)
+                    },
+                    secondaryButton: .cancel(Text(String(localized: "dismiss")))
+                )
+            } else {
+                Alert(
+                    title: Text(alert.title),
+                    message: Text(alert.message),
+                    dismissButton: .default(Text(String(localized: "dismiss")))
+                )
+            }
         }
         .sheet(item: $compression) { model in
             PDFCompressionView(session: model) { compression = nil }
@@ -227,9 +253,82 @@ struct PDFInfoView: View {
         } message: { Text(message ?? "") }
         .onChange(of: actions.errorMessage) { _, value in if let value { message = value; actions.errorMessage = nil } }
         .onChange(of: actions.notice) { _, value in if let value { message = value; actions.notice = nil } }
-        .onDisappear { if !showsExport && sharedRevision == nil && compression == nil && signature == nil && !selectsResourceFolder { close(); removeExport() } }
+        .onDisappear {
+            if !showsExport && sharedRevision == nil && compression == nil && signature == nil
+                && !selectsResourceFolder && !postScriptExport.isFileExporterPresented {
+                close()
+                removeExport()
+            }
+        }
     }
-    private func close() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; if ownsInspection { session.cancel() } }
+
+    private var bottomActionBar: some View {
+        HStack(spacing: 0) {
+            Button { removeMetadata() } label: {
+                Image(systemName: "eraser")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Remove metadata")
+            .disabled(
+                session.isReading || session.report.isLocked || session.errorMessage != nil
+                    || actions.isProcessing || isExportingResources
+            )
+
+            Button {
+                do { compression = try PDFCompressionSession(editing: actions.editingSession()) }
+                catch { message = error.localizedDescription }
+            } label: {
+                Image(systemName: "arrow.down.right.and.arrow.up.left")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Compress PDF")
+            .disabled(
+                session.isReading || session.report.isLocked || session.errorMessage != nil
+                    || actions.isProcessing || isExportingResources
+            )
+
+            Button {
+                do { signature = try PDFSignatureEditingSession(editing: actions.editingSession()) }
+                catch { message = error.localizedDescription }
+            } label: {
+                Image(systemName: "signature")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Sign PDF")
+            .disabled(
+                session.isReading || session.report.isLocked || session.errorMessage != nil
+                    || actions.isProcessing || isExportingResources
+            )
+
+            Spacer(minLength: 8)
+
+            Button { actions.editing?.undo() } label: {
+                Image(systemName: "arrow.uturn.backward")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Undo PDF edit")
+            .disabled(actions.editing?.canUndo != true || actions.isProcessing)
+
+            Button { actions.editing?.redo() } label: {
+                Image(systemName: "arrow.uturn.forward")
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Redo PDF edit")
+            .disabled(actions.editing?.canRedo != true || actions.isProcessing)
+        }
+        .padding(.horizontal, 8)
+        .background(.regularMaterial)
+        .overlay(alignment: .top) {
+            Divider()
+        }
+    }
+
+    private func close() { actions.cancel(); postScriptExport.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; if ownsInspection { session.cancel() } }
     private func unlock() { let value = password; password = ""; session.unlock(value) }
     private func removeMetadata() {
         if session.report.hasConformityDeclaration { asksConformity = true }
@@ -238,6 +337,18 @@ struct PDFInfoView: View {
     private func share(formatted: Bool) {
         do { removeExport(); exportURL = try PDFReportSharing.export(session.report, formatted: formatted); showsExport = true }
         catch { message = error.localizedDescription }
+    }
+    private func exportPostScript() {
+        guard let input = actions.editing?.current?.input ?? session.currentInput else { return }
+        postScriptExport.start(
+            sourceURL: input.url,
+            sourceName: input.fileName,
+            inputPassword: actions.editing?.passwordForProcessing ?? session.unlockedPassword
+        )
+    }
+    private func cancelPostScriptExportIfNeeded() {
+        guard postScriptExport.artifact != nil else { return }
+        postScriptExport.fileExporterDidFinish(.failure(CocoaError(.userCancelled)))
     }
     private func removeExport() {
         if resourceArtifact == nil, let exportURL { try? FileManager.default.removeItem(at: exportURL.deletingLastPathComponent()) }

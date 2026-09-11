@@ -3,7 +3,7 @@ import Combine
 import UniformTypeIdentifiers
 
 @MainActor
-final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuItemValidation {
+final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSource, NSOutlineViewDelegate, NSMenuItemValidation, MacOSPostScriptExportProviding {
     private let session: PDFInspectionSession
     private let actions: PDFEditingActions
     private var actionsObservation: AnyCancellable?
@@ -11,6 +11,7 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
     private let compressionButton = NSButton(title: String(localized: "Compress PDF…"), target: nil, action: nil)
     private let signatureButton = NSButton(title: String(localized: "Sign PDF…"), target: nil, action: nil)
     private let savePDFButton = NSButton(title: String(localized: "Export edited PDF…"), target: nil, action: nil)
+    private let moreButton = NSPopUpButton(frame: .zero, pullsDown: true)
     private let undoPDFButton = NSButton(title: "", target: nil, action: nil)
     private let redoPDFButton = NSButton(title: "", target: nil, action: nil)
     private let cancelProcessingButton = NSButton(title: String(localized: "Cancel"), target: nil, action: nil)
@@ -128,13 +129,27 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
         signatureButton.imagePosition = .imageLeading
         signatureButton.setAccessibilityIdentifier("pdf-sign")
         savePDFButton.target = self; savePDFButton.action = #selector(exportEditedPDF)
+        moreButton.bezelStyle = .accessoryBarAction
+        moreButton.addItem(withTitle: "")
+        moreButton.lastItem?.image = NSImage(
+            systemSymbolName: "ellipsis",
+            accessibilityDescription: String(localized: "More export options")
+        )
+        let postScriptItem = NSMenuItem(
+            title: String(localized: "Export as PostScript…"),
+            action: #selector(exportAsPostScript),
+            keyEquivalent: ""
+        )
+        postScriptItem.target = self
+        moreButton.menu?.addItem(postScriptItem)
+        moreButton.setAccessibilityLabel(String(localized: "More export options"))
         undoPDFButton.image = NSImage(systemSymbolName: "arrow.uturn.backward", accessibilityDescription: String(localized: "Undo PDF edit"))
         redoPDFButton.image = NSImage(systemSymbolName: "arrow.uturn.forward", accessibilityDescription: String(localized: "Redo PDF edit"))
         undoPDFButton.target = self; undoPDFButton.action = #selector(undoPDFEdit)
         redoPDFButton.target = self; redoPDFButton.action = #selector(redoPDFEdit)
         cancelProcessingButton.target = self; cancelProcessingButton.action = #selector(cancelProcessing)
         processingStatus.font = .systemFont(ofSize: 11); processingStatus.textColor = .secondaryLabelColor
-        let tools = NSStackView(views: [metadataButton, compressionButton, signatureButton, NSView(), undoPDFButton, redoPDFButton, savePDFButton])
+        let tools = NSStackView(views: [metadataButton, compressionButton, signatureButton, NSView(), undoPDFButton, redoPDFButton, savePDFButton, moreButton])
         tools.spacing = 10; root.addArrangedSubview(tools)
         tools.widthAnchor.constraint(equalTo: root.widthAnchor).isActive = true
         let progress = NSStackView(views: [processingStatus, NSView(), cancelProcessingButton])
@@ -142,6 +157,7 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
     }
     override func viewDidLoad() {
         super.viewDidLoad()
+        MacOSApplicationModel.shared.postScriptExportController.register(self)
         observation = session.objectWillChange.sink { [weak self] _ in Task { @MainActor [weak self] in self?.refresh() } }
         actionsObservation = actions.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in self?.refresh(); self?.showProcessingFeedback() }
@@ -178,6 +194,7 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
         savePDFButton.isEnabled = actions.editing?.isEdited == true && !actions.isProcessing
         compressionButton.isEnabled = metadataButton.isEnabled
         signatureButton.isEnabled = metadataButton.isEnabled
+        moreButton.isEnabled = postScriptExportInput != nil
         cancelProcessingButton.isHidden = !actions.isProcessing && !isExportingResources
         processingStatus.stringValue = isExportingResources ? resourceExportStatus : (actions.isProcessing ? String(localized: "Removing metadata…") : "")
         categoryButtons.enumerated().forEach { $0.element.state = PDFInfoCategory.allCases[$0.offset] == category ? .on : .off }
@@ -193,7 +210,12 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
         }
         isReloading = false
     }
-    func stopProcessing() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil }
+    func stopProcessing() {
+        MacOSApplicationModel.shared.postScriptExportController.unregister(self)
+        actions.cancel()
+        resourceExportTask?.cancel()
+        resourceExportTask = nil
+    }
     @objc private func cancelProcessing() { actions.cancel(); resourceExportTask?.cancel(); resourceExportTask = nil; isExportingResources = false; refresh() }
     @objc private func undoPDFEdit() { actions.editing?.undo() }
     @objc private func redoPDFEdit() { actions.editing?.redo() }
@@ -253,6 +275,23 @@ final class MacOSPDFInfoViewController: NSViewController, NSOutlineViewDataSourc
             }
         }
     }
+    @objc private func exportAsPostScript() {
+        MacOSApplicationModel.shared.postScriptExportController.export(using: self)
+    }
+
+    var postScriptExportInput: MacOSPostScriptExportInput? {
+        guard !session.isReading, !session.report.isLocked,
+              let input = actions.editing?.current?.input ?? session.currentInput
+        else { return nil }
+        return MacOSPostScriptExportInput(
+            url: input.url,
+            sourceName: input.fileName,
+            inputPassword: actions.editing?.passwordForProcessing ?? session.unlockedPassword,
+            retainedInput: input
+        )
+    }
+
+    var postScriptExportWindow: NSWindow? { view.window }
     @objc private func selectCategory(_ sender: NSButton) { category = PDFInfoCategory.allCases[sender.tag]; refresh(); outline.scrollRowToVisible(0) }
     @objc private func showMissingFonts() { category = .fonts; for section in session.report.fontWarnings { expanded.insert(section.id); collapsed.remove(section.id) }; refresh(); outline.scrollRowToVisible(0) }
     @objc private func showAnalysisDetails() {

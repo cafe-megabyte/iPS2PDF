@@ -7,7 +7,12 @@ final class MacOSApplicationModel: ObservableObject {
     static let shared = MacOSApplicationModel()
 
     let joboptionsRepository = JoboptionsRepository()
+    let runtimeSettings = GhostscriptRuntimeSettings()
     let conversionCoordinator = MacOSConversionCoordinator()
+    lazy var postScriptExportController = MacOSPostScriptExportController(
+        coordinator: conversionCoordinator,
+        runtimeSettings: runtimeSettings
+    )
 
     private(set) var activeConversionCount = 0
     private var idleActions: [() -> Void] = []

@@ -7,15 +7,18 @@ struct ContentView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var showsBack = false
-    @State private var opensInformation = false
+    @State private var fileImportPurpose: FileImportPurpose?
+    @State private var showsGhostscriptSettings = false
 
     var body: some View {
         ZStack {
             FrontConversionView(
                 viewModel: viewModel,
                 onShowSettings: { setBackVisible(true) },
-                onShowPDFInfo: { opensInformation = true; viewModel.isFileImporterPresented = true },
-                onOpenFile: { opensInformation = false; viewModel.isFileImporterPresented = true }
+                onShowPDFInfo: { presentFileImporter(for: .pdfInformation) },
+                onOpenFile: { presentFileImporter(for: .pdfConversion) },
+                onOpenPostScriptFile: { presentFileImporter(for: .postScriptConversion) },
+                onShowGhostscriptSettings: { showsGhostscriptSettings = true }
             )
             .opacity(showsBack ? 0 : 1)
             .rotation3DEffect(
@@ -42,26 +45,33 @@ struct ContentView: View {
             if viewModel.showsProgressOverlay {
                 ProcessingOverlay()
             }
+
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .fileImporter(
             isPresented: $viewModel.isFileImporterPresented,
-            allowedContentTypes: opensInformation ? [.pdf] : [.data, .joboptions],
+            allowedContentTypes: fileImportPurpose?.allowedContentTypes ?? [.item],
             allowsMultipleSelection: false
         ) { result in
-            switch result {
-            case let .success(urls):
-                if let url = urls.first {
-                    if opensInformation { viewModel.presentedPDFInfo = PDFInspectionSession(url: url) }
-                    else { viewModel.handleSelectedFile(url) }
-                }
-            case .failure:
-                break
+            handleFileImport(result)
+        }
+        .sheet(
+            isPresented: $viewModel.isPostScriptFileExporterPresented,
+            onDismiss: cancelPostScriptExportIfNeeded
+        ) {
+            if let artifact = viewModel.postScriptExportArtifact {
+                PostScriptDocumentExporter(
+                    sourceURL: artifact.url,
+                    onCompletion: viewModel.postScriptFileExporterDidFinish
+                )
             }
         }
+        .sheet(isPresented: $showsGhostscriptSettings) {
+            GhostscriptSettingsView(settings: viewModel.runtimeSettings)
+        }
         .sheet(item: $viewModel.presentedPDFInfo, onDismiss: viewModel.pdfInfoDidDismiss) { session in
-            PDFInfoView(session: session)
+            PDFInfoView(session: session, runtimeSettings: viewModel.runtimeSettings)
         }
         .modifier(PDFPasswordPresenter(controller: viewModel.passwordController))
         .onOpenURL { url in
@@ -83,6 +93,7 @@ struct ContentView: View {
         .fullScreenCover(item: $viewModel.presentedPDF, onDismiss: viewModel.pdfViewerDidDismiss) { presentation in
             PDFViewer(
                 url: presentation.url,
+                runtimeSettings: viewModel.runtimeSettings,
                 onClose: viewModel.closePDFViewer,
                 onShareStarted: viewModel.beginSharing,
                 onShareFinished: viewModel.endSharing
@@ -119,6 +130,35 @@ struct ContentView: View {
         withAnimation(reduceMotion ? .easeInOut(duration: 0.2) : .easeInOut(duration: 0.62)) {
             showsBack = visible
         }
+    }
+
+    private func presentFileImporter(for purpose: FileImportPurpose) {
+        guard !viewModel.controlsAreDisabled else { return }
+        fileImportPurpose = purpose
+        viewModel.isFileImporterPresented = true
+    }
+
+    private func handleFileImport(_ result: Result<[URL], Error>) {
+        let purpose = fileImportPurpose
+        fileImportPurpose = nil
+        viewModel.isFileImporterPresented = false
+        guard case let .success(urls) = result, let url = urls.first else { return }
+
+        switch purpose {
+        case .pdfInformation:
+            viewModel.presentedPDFInfo = PDFInspectionSession(url: url)
+        case .pdfConversion:
+            viewModel.handleSelectedFile(url)
+        case .postScriptConversion:
+            viewModel.handleSelectedPostScriptFile(url)
+        case nil:
+            break
+        }
+    }
+
+    private func cancelPostScriptExportIfNeeded() {
+        guard viewModel.postScriptExportArtifact != nil else { return }
+        viewModel.postScriptFileExporterDidFinish(.failure(CocoaError(.userCancelled)))
     }
 
     private func receiveDroppedItems(_ providers: [NSItemProvider]) -> Bool {
@@ -172,5 +212,22 @@ struct ContentView: View {
             }
         }
         return true
+    }
+
+    private enum FileImportPurpose {
+        case pdfInformation
+        case pdfConversion
+        case postScriptConversion
+
+        var allowedContentTypes: [UTType] {
+            switch self {
+            case .pdfInformation:
+                return [.pdf]
+            case .pdfConversion:
+                return [.data, .joboptions]
+            case .postScriptConversion:
+                return [.item]
+            }
+        }
     }
 }

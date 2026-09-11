@@ -59,6 +59,15 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
         _ request: XPCDictionary,
         inputFileHandle: FileHandle?
     ) throws -> XPCDictionary {
+        let outputFormatValue: String =
+            request[GhostscriptExtensionEnvelope.outputFormat] ?? GhostscriptOutputFormat.pdf.rawValue
+        guard let outputFormat = GhostscriptOutputFormat(rawValue: outputFormatValue) else {
+            throw HelperError.message("The requested Ghostscript output format is invalid.")
+        }
+        if outputFormat == .postScript {
+            return try runPostScript(request, inputFileHandle: inputFileHandle)
+        }
+
         let validationOnly: Bool = request[GhostscriptExtensionEnvelope.validate] ?? false
         let limitsEnabled: Bool = request[GhostscriptExtensionEnvelope.limitsEnabled] ?? true
         let allowTransparency: Bool =
@@ -200,9 +209,10 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
                                 Self.withOptionalPath(profileOverrideDirectory) { overridesDirectoryPointer in
                                     Self.withOptionalCString(profileOverrides) { overridesPointer in
                                         Self.withOptionalCString(blendConversionStrategy) { blendPointer in
-                                            gs_run_joboptions_with_fds(
+                                            gs_run_conversion_with_fds(
                                                 input, output, joboptions, journal,
                                                 validationOnly ? 1 : 0,
+                                                Int32(GS_BRIDGE_OUTPUT_PDF.rawValue),
                                                 allowTransparency ? 1 : 0,
                                                 epsCrop ? 1 : 0,
                                                 embedSubstituteFonts ? 1 : 0,
@@ -246,6 +256,127 @@ final class GhostscriptExtensionRequestHandler: XPCPeerHandler, @unchecked Senda
             try publish(partialJournalURL, as: journalURL)
         }
         if status == 0, !validationOnly {
+            try publish(partialOutputURL, as: outputURL)
+        } else {
+            try? fileManager.removeItem(at: partialOutputURL)
+        }
+
+        var reply = XPCDictionary()
+        reply[GhostscriptExtensionEnvelope.status] = Int64(status)
+        reply[GhostscriptExtensionEnvelope.ghostscriptCode] = Int64(ghostscriptCode)
+        reply[GhostscriptExtensionEnvelope.stage] = Int64(stage)
+        return reply
+    }
+
+    private func runPostScript(
+        _ request: XPCDictionary,
+        inputFileHandle: FileHandle?
+    ) throws -> XPCDictionary {
+        let limitsEnabled: Bool = request[GhostscriptExtensionEnvelope.limitsEnabled] ?? true
+        let postScriptRandomSeed: Int64 =
+            request[GhostscriptExtensionEnvelope.postScriptRandomSeed] ?? 1
+        let deadline: Int64 = request[GhostscriptExtensionEnvelope.deadline]
+            ?? Int64(Date().addingTimeInterval(15 * 60).timeIntervalSince1970)
+        let maximumOutput: Int64 =
+            request[GhostscriptExtensionEnvelope.maximumOutputBytes] ?? 2_147_483_648
+
+        let inputDirectory = try AppGroupWorkspace.inputDirectoryURL()
+        let outputDirectory = try AppGroupWorkspace.outputDirectoryURL()
+        try verifyRegularFile(
+            at: inputDirectory.appendingPathComponent(AppGroupWorkspace.readyFileName)
+        )
+        try fileManager.createDirectory(at: outputDirectory, withIntermediateDirectories: true)
+
+        let inputURL = inputDirectory.appendingPathComponent(AppGroupWorkspace.inputFileName)
+        let partialOutputURL = outputDirectory.appendingPathComponent(
+            AppGroupWorkspace.partialPostScriptOutputFileName
+        )
+        let outputURL = outputDirectory.appendingPathComponent(
+            AppGroupWorkspace.postScriptOutputFileName
+        )
+        let partialJournalURL = outputDirectory
+            .appendingPathComponent(AppGroupWorkspace.partialJournalFileName)
+        let journalURL = outputDirectory.appendingPathComponent(AppGroupWorkspace.journalFileName)
+
+        for url in [partialOutputURL, outputURL, partialJournalURL, journalURL]
+        where fileManager.fileExists(atPath: url.path) {
+            try fileManager.removeItem(at: url)
+        }
+
+        var journal = try openRegularFile(
+            at: partialJournalURL,
+            flags: O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW,
+            mode: 0o600
+        )
+        var input: Int32
+        if let inputFileHandle {
+            input = try duplicateRegularFileDescriptor(
+                inputFileHandle.fileDescriptor,
+                name: AppGroupWorkspace.inputFileName
+            )
+        } else {
+            input = try openRegularFile(at: inputURL, flags: O_RDONLY | O_CLOEXEC | O_NOFOLLOW)
+        }
+        var output = try openRegularFile(
+            at: partialOutputURL,
+            flags: O_RDWR | O_CREAT | O_TRUNC | O_CLOEXEC | O_NOFOLLOW,
+            mode: 0o600
+        )
+        defer {
+            [input, output, journal].filter { $0 >= 0 }.forEach { Darwin.close($0) }
+        }
+
+        guard let ghostscriptDirectory = GhostscriptRuntimeResources.ghostscriptDirectoryURL else {
+            throw HelperError.message(
+                "The Ghostscript resource directory is unavailable in the Ghostscript extension."
+            )
+        }
+
+        var ghostscriptCode: Int32 = 0
+        var stage: Int32 = 0
+        gs_bridge_reset_cancellation()
+        let inputPassword: String? = request[GhostscriptExtensionEnvelope.inputPDFPassword]
+        let status = Self.withOptionalCString(inputPassword) { passwordPointer in
+            "none".withCString { standardPointer in
+                Self.withOptionalPath(ghostscriptDirectory) { ghostscriptPointer in
+                    gs_run_conversion_with_fds(
+                        input, output, -1, journal,
+                        0,
+                        Int32(GS_BRIDGE_OUTPUT_POSTSCRIPT.rawValue),
+                        0,
+                        1,
+                        1,
+                        0,
+                        0,
+                        nil,
+                        standardPointer,
+                        nil,
+                        ghostscriptPointer,
+                        nil,
+                        nil,
+                        nil,
+                        nil,
+                        passwordPointer,
+                        Int32(postScriptRandomSeed),
+                        limitsEnabled ? 1 : 0,
+                        deadline,
+                        maximumOutput,
+                        &ghostscriptCode,
+                        &stage
+                    )
+                }
+            }
+        }
+
+        [input, output, journal].filter { $0 >= 0 }.forEach { Darwin.close($0) }
+        input = -1
+        output = -1
+        journal = -1
+
+        if fileManager.fileExists(atPath: partialJournalURL.path) {
+            try publish(partialJournalURL, as: journalURL)
+        }
+        if status == 0 {
             try publish(partialOutputURL, as: outputURL)
         } else {
             try? fileManager.removeItem(at: partialOutputURL)

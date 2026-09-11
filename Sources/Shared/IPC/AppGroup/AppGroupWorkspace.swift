@@ -14,6 +14,8 @@ enum AppGroupWorkspace {
     static let readyFileName = "ready"
     static let outputFileName = "output.pdf"
     static let partialOutputFileName = "output.pdf.partial"
+    static let postScriptOutputFileName = "output.ps"
+    static let partialPostScriptOutputFileName = "output.ps.partial"
     static let journalFileName = "journal.log"
     static let partialJournalFileName = "journal.log.partial"
 

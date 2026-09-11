@@ -40,6 +40,7 @@ typedef struct DescriptorCapture {
     int input_fd;
     int journal_fd;
     int output_fd;
+    const char *output_name;
     int limits_enabled;
     long long deadline_epoch_seconds;
     long long maximum_output_bytes;
@@ -48,7 +49,8 @@ typedef struct DescriptorCapture {
 } DescriptorCapture;
 
 static const char *kDescriptorInputName = "iPS2PDF-input";
-static const char *kDescriptorOutputName = "iPS2PDF-output.pdf";
+static const char *kDescriptorPDFOutputName = "iPS2PDF-output.pdf";
+static const char *kDescriptorPostScriptOutputName = "iPS2PDF-output.ps";
 
 static volatile sig_atomic_t descriptor_cancellation_requested = 0;
 
@@ -271,11 +273,12 @@ static int descriptor_open_file(
             file
         );
     }
-    if (strcmp(filename, kDescriptorOutputName) != 0) return 0;
+    DescriptorCapture *capture = (DescriptorCapture *)secret;
+    if (capture == NULL || strcmp(filename, capture->output_name) != 0) return 0;
     if (strchr(mode, 'w') == NULL && strchr(mode, 'a') == NULL) return -1;
     return descriptor_make_output_file(
         memory,
-        (DescriptorCapture *)secret,
+        capture,
         mode,
         file
     );
@@ -290,10 +293,11 @@ static int descriptor_open_printer(
 )
 {
     *file = NULL;
-    if (strcmp(filename, kDescriptorOutputName) != 0) return 0;
+    DescriptorCapture *capture = (DescriptorCapture *)secret;
+    if (capture == NULL || strcmp(filename, capture->output_name) != 0) return 0;
     return descriptor_make_output_file(
         memory,
-        (DescriptorCapture *)secret,
+        capture,
         binary ? "wb" : "w",
         file
     );
@@ -307,12 +311,13 @@ static gsapi_fs_t descriptor_file_system = {
     .open_handle = NULL
 };
 
-int gs_run_joboptions_with_fds(
+int gs_run_conversion_with_fds(
     int input_fd,
     int output_fd,
     int joboptions_fd,
     int journal_fd,
     int validation_only,
+    int output_format,
     int allow_transparency,
     int eps_crop,
     int embed_substitute_fonts,
@@ -350,6 +355,8 @@ int gs_run_joboptions_with_fds(
     char first_page_option[32];
     char last_page_option[32];
     char random_seed_prolog[32];
+    char permit_output[64];
+    char output_option[64];
     char resource_directory[PATH_MAX];
     char init_directory[PATH_MAX];
     char generic_resource_option[PATH_MAX + 24];
@@ -362,6 +369,9 @@ int gs_run_joboptions_with_fds(
         .input_fd = input_fd,
         .journal_fd = journal_fd,
         .output_fd = output_fd,
+        .output_name = output_format == GS_BRIDGE_OUTPUT_POSTSCRIPT
+            ? kDescriptorPostScriptOutputName
+            : kDescriptorPDFOutputName,
         .limits_enabled = limits_enabled,
         .deadline_epoch_seconds = deadline_epoch_seconds,
         .maximum_output_bytes = maximum_output_bytes,
@@ -371,7 +381,11 @@ int gs_run_joboptions_with_fds(
 
     if (ghostscript_return_code != NULL) *ghostscript_return_code = 0;
     if (stage != NULL) *stage = GS_BRIDGE_STAGE_NONE;
-    if (joboptions_fd < 0 || journal_fd < 0 || (!validation_only && (input_fd < 0 || output_fd < 0))) {
+    if ((output_format != GS_BRIDGE_OUTPUT_PDF &&
+         output_format != GS_BRIDGE_OUTPUT_POSTSCRIPT) ||
+        (output_format == GS_BRIDGE_OUTPUT_POSTSCRIPT && validation_only) ||
+        (output_format == GS_BRIDGE_OUTPUT_PDF && joboptions_fd < 0) ||
+        journal_fd < 0 || (!validation_only && (input_fd < 0 || output_fd < 0))) {
         return -1;
     }
     if (!validation_only && (postscript_random_seed < 0 || postscript_random_seed > 2147483647)) {
@@ -383,7 +397,7 @@ int gs_run_joboptions_with_fds(
         return -1;
     }
 
-    lseek(joboptions_fd, 0, SEEK_SET);
+    if (joboptions_fd >= 0) lseek(joboptions_fd, 0, SEEK_SET);
     if (!validation_only) {
         lseek(input_fd, 0, SEEK_SET);
         ftruncate(output_fd, 0);
@@ -404,7 +418,8 @@ int gs_run_joboptions_with_fds(
     file_system_added = 1;
 
     current_stage = GS_BRIDGE_STAGE_INITIALIZATION;
-    const int has_standard = standard != NULL && strcmp(standard, "none") != 0;
+    const int writes_postscript = output_format == GS_BRIDGE_OUTPUT_POSTSCRIPT;
+    const int has_standard = !writes_postscript && standard != NULL && strcmp(standard, "none") != 0;
     const int is_pdfa = has_standard && strncmp(standard, "pdfa", 4) == 0;
     const int is_pdfx = has_standard && strncmp(standard, "pdfx", 4) == 0;
     const int has_standard_definition =
@@ -517,18 +532,19 @@ int gs_run_joboptions_with_fds(
         if (password_option == NULL) { return_code = -25; goto descriptor_finished; }
         snprintf(password_option, length, "-sPDFPassword=%s", pdf_password);
     }
-    const char *arguments[57];
+    const char *arguments[96];
     int argument_count = 0;
     arguments[argument_count++] = "iPS2PDF";
     arguments[argument_count++] = "-P-";
     arguments[argument_count++] = "-dSAFER";
     if (!validation_only) arguments[argument_count++] = "--permit-file-read=iPS2PDF-input";
-    arguments[argument_count++] = "--permit-file-write=iPS2PDF-output.pdf";
+    snprintf(permit_output, sizeof(permit_output), "--permit-file-write=%s", capture.output_name);
+    arguments[argument_count++] = permit_output;
     if (allow_transparency && !validation_only) {
         arguments[argument_count++] = "-dHaveTransparency=true";
         arguments[argument_count++] = "-dALLOWPSTRANSPARENCY";
     }
-    if (eps_crop) arguments[argument_count++] = "-dEPSCrop";
+    if (eps_crop || writes_postscript) arguments[argument_count++] = "-dEPSCrop";
     snprintf(
         embed_substitute_fonts_option,
         sizeof(embed_substitute_fonts_option),
@@ -572,9 +588,35 @@ int gs_run_joboptions_with_fds(
     if (password_option != NULL) arguments[argument_count++] = password_option;
     arguments[argument_count++] = "-q";
     arguments[argument_count++] = "-dNOPAUSE";
-    arguments[argument_count++] = "-sDEVICE=pdfwrite";
+    if (writes_postscript) {
+        arguments[argument_count++] = "-dLanguageLevel=2";
+        arguments[argument_count++] = "-dProduceDSC=true";
+        arguments[argument_count++] = "-dCompressPages=true";
+        arguments[argument_count++] = "-dCompressEntireFile=false";
+        arguments[argument_count++] = "-dSetPageSize=true";
+        arguments[argument_count++] = "-dRotatePages=false";
+        arguments[argument_count++] = "-dFitPages=false";
+        arguments[argument_count++] = "-dCenterPages=false";
+        arguments[argument_count++] = "-dAutoRotatePages=/None";
+        arguments[argument_count++] = "-dDoNumCopies=false";
+        arguments[argument_count++] = "-sColorConversionStrategy=LeaveColorUnchanged";
+        arguments[argument_count++] = "-dDownsampleColorImages=false";
+        arguments[argument_count++] = "-dDownsampleGrayImages=false";
+        arguments[argument_count++] = "-dDownsampleMonoImages=false";
+        arguments[argument_count++] = "-dEmbedAllFonts=true";
+        arguments[argument_count++] = "-dSubsetFonts=true";
+        arguments[argument_count++] = "-dUseCropBox=true";
+        arguments[argument_count++] = "-dUseBleedBox=false";
+        arguments[argument_count++] = "-dUseTrimBox=false";
+        arguments[argument_count++] = "-dUseArtBox=false";
+        arguments[argument_count++] = "-r720";
+        arguments[argument_count++] = "-sDEVICE=ps2write";
+    } else {
+        arguments[argument_count++] = "-sDEVICE=pdfwrite";
+    }
     arguments[argument_count++] = "-sstdout=%stderr";
-    arguments[argument_count++] = "-sOutputFile=iPS2PDF-output.pdf";
+    snprintf(output_option, sizeof(output_option), "-sOutputFile=%s", capture.output_name);
+    arguments[argument_count++] = output_option;
 
     return_code = gsapi_init_with_args(instance, argument_count, (char **)arguments);
     initialized = 1;
@@ -591,9 +633,11 @@ int gs_run_joboptions_with_fds(
         if (return_code != 0) goto descriptor_finished;
     }
 
-    return_code = descriptor_run_stream(instance, joboptions_fd, &capture);
-    if (return_code != 0) goto descriptor_finished;
-    if (allow_transparency && !validation_only) {
+    if (!writes_postscript) {
+        return_code = descriptor_run_stream(instance, joboptions_fd, &capture);
+        if (return_code != 0) goto descriptor_finished;
+    }
+    if (!writes_postscript && allow_transparency && !validation_only) {
         const char *transparency_prolog =
             "<< /PageUsesTransparency true /PageSpotColors 0 >> setpagedevice\n"
             "0 .pushpdf14devicefilter\n"
@@ -613,7 +657,7 @@ int gs_run_joboptions_with_fds(
         return_code = descriptor_run_bytes(instance, transparency_prolog, &capture);
         if (return_code != 0) goto descriptor_finished;
     }
-    if (has_profile_overrides) {
+    if (!writes_postscript && has_profile_overrides) {
         return_code = descriptor_run_bytes(instance, profile_overrides, &capture);
         if (return_code != 0) goto descriptor_finished;
     }

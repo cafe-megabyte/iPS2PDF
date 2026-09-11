@@ -5,13 +5,25 @@ struct FrontConversionView: View {
     let onShowSettings: () -> Void
     let onShowPDFInfo: () -> Void
     let onOpenFile: () -> Void
+    let onOpenPostScriptFile: () -> Void
+    let onShowGhostscriptSettings: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            Text(verbatim: "iPS2PDF")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+            ZStack {
+                Text(verbatim: "iPS2PDF")
+                    .font(.headline)
+                HStack {
+                    Spacer()
+                    Button(action: onShowGhostscriptSettings) {
+                        Image(systemName: "gearshape")
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("Ghostscript settings")
+                }
+            }
+            .padding(.horizontal, 12)
+            .frame(maxWidth: .infinity, minHeight: 44)
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
@@ -25,6 +37,7 @@ struct FrontConversionView: View {
 
                     analysisCard
                     conversionCard
+                    postScriptCard
                 }
                 .frame(maxWidth: 520, alignment: .leading)
                 .frame(maxWidth: .infinity)
@@ -53,7 +66,7 @@ struct FrontConversionView: View {
     private var conversionCard: some View {
         VStack(spacing: 0) {
             toolButton(
-                title: LocalizedStringResource("Convert file…"),
+                title: LocalizedStringResource("Convert to PDF…"),
                 subtitle: LocalizedStringResource("PostScript · EPS · PDF → PDF"),
                 systemImage: "arrow.down.doc",
                 action: onOpenFile
@@ -98,6 +111,18 @@ struct FrontConversionView: View {
                 }
             }
         }
+        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
+    }
+
+    private var postScriptCard: some View {
+        toolButton(
+            title: LocalizedStringResource("Convert to PS…"),
+            subtitle: LocalizedStringResource("PDF · PostScript · EPS → PostScript"),
+            systemImage: "doc.badge.arrow.up",
+            action: onOpenPostScriptFile
+        )
         .background(Color(uiColor: .secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
