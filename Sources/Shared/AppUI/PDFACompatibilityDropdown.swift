@@ -13,13 +13,13 @@ struct PDFACompatibilityDropdown: View {
                 } label: {
                     menuItemTitle(for: compatibility)
                     if let detail = compatibility.detail {
-                        Text(detail)
+                        Text(verbatim: detail)
                     }
                 }
             }
         } label: {
             HStack(spacing: 6) {
-                Text(selectedCompatibility.title)
+                Text(verbatim: selectedCompatibility.title)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
@@ -36,9 +36,13 @@ struct PDFACompatibilityDropdown: View {
     @ViewBuilder
     private func menuItemTitle(for compatibility: PDFACompatibility) -> some View {
         if compatibility.isHighlighted {
-            Label(compatibility.title, systemImage: "star.fill")
+            Label {
+                Text(verbatim: compatibility.title)
+            } icon: {
+                Image(systemName: "star.fill")
+            }
         } else {
-            Text(compatibility.title)
+            Text(verbatim: compatibility.title)
         }
     }
 }

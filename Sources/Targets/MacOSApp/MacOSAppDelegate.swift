@@ -12,7 +12,11 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
     ]
 
     private var waitsForConversionBeforeTermination = false
+    private var startWindowController: MacOSStartWindowController?
+    private var startWindowMenuItem: NSMenuItem?
     private var settingsWindowController: NSWindowController?
+    private var joboptionsEditorWindowController: NSWindowController?
+    private var joboptionsManagementWindowController: NSWindowController?
     private var pdfLicensesWindowController: NSWindowController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -20,17 +24,46 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         JoboptionsEditingSession.cleanupStaleDirectories()
         try? PDFInspectionInput.clearStaleDirectories()
         try? AppGroupWorkspace.clearStaleDataPreservingShareInbox()
-        Task { @MainActor in
+        installStartWindowMenuItem()
+        Task { @MainActor [weak self] in
             try? await Task.sleep(for: .milliseconds(350))
             guard NSDocumentController.shared.documents.isEmpty,
-                  NSApp.keyWindow == nil
+                  !NSApp.windows.contains(where: \.isVisible)
             else { return }
-            MacOSApplicationModel.shared.presentOpenPanel()
+            self?.showStartWindow(nil)
         }
     }
 
     func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
         true
+    }
+
+    func applicationShouldHandleReopen(
+        _ sender: NSApplication,
+        hasVisibleWindows flag: Bool
+    ) -> Bool {
+        if !flag {
+            showStartWindow(nil)
+        }
+        return true
+    }
+
+    @IBAction func showStartWindow(_ sender: Any?) {
+        if startWindowController == nil {
+            startWindowController = MacOSStartWindowController(
+                model: MacOSApplicationModel.shared,
+                onEditJoboptions: { [weak self] in
+                    self?.showJoboptionsEditor()
+                },
+                onManageJoboptions: { [weak self] in
+                    self?.showJoboptionsManagement()
+                },
+                onShowGhostscriptSettings: { [weak self] in
+                    self?.showSettings(nil)
+                }
+            )
+        }
+        startWindowController?.present()
     }
 
     @IBAction func openFile(_ sender: Any?) {
@@ -81,11 +114,10 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         }
 
         let viewController = MacOSSettingsViewController(
-            repository: MacOSApplicationModel.shared.joboptionsRepository,
             runtimeSettings: MacOSApplicationModel.shared.runtimeSettings
         )
         let window = NSWindow(contentViewController: viewController)
-        window.title = String(localized: "Settings")
+        window.title = String(localized: "Ghostscript settings")
         window.setContentSize(NSSize(width: 500, height: viewController.view.fittingSize.height))
         window.minSize = window.frame.size
         window.styleMask.formUnion([.titled, .closable, .miniaturizable])
@@ -167,5 +199,93 @@ final class MacOSAppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidat
         }
         guard menuItem.action == #selector(prepareContainerReset(_:)) else { return true }
         return MacOSApplicationModel.shared.activeConversionCount == 0
+    }
+
+    private func installStartWindowMenuItem() {
+        guard startWindowMenuItem == nil, let menu = NSApp.windowsMenu else { return }
+        let item = NSMenuItem(
+            title: String(localized: "Show Start Window"),
+            action: #selector(showStartWindow(_:)),
+            keyEquivalent: ""
+        )
+        item.target = self
+        menu.insertItem(item, at: 0)
+        menu.insertItem(.separator(), at: 1)
+        startWindowMenuItem = item
+    }
+
+    private func showJoboptionsEditor() {
+        guard let parentWindow = startWindowController?.window else { return }
+        if let window = joboptionsEditorWindowController?.window {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let repository = MacOSApplicationModel.shared.joboptionsRepository
+        do {
+            let session = try JoboptionsEditingSession(repository: repository)
+            let viewController = MacOSDistillerEditorViewController(
+                session: session,
+                repository: repository
+            )
+            let window = NSWindow(contentViewController: viewController)
+            window.title = String.localizedStringWithFormat(
+                String(localized: "PDF settings: %@"),
+                repository.activeName
+            )
+            window.setContentSize(NSSize(width: 900, height: 670))
+            window.minSize = NSSize(width: 760, height: 560)
+            window.styleMask = [.titled, .closable, .resizable]
+            window.isReleasedWhenClosed = false
+
+            joboptionsEditorWindowController = NSWindowController(window: window)
+            viewController.onFinish = { [weak self, weak parentWindow, weak window] commits in
+                guard let self else { return }
+                if commits {
+                    try session.commit()
+                } else {
+                    session.cancel()
+                }
+                if let window, let parentWindow {
+                    parentWindow.endSheet(window)
+                }
+                joboptionsEditorWindowController = nil
+            }
+            parentWindow.beginSheet(window)
+        } catch {
+            present(error, asSheetFor: parentWindow)
+        }
+    }
+
+    private func showJoboptionsManagement() {
+        guard let parentWindow = startWindowController?.window else { return }
+        if let window = joboptionsManagementWindowController?.window {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let viewController = MacOSJoboptionsManagementViewController(
+            repository: MacOSApplicationModel.shared.joboptionsRepository
+        )
+        let window = NSWindow(contentViewController: viewController)
+        window.title = String(localized: "Manage Joboptions")
+        window.setContentSize(NSSize(width: 700, height: 520))
+        window.minSize = NSSize(width: 620, height: 430)
+        window.styleMask = [.titled, .closable, .resizable]
+        window.isReleasedWhenClosed = false
+
+        joboptionsManagementWindowController = NSWindowController(window: window)
+        viewController.onFinish = { [weak self, weak parentWindow, weak window] in
+            guard let self else { return }
+            if let window, let parentWindow {
+                parentWindow.endSheet(window)
+            }
+            joboptionsManagementWindowController = nil
+        }
+        parentWindow.beginSheet(window)
+    }
+
+    private func present(_ error: Error, asSheetFor parentWindow: NSWindow) {
+        NSAlert(error: error).beginSheetModal(for: parentWindow)
     }
 }

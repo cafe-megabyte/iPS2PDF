@@ -58,14 +58,14 @@ final class MacOSPostScriptExportController {
         }
     }
 
-    func presentOpenPanel() {
+    func presentOpenPanel(parentWindow: NSWindow? = nil) {
         guard !isProcessing else { NSSound.beep(); return }
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.item]
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.message = String(localized: "Select a file to convert to PostScript.")
-        panel.begin { [weak self] response in
+        let completion: (NSApplication.ModalResponse) -> Void = { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
             Task { @MainActor [weak self] in
                 self?.presentSavePanel(
@@ -75,9 +75,14 @@ final class MacOSPostScriptExportController {
                         inputPassword: nil,
                         retainedInput: nil
                     ),
-                    parentWindow: nil
+                    parentWindow: parentWindow
                 )
             }
+        }
+        if let parentWindow, parentWindow.attachedSheet == nil {
+            panel.beginSheetModal(for: parentWindow, completionHandler: completion)
+        } else {
+            panel.begin(completionHandler: completion)
         }
     }
 

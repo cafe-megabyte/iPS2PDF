@@ -27,15 +27,20 @@ final class MacOSPDFInfoWindowController: NSWindowController, NSWindowDelegate {
         controller.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
-    static func openPanel() {
+    static func openPanel(parentWindow: NSWindow? = nil) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.pdf]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
         panel.message = String(localized: "Select PDFs to display their information.")
-        panel.begin { response in
+        let completion: (NSApplication.ModalResponse) -> Void = { response in
             guard response == .OK else { return }
             for url in panel.urls { present(url: url) }
+        }
+        if let parentWindow, parentWindow.attachedSheet == nil {
+            panel.beginSheetModal(for: parentWindow, completionHandler: completion)
+        } else {
+            panel.begin(completionHandler: completion)
         }
     }
     private init(session: PDFInspectionSession, editing: PDFEditingSession?) {

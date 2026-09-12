@@ -1,8 +1,8 @@
 import Foundation
 
 enum JoboptionsConsistencyEngine {
-    /// The initial iOS page and compact macOS settings present this PDF/A
-    /// constraint instead of the stored version. A matching value is still constrained.
+    /// The compact iOS and macOS start screens present this PDF/A constraint
+    /// instead of the stored version. A matching value is still constrained.
     static func pdfAConstrainedCompatibilityLevel(
         in document: LosslessJoboptionsDocument?
     ) -> String? {

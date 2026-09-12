@@ -23,14 +23,22 @@ final class MacOSApplicationModel: ObservableObject {
 
     private init() {}
 
-    func presentOpenPanel(purpose: IncomingDocumentPurpose = .automatic) {
+    func presentOpenPanel(
+        purpose: IncomingDocumentPurpose = .automatic,
+        parentWindow: NSWindow? = nil
+    ) {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.data]
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = false
-        panel.begin { [weak self] response in
+        let completion: (NSApplication.ModalResponse) -> Void = { [weak self] response in
             guard response == .OK else { return }
             self?.openDocuments(at: panel.urls, purpose: purpose)
+        }
+        if let parentWindow, parentWindow.attachedSheet == nil {
+            panel.beginSheetModal(for: parentWindow, completionHandler: completion)
+        } else {
+            panel.begin(completionHandler: completion)
         }
     }
 

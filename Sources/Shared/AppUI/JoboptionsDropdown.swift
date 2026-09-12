@@ -3,13 +3,14 @@ import SwiftUI
 struct JoboptionsDropdown: View {
     @ObservedObject var repository: JoboptionsRepository
     let isDisabled: Bool
+    let onManage: (() -> Void)?
 
     var body: some View {
         Menu {
             ForEach(userRecords.reversed()) { record in
                 recordButton(record)
             }
-            menuHeader("User")
+            menuHeader(LocalizedStringResource("User"))
 
             ForEach(otherBundledRecords.reversed()) { record in
                 recordButton(record)
@@ -20,10 +21,17 @@ struct JoboptionsDropdown: View {
             if let normalRecord {
                 recordButton(normalRecord)
             }
-            menuHeader("Bundled")
+            menuHeader(LocalizedStringResource("Bundled"))
+
+            if let onManage {
+                Divider()
+                Button("Manage Joboptions...", systemImage: "folder") {
+                    onManage()
+                }
+            }
         } label: {
             HStack(spacing: 6) {
-                Text(repository.activeName)
+                Text(verbatim: repository.activeName)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
@@ -54,7 +62,7 @@ struct JoboptionsDropdown: View {
         repository.records.filter { !$0.isBundled }
     }
 
-    private func menuHeader(_ title: LocalizedStringKey) -> some View {
+    private func menuHeader(_ title: LocalizedStringResource) -> some View {
         Text(title)
             .foregroundStyle(.secondary)
     }
@@ -64,7 +72,15 @@ struct JoboptionsDropdown: View {
             do { try repository.activate(record) }
             catch { repository.lastError = error.localizedDescription }
         } label: {
-            Text(repository.activeRecord?.id == record.id ? "✓ \(record.name)" : record.name)
+            if repository.activeRecord?.id == record.id {
+                Label {
+                    Text(verbatim: record.name)
+                } icon: {
+                    Image(systemName: "checkmark")
+                }
+            } else {
+                Text(verbatim: record.name)
+            }
         }
     }
 }

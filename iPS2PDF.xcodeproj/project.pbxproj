@@ -317,6 +317,7 @@
 		U20000000000000000000024 /* Native */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = Native; sourceTree = "<group>"; };
 		U20000000000000000000025 /* MacOS */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = MacOS; sourceTree = "<group>"; };
 		U20000000000000000000026 /* PostScriptEncryption */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = PostScriptEncryption; sourceTree = "<group>"; };
+		U20000000000000000000027 /* AppUI */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = AppUI; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -469,6 +470,7 @@
 			children = (
 				W70000000000000000000001 /* PDFProcessingRuntime */,
 				S70000000000000000000003 /* AppCore */,
+				U20000000000000000000027 /* AppUI */,
 				U2000000000000000000001D /* ICCMetadata */,
 				U2000000000000000000000C /* GhostscriptClient */,
 				U20000000000000000000022 /* PDFProcessingClient */,
@@ -587,6 +589,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				U20000000000000000000001 /* iOSApp */,
+				U20000000000000000000027 /* AppUI */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000C /* GhostscriptClient */,
@@ -693,6 +696,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				U20000000000000000000004 /* MacOSApp */,
+				U20000000000000000000027 /* AppUI */,
 				U20000000000000000000009 /* Conversion */,
 				U2000000000000000000000A /* Joboptions */,
 				U2000000000000000000000C /* GhostscriptClient */,

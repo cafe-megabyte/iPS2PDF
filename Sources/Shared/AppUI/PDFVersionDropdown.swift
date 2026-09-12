@@ -13,13 +13,13 @@ struct PDFVersionDropdown: View {
                 } label: {
                     menuItemTitle(for: version)
                     if let detail = version.detail {
-                        Text(detail)
+                        Text(verbatim: detail)
                     }
                 }
             }
         } label: {
             HStack(spacing: 6) {
-                Text(selectedVersion.title)
+                Text(verbatim: selectedVersion.title)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.trailing)
@@ -36,9 +36,13 @@ struct PDFVersionDropdown: View {
     @ViewBuilder
     private func menuItemTitle(for version: PDFVersion) -> some View {
         if version.isHighlighted {
-            Label(version.title, systemImage: "star.fill")
+            Label {
+                Text(verbatim: version.title)
+            } icon: {
+                Image(systemName: "star.fill")
+            }
         } else {
-            Text(version.title)
+            Text(verbatim: version.title)
         }
     }
 }

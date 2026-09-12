@@ -22,8 +22,16 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             FrontConversionView(
-                viewModel: viewModel,
+                repository: viewModel.joboptionsRepository,
+                selectedPDFVersion: viewModel.selectedPDFVersion,
+                isPDFVersionConstrained: viewModel.isPDFVersionConstrained,
+                selectedPDFACompatibility: viewModel.selectedPDFACompatibility,
+                controlsAreDisabled: viewModel.controlsAreDisabled,
+                controlsAppearDisabled: viewModel.controlsAppearDisabled,
+                onSelectPDFVersion: viewModel.setPDFVersion,
+                onSelectPDFACompatibility: viewModel.setPDFACompatibility,
                 onShowSettings: { setBackVisible(true) },
+                onManageJoboptions: nil,
                 onShowPDFInfo: { viewModel.presentFileImporter(for: .pdfInformation) },
                 onOpenFile: { viewModel.presentFileImporter(for: .pdfConversion) },
                 onOpenPostScriptFile: {

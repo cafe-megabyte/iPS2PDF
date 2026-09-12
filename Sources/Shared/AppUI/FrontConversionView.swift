@@ -1,8 +1,16 @@
 import SwiftUI
 
 struct FrontConversionView: View {
-    @ObservedObject var viewModel: ConversionViewModel
+    @ObservedObject var repository: JoboptionsRepository
+    let selectedPDFVersion: PDFVersion
+    let isPDFVersionConstrained: Bool
+    let selectedPDFACompatibility: PDFACompatibility
+    let controlsAreDisabled: Bool
+    let controlsAppearDisabled: Bool
+    let onSelectPDFVersion: (PDFVersion) -> Void
+    let onSelectPDFACompatibility: (PDFACompatibility) -> Void
     let onShowSettings: () -> Void
+    let onManageJoboptions: (() -> Void)?
     let onShowPDFInfo: () -> Void
     let onOpenFile: () -> Void
     let onOpenPostScriptFile: () -> Void
@@ -48,8 +56,8 @@ struct FrontConversionView: View {
             }
             .scrollIndicators(.hidden)
         }
-        .background(Color(uiColor: .systemGroupedBackground).ignoresSafeArea())
-        .allowsHitTesting(!viewModel.controlsAreDisabled)
+        .background(Color.appGroupedBackground.ignoresSafeArea())
+        .allowsHitTesting(!controlsAreDisabled)
     }
 
     private var analysisCard: some View {
@@ -59,7 +67,7 @@ struct FrontConversionView: View {
             systemImage: "doc.text.magnifyingglass",
             action: onShowPDFInfo
         )
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.appSecondaryGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
     }
@@ -92,12 +100,11 @@ struct FrontConversionView: View {
 
             optionRow(LocalizedStringResource("pdf_version")) {
                 PDFVersionDropdown(
-                    selectedVersion: viewModel.selectedPDFVersion,
-                    isDisabled: viewModel.controlsAppearDisabled || viewModel.isPDFVersionConstrained
-                ) { version in
-                    viewModel.setPDFVersion(version)
-                }
-                .saturation(viewModel.isPDFVersionConstrained ? 0 : 1)
+                    selectedVersion: selectedPDFVersion,
+                    isDisabled: controlsAppearDisabled || isPDFVersionConstrained,
+                    onSelect: onSelectPDFVersion
+                )
+                .saturation(isPDFVersionConstrained ? 0 : 1)
             }
 
             Divider()
@@ -105,14 +112,13 @@ struct FrontConversionView: View {
 
             optionRow(LocalizedStringResource("pdfa_compatibility")) {
                 PDFACompatibilityDropdown(
-                    selectedCompatibility: viewModel.selectedPDFACompatibility,
-                    isDisabled: viewModel.controlsAppearDisabled
-                ) { compatibility in
-                    viewModel.setPDFACompatibility(compatibility)
-                }
+                    selectedCompatibility: selectedPDFACompatibility,
+                    isDisabled: controlsAppearDisabled,
+                    onSelect: onSelectPDFACompatibility
+                )
             }
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.appSecondaryGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
     }
@@ -153,9 +159,9 @@ struct FrontConversionView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .disabled(viewModel.controlsAppearDisabled)
+            .disabled(controlsAppearDisabled)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.appSecondaryGroupedBackground)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .shadow(color: .black.opacity(0.08), radius: 8, y: 3)
     }
@@ -168,8 +174,9 @@ struct FrontConversionView: View {
             Spacer(minLength: 8)
 
             JoboptionsDropdown(
-                repository: viewModel.joboptionsRepository,
-                isDisabled: viewModel.controlsAppearDisabled
+                repository: repository,
+                isDisabled: controlsAppearDisabled,
+                onManage: onManageJoboptions
             )
 
             Divider()
@@ -183,7 +190,7 @@ struct FrontConversionView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.tint)
-            .disabled(viewModel.controlsAppearDisabled)
+            .disabled(controlsAppearDisabled)
             .accessibilityLabel("Edit selected Joboptions")
             .help("Edit selected Joboptions")
         }
@@ -243,6 +250,6 @@ struct FrontConversionView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(viewModel.controlsAppearDisabled)
+        .disabled(controlsAppearDisabled)
     }
 }
