@@ -1,6 +1,7 @@
 #include "PDFStructuralWriter.h"
 #include "PDFConformityMetadata.h"
 #include "PDFProcessingControl.h"
+#include "PDFProcessingUnsupported.h"
 #include "PDFContentProgram.h"
 
 #include <qpdf/FileInputSource.hh>
@@ -9,7 +10,9 @@
 #include <qpdf/QUtil.hh>
 #include <cstdio>
 #include <fcntl.h>
+#include <functional>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -61,6 +64,79 @@ private:
     uint64_t bytes = 0;
 };
 
+PDFInputNormalizationResult normalizeRecoverableInput(QPDF& pdf) {
+    using Object = QPDFObjectHandle;
+    PDFInputNormalizationResult result;
+    const auto xref = pdf.getXRefTable();
+    std::set<QPDFObjGen> zeroOffsetObjects;
+    for (const auto& [id, entry] : xref) {
+        if (entry.getType() == 1 && entry.getOffset() == 0) zeroOffsetObjects.insert(id);
+    }
+    if (zeroOffsetObjects.empty()) {
+        pdf.fixDanglingReferences();
+        if (pdf.anyWarnings())
+            throw PDFProcessingUnsupported(
+                "The PDF contains damaged objects that cannot be repaired without risking document content.");
+        return result;
+    }
+
+    auto root = pdf.getRoot();
+    const auto structureReference = root.getKey("/StructTreeRoot");
+    QPDFObjGen structureRoot;
+    if (structureReference.isIndirect() &&
+        !zeroOffsetObjects.contains(structureReference.getObjGen())) {
+        structureRoot = structureReference.getObjGen();
+    }
+
+    struct SafeReference { Object dictionary; std::string key; };
+    std::vector<SafeReference> safeReferences;
+    std::set<QPDFObjGen> unsafeReferences;
+    std::set<QPDFObjGen> visited;
+    std::function<void(Object, unsigned)> walk = [&](Object object, unsigned depth) {
+        checkPDFProcessing();
+        if (depth > 256)
+            throw PDFProcessingUnsupported(
+                "The PDF object hierarchy is too deep to repair safely.");
+        if (object.isIndirect()) {
+            const auto id = object.getObjGen();
+            if (zeroOffsetObjects.contains(id)) {
+                unsafeReferences.insert(id);
+                return;
+            }
+            if (!visited.insert(id).second) return;
+        }
+        if (object.isArray()) {
+            for (auto child : object.getArrayAsVector()) walk(child, depth + 1);
+            return;
+        }
+        auto dictionary = object.isStream() ? object.getDict() : object;
+        if (!dictionary.isDictionary()) return;
+        const bool isStructureRoot = object.isIndirect() && object.getObjGen() == structureRoot;
+        for (const auto& [key, child] : dictionary.getDictAsMap()) {
+            if (child.isIndirect() && zeroOffsetObjects.contains(child.getObjGen())) {
+                const bool safe = isStructureRoot && (key == "/ParentTree" || key == "/IDTree");
+                if (safe) safeReferences.push_back({dictionary, key});
+                else unsafeReferences.insert(child.getObjGen());
+                continue;
+            }
+            walk(child, depth + 1);
+        }
+    };
+    walk(root, 0);
+    if (!unsafeReferences.empty())
+        throw PDFProcessingUnsupported(
+            "The PDF has a missing object that is required to preserve visible or functional content.");
+
+    for (auto& reference : safeReferences) reference.dictionary.removeKey(reference.key);
+    for (const auto& id : zeroOffsetObjects) pdf.replaceObject(id, Object::newNull());
+    result.zeroOffsetObjectsRemoved = static_cast<unsigned>(zeroOffsetObjects.size());
+    pdf.fixDanglingReferences();
+    if (pdf.anyWarnings())
+        throw PDFProcessingUnsupported(
+            "The PDF contains damaged objects that cannot be repaired without risking document content.");
+    return result;
+}
+
 } // namespace
 
 bool canPreservePDFEncryption(QPDF& pdf) {
@@ -76,7 +152,8 @@ bool canPreservePDFEncryption(QPDF& pdf) {
     return streams == expected && strings == expected && files == expected;
 }
 
-std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input, const std::string& password) {
+std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input, const std::string& password,
+                                      PDFInputNormalizationResult* normalization) {
     auto read = [&](const std::string& encoded) {
         auto pdf = std::make_unique<QPDF>();
         pdf->setSuppressWarnings(true);
@@ -84,6 +161,7 @@ std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input, const 
         // structural editing. The original remains available after any error.
         pdf->setAttemptRecovery(false);
         pdf->processInputSource(std::make_shared<CheckedInput>(input), encoded.c_str());
+        if (normalization) *normalization = normalizeRecoverableInput(*pdf);
         return pdf;
     };
     try {
@@ -142,9 +220,11 @@ static PDFStructuralWriteResult rewritePDF(const std::filesystem::path& input,
                                           bool preserveConformity,
                                           const PDFCompressionPlan* compression, int previewPage = -1) {
     if (input == output) throw std::runtime_error("PDF processing requires a separate output file");
-    auto pdf = openPDFDocument(input, password);
+    PDFInputNormalizationResult normalization;
+    auto pdf = openPDFDocument(input, password, &normalization);
     PDFStructuralWriteResult result;
     result.protectionRemoved = !canPreservePDFEncryption(*pdf);
+    result.inputStructureRepaired = normalization.repaired();
     const auto effectiveRetention = preserveConformity ? metadataPreservingConformity(*pdf) : retention;
     if (compression) result.compression = compressPDFObjects(*pdf, *compression, previewPage);
     else externalizePDFInlineImages(*pdf);

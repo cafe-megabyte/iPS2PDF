@@ -1892,6 +1892,16 @@
         }
       }
     },
+    "Damaged document structure was repaired. Accessibility or navigation information may be incomplete." : {
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eine beschädigte Dokumentstruktur wurde repariert. Informationen zur Barrierefreiheit oder Navigation können unvollständig sein."
+          }
+        }
+      }
+    },
     "DCTEncode" : {
       "localizations" : {
         "de" : {
@@ -7868,6 +7878,17 @@
         }
       }
     },
+    "The PDF contains damaged objects that cannot be repaired without risking document content." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Das PDF enthält beschädigte Objekte, die sich nicht reparieren lassen, ohne den Dokumentinhalt zu gefährden."
+          }
+        }
+      }
+    },
     "The PDF could not be processed. The original is unchanged." : {
       "localizations" : {
         "de" : {
@@ -7894,6 +7915,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Der PDF-Hilfsprozess hat ein ungültiges Ergebnis zurückgegeben."
+          }
+        }
+      }
+    },
+    "The PDF has a missing object that is required to preserve visible or functional content." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Im PDF fehlt ein Objekt, das zum Erhalt sichtbarer oder funktionaler Inhalte erforderlich ist."
+          }
+        }
+      }
+    },
+    "The PDF object hierarchy is too deep to repair safely." : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Die Objekthierarchie des PDFs ist zu tief, um sie sicher zu reparieren."
           }
         }
       }

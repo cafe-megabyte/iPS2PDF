@@ -59,6 +59,7 @@ int32_t process(const char* input, const char* output, const char* password,
         if (finished.sanitization.signatureAppearancesMayDiffer) result->warnings |= IPS2PDF_WARNING_SIGNATURE_APPEARANCE;
         if (finished.compression.attachmentsRemoved) result->warnings |= IPS2PDF_WARNING_ATTACHMENTS_REMOVED;
         if (finished.compression.invoiceAttachmentRemoved) result->warnings |= IPS2PDF_WARNING_INVOICE_ATTACHMENT_REMOVED;
+        if (finished.inputStructureRepaired) result->warnings |= IPS2PDF_WARNING_INPUT_STRUCTURE_REPAIRED;
         result->shared_resources_from_earlier_pages = finished.compression.sharedResourcesFromEarlierPages;
         result->status = IPS2PDF_PROCESSING_SUCCESS;
     } catch (const ips2pdf::PDFProcessingStopped& error) {
@@ -166,9 +167,13 @@ int32_t ips2pdf_pdf_add_signatures(const char* input, const char* output, const 
         if (finished.sanitization.signaturesRemoved) result->warnings |= IPS2PDF_WARNING_SIGNATURES_REMOVED;
         if (finished.protectionRemoved) result->warnings |= IPS2PDF_WARNING_PROTECTION_REMOVED;
         if (finished.sanitization.signatureAppearancesMayDiffer) result->warnings |= IPS2PDF_WARNING_SIGNATURE_APPEARANCE;
+        if (finished.inputStructureRepaired) result->warnings |= IPS2PDF_WARNING_INPUT_STRUCTURE_REPAIRED;
         result->status = IPS2PDF_PROCESSING_SUCCESS;
     } catch (const ips2pdf::PDFProcessingStopped& error) {
         result->status = error.cancelled ? IPS2PDF_PROCESSING_CANCELLED : IPS2PDF_PROCESSING_LIMIT_EXCEEDED;
+    } catch (const ips2pdf::PDFProcessingUnsupported& error) {
+        result->status = IPS2PDF_PROCESSING_UNSUPPORTED;
+        std::snprintf(result->detail, sizeof(result->detail), "%s", error.what());
     } catch (const QPDFExc& error) {
         result->status = error.getErrorCode() == qpdf_e_password ? IPS2PDF_PROCESSING_PASSWORD_REQUIRED : IPS2PDF_PROCESSING_FAILED;
     } catch (...) {

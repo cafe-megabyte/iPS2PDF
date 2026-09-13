@@ -6,6 +6,7 @@ enum PDFProcessingWarning: String, Codable, Sendable, Identifiable {
     case conformityRemoved
     case attachmentsRemoved
     case signatureAppearanceMayDiffer
+    case inputStructureRepaired
 
     var id: String { rawValue }
 
@@ -21,6 +22,8 @@ enum PDFProcessingWarning: String, Codable, Sendable, Identifiable {
             String(localized: "Embedded files were removed. This also removes embedded invoice data such as ZUGFeRD.")
         case .signatureAppearanceMayDiffer:
             String(localized: "Some signature appearances could not be preserved consistently across PDF readers.")
+        case .inputStructureRepaired:
+            String(localized: "Damaged document structure was repaired. Accessibility or navigation information may be incomplete.")
         }
     }
 }

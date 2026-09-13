@@ -9,8 +9,15 @@
 
 namespace ips2pdf {
 
+struct PDFInputNormalizationResult {
+    unsigned zeroOffsetObjectsRemoved = 0;
+
+    bool repaired() const { return zeroOffsetObjectsRemoved > 0; }
+};
+
 std::unique_ptr<QPDF> openPDFDocument(const std::filesystem::path& input,
-                                      const std::string& password);
+                                      const std::string& password,
+                                      PDFInputNormalizationResult* normalization = nullptr);
 
 bool canPreservePDFEncryption(QPDF& pdf);
 
@@ -22,6 +29,7 @@ std::uintmax_t writePDFDocument(QPDF& pdf, const std::filesystem::path& output,
 struct PDFStructuralWriteResult {
     PDFSanitizationResult sanitization;
     bool protectionRemoved = false;
+    bool inputStructureRepaired = false;
     PDFCompressionChanges compression;
     std::uintmax_t outputBytes = 0;
 };

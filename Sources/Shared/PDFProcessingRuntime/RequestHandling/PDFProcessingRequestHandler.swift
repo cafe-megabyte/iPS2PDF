@@ -127,6 +127,7 @@ final class PDFProcessingRequestHandler: @unchecked Sendable {
                     if result.warnings & 2 != 0 { warnings.append(.protectionRemoved) }
                     if result.warnings & 4 != 0 { warnings.append(.signatureAppearanceMayDiffer) }
                     if result.warnings & 8 != 0 { warnings.append(.attachmentsRemoved) }
+                    if result.warnings & 32 != 0 { warnings.append(.inputStructureRepaired) }
                     let detail = withUnsafeBytes(of: result.detail) { bytes in
                         String(decoding: bytes.prefix(while: { $0 != 0 }), as: UTF8.self)
                     }

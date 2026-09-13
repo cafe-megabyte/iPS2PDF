@@ -68,6 +68,39 @@ struct PDFProcessingIPCSmoke {
         result.append(Data("trailer\n<< /Size 8 /Root 1 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
         return result
     }
+
+    static func pdfWithZeroOffsetObjectReferences(brokenPageContent: Bool = false) -> Data {
+        var result = Data("%PDF-1.7\n%âãÏÓ\n".utf8)
+        var offsets = [Int](repeating: 0, count: 9)
+        func appendObject(_ number: Int, _ body: Data) {
+            offsets[number] = result.count
+            result.append(Data("\(number) 0 obj\n".utf8))
+            result.append(body)
+            result.append(Data("\nendobj\n".utf8))
+        }
+        appendObject(1, Data("<< /Type /Catalog /Pages 2 0 R /StructTreeRoot 6 0 R >>".utf8))
+        appendObject(2, Data("<< /Type /Pages /Kids [3 0 R] /Count 1 >>".utf8))
+        appendObject(3, Data("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 200 200] /Resources << >> /Contents 4 0 R >>".utf8))
+        let content = Data("0 0 0 rg 20 20 100 100 re f".utf8)
+        var contentStream = Data("<< /Length \(content.count) >>\nstream\n".utf8)
+        contentStream.append(content)
+        contentStream.append(Data("\nendstream".utf8))
+        appendObject(4, contentStream)
+        appendObject(5, Data("<< /Producer (Private producer) >>".utf8))
+        appendObject(6, Data("<< /Type /StructTreeRoot /K [] /ParentTree 7 0 R /IDTree 8 0 R >>".utf8))
+        appendObject(7, Data("<< /Nums [] >>".utf8))
+        appendObject(8, Data("<< /Names [] >>".utf8))
+        let xref = result.count
+        result.append(Data("xref\n0 9\n0000000000 65535 f \n".utf8))
+        for (number, offset) in offsets.dropFirst().enumerated() {
+            let objectNumber = number + 1
+            let zeroOffset = brokenPageContent ? objectNumber == 4 : objectNumber == 7 || objectNumber == 8
+            result.append(Data(String(format: "%010d 00000 n \n", zeroOffset ? 0 : offset).utf8))
+        }
+        result.append(Data("trailer\n<< /Size 9 /Root 1 0 R /Info 5 0 R >>\nstartxref\n\(xref)\n%%EOF\n".utf8))
+        return result
+    }
+
     static func pdfWithLargeImage(width: Int = 8_000, height: Int = 8_000) -> Data {
         let rowBytes = (width + 7) / 8
         let pixels = Data(repeating: 0x55, count: rowBytes * height)
@@ -293,6 +326,33 @@ struct PDFProcessingIPCSmoke {
         let invalidPreview = try staged("InfoPlain.pdf")
         try require(try send(invalidPreview, previewPage: 0).status == .invalidRequest, "Metadata accepted a compression-only preview parameter")
 
+        let damagedStructure = pdfWithZeroOffsetObjectReferences()
+        let damagedSource = try PDFDocument(data: damagedStructure).unwrap("Recoverable structure fixture did not open")
+        let damagedPixels = try renderedPixels(
+            of: try damagedSource.page(at: 0).unwrap("Recoverable structure fixture page missing")
+        )
+        for operation in [PDFProcessingRequest.Operation.removeMetadata, .compress] {
+            let repair = try PDFProcessingJobDirectory.create(root: root)
+            try damagedStructure.write(to: repair.inputURL)
+            let repairReply = try send(repair, operation: operation)
+            try require(repairReply.status == .success &&
+                        repairReply.warnings.contains(.inputStructureRepaired),
+                        "Recoverable zero-offset structure references were not reported as repaired")
+            let repairedDocument = try PDFDocument(url: repair.outputURL).unwrap("Repaired PDF did not reopen")
+            let repairedPage = try repairedDocument.page(at: 0).unwrap("Repaired PDF page missing")
+            try require(try renderedPixels(of: repairedPage) == damagedPixels,
+                        "Structure repair changed visible page content")
+        }
+        let unsafeStructure = pdfWithZeroOffsetObjectReferences(brokenPageContent: true)
+        let unsafeRepair = try PDFProcessingJobDirectory.create(root: root)
+        try unsafeStructure.write(to: unsafeRepair.inputURL)
+        let unsafeReply = try send(unsafeRepair)
+        try require(unsafeReply.status == .unsupported &&
+                    unsafeReply.detail == "The PDF has a missing object that is required to preserve visible or functional content.",
+                    "A zero-offset page-content reference was not rejected safely")
+        try require(!FileManager.default.fileExists(atPath: unsafeRepair.outputURL.path),
+                    "Unsafe structure repair created output")
+
         let signature = try staged("InfoPlain.pdf")
         let twoPages = try PDFDocument(url: signature.inputURL).unwrap("Signature fixture did not open")
         let duplicateSource = try PDFDocument(url: signature.inputURL).unwrap("Signature fixture duplicate did not open")
@@ -326,6 +386,19 @@ struct PDFProcessingIPCSmoke {
         }
         try require(embeddedSignatures.count == 1,
                     "Multiple placements did not share exactly one embedded signature font")
+
+        let repairedSignature = try PDFProcessingJobDirectory.create(root: root)
+        try damagedStructure.write(to: repairedSignature.inputURL)
+        try FileManager.default.copyItem(at: dummySignatureFont, to: repairedSignature.signatureFontURL)
+        let repairedSignatureReply = try send(
+            repairedSignature, operation: .addSignatures,
+            signaturePlacements: [PDFSignaturePlacement(pageIndex: 0, x: 50, y: 50)]
+        )
+        try require(repairedSignatureReply.status == .success &&
+                    repairedSignatureReply.warnings.contains(.inputStructureRepaired),
+                    "Signature insertion did not repair recoverable structure references")
+        try require(PDFDocument(url: repairedSignature.outputURL)?.pageCount == 1,
+                    "Signed repaired PDF did not reopen")
         let invalidSignature = try staged("InfoPlain.pdf")
         try require(try send(invalidSignature, operation: .addSignatures).status == .invalidRequest,
                     "Empty signature request was accepted")
@@ -442,7 +515,7 @@ struct PDFProcessingIPCSmoke {
         let convertedFont = try CGFont(provider).unwrap("Generated OpenType font was rejected by Apple font services")
         try require(openType.starts(with: Data("OTTO".utf8)) && convertedFont.numberOfGlyphs == 3,
                     "Generated OpenType font lost its CFF glyphs")
-        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, compression, previews, shared signature-font embedding, ICC, inline, TIFF-predictor, run-length, CCITT and large image, attachment and OpenType font extraction")
+        print("PASS PDF helper contract: wire codec, native result, original preservation, exclusive output, versions, cancellation, serialization, password failures, guarded structure repair, compression, previews, shared signature-font embedding, ICC, inline, TIFF-predictor, run-length, CCITT and large image, attachment and OpenType font extraction")
     }
 }
 

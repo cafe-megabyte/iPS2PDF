@@ -201,7 +201,8 @@ PDFStructuralWriteResult addPDFSignatures(const std::filesystem::path& input,
                                           const std::vector<PDFSignaturePlacement>& placements) {
     if (input == output || placements.empty() || placements.size() > 10000)
         throw std::runtime_error("Invalid signature request");
-    auto pdf = openPDFDocument(input, password);
+    PDFInputNormalizationResult normalization;
+    auto pdf = openPDFDocument(input, password, &normalization);
     auto pages = QPDFPageDocumentHelper(*pdf).getAllPages();
     std::map<int, std::vector<PDFSignaturePlacement>> byPage;
     for (const auto& placement : placements) {
@@ -237,6 +238,7 @@ PDFStructuralWriteResult addPDFSignatures(const std::filesystem::path& input,
     }
     PDFStructuralWriteResult result;
     result.protectionRemoved = !canPreservePDFEncryption(*pdf);
+    result.inputStructureRepaired = normalization.repaired();
     result.sanitization = invalidatePDFDigitalSignatures(*pdf);
     result.outputBytes = writePDFDocument(*pdf, output, !result.protectionRemoved, false);
     return result;
