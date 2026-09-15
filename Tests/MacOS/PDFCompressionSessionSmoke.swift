@@ -112,6 +112,8 @@ struct PDFCompressionSessionSmoke {
                     "A page-only preview acquired a file size or could be accepted")
         model.options.colorMode = .blackAndWhite
         try await wait { model.pagePreview == nil && model.candidate == nil }
+        try require(model.displayedResult?.id == preview.id && !model.canAccept,
+                    "Recalculation removed the visible preview or made it acceptable")
         try await wait { await queue.count() == 4 }
         await queue.finish(2, with: larger)
         try await Task.sleep(for: .milliseconds(25))
@@ -147,6 +149,19 @@ struct PDFCompressionSessionSmoke {
         }
         try require(pageModel.individualPageCount == 1 && pageModel.currentPageUsesIndividualSettings,
                     "Current-page settings were not retained")
+        pageModel.updateCurrentPageOptions(pageModel.options)
+        try require(pageModel.currentPageUsesIndividualSettings,
+                    "Touching an unchanged slider reverted Individual to Document Standard")
+        var changedPage = pageModel.currentPageOptions
+        changedPage.contrast = 40
+        pageModel.updateCurrentPageOptions(changedPage)
+        pageModel.options = changedPage
+        try await wait { pageModel.canAccept }
+        try require(pageModel.currentPageUsesIndividualSettings,
+                    "Matching document settings removed an explicit page override")
+        pageModel.options = PDFCompressionOptions()
+        pageModel.updateCurrentPageOptions(pageModel.options)
+        try await wait { pageModel.canAccept }
         try require(pageModel.currentPageSizeImpact != nil,
                     "Exact whole-document size comparison was not published")
         let pageCalls = await pageQueue.recorded()

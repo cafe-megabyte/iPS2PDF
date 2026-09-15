@@ -17,6 +17,10 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
     }
     @Published private(set) var pageOverrides: [Int: PDFCompressionOptions] = [:]
     @Published private(set) var candidate: PDFEditingRevision?
+    // Keep the last rendered result visible while a new candidate is calculated.
+    // Only candidate is eligible for acceptance.
+    @Published private(set) var displayedResult: PDFEditingRevision?
+    @Published private(set) var displayedPreviewPageIndex: Int?
     @Published private(set) var pagePreview: PDFEditingRevision?
     @Published private(set) var previewPageIndex: Int?
     @Published private(set) var isProcessing = false
@@ -61,6 +65,8 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
                 cancel()
                 candidate = nil
                 pagePreview = nil
+                displayedResult = nil
+                displayedPreviewPageIndex = nil
                 errorMessage = String(localized: "The PDF changed while the preview was being prepared. Open compression again.")
             }
         }
@@ -145,12 +151,9 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
             }
         }
         value = normalized(value)
-        if value == options {
-            guard pageOverrides.removeValue(forKey: currentPage) != nil else { return }
-        } else {
-            guard pageOverrides[currentPage] != value else { return }
-            pageOverrides[currentPage] = value
-        }
+        // Individual is an explicit choice, even when its values match the standard.
+        guard pageOverrides[currentPage] != value else { return }
+        pageOverrides[currentPage] = value
         scheduleAfterViewUpdate(normalizeSettings: false)
     }
 
@@ -244,10 +247,6 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
                     options = value
                     return
                 }
-                let redundant = pageOverrides.filter { $0.value == options }.map(\.key)
-                if !redundant.isEmpty {
-                    for page in redundant { pageOverrides.removeValue(forKey: page) }
-                }
             }
             schedule()
         }
@@ -291,7 +290,6 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
             if documentNeedsNormalization { options = normalized(options) }
             var updated = pageOverrides
             for (page, value) in updated { updated[page] = normalized(value) }
-            updated = updated.filter { $0.value != options }
             pageOverrides = updated
             scheduleAfterViewUpdate(normalizeSettings: false)
         }
@@ -303,7 +301,6 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
         pagePreview = nil
         previewPageIndex = nil
         standardComparisonBytes = nil
-        sharedResourcesFromEarlierPages = 0
         errorMessage = nil
         isProcessing = true
         let token = generation
@@ -320,12 +317,20 @@ final class PDFCompressionSession: ObservableObject, Identifiable {
                 if currentPage == page {
                     pagePreview = preview
                     previewPageIndex = page
+                    // Once a complete result exists, replace it only with the next
+                    // complete result, avoiding a full → single-page → full layout cycle.
+                    if displayedResult == nil || displayedPreviewPageIndex != nil {
+                        displayedResult = preview
+                        displayedPreviewPageIndex = page
+                    }
                     sharedResourcesFromEarlierPages = preview.sharedResourcesFromEarlierPages
                 }
                 try await ContinuousClock().sleep(until: fullDeadline)
                 let finished = try await processor(input, settings, overrides, password, nil)
                 guard generation == token, !Task.isCancelled else { return }
                 candidate = finished
+                displayedResult = finished
+                displayedPreviewPageIndex = nil
                 pagePreview = nil
                 previewPageIndex = nil
                 if pageOverrides[page] != nil, currentPage == page {

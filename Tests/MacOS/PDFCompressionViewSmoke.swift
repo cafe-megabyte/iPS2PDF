@@ -27,7 +27,13 @@ struct PDFCompressionViewSmoke {
             input: PDFInspectionInput(sourceURL: folder.appendingPathComponent("Compression-Shared-Preview.pdf")),
             sharedResourcesFromEarlierPages: 1
         )
-        let model = try PDFCompressionSession(editing: editing) { _, _, _, _, page in page == nil ? full : preview }
+        let model = try PDFCompressionSession(editing: editing) { _, _, _, _, page in
+            try await Task.sleep(for: .milliseconds(180))
+            return try PDFEditingRevision(
+                input: (page == nil ? full : preview).input,
+                sharedResourcesFromEarlierPages: page == nil ? 0 : 1
+            )
+        }
         let host = NSHostingController(rootView: PDFCompressionView(session: model, close: {}))
         let window = NSWindow(contentViewController: host)
         window.setContentSize(NSSize(width: 1050, height: 760))
@@ -64,7 +70,21 @@ struct PDFCompressionViewSmoke {
         try require(views.allSatisfy { $0.bounds.width > 250 && $0.bounds.height > 200 }, "Compact comparison lost its usable viewports")
         let retainedScale = left.scaleFactor / left.scaleFactorForSizeToFit
         guard let retainedPoint = left.currentDestination?.point else { throw CocoaError(.fileReadUnknown) }
+        let retainedFrame = right.convert(right.bounds, to: host.view)
+        let retainedDocument = right.document
         model.options.contrast = 20
+        try await wait { model.isProcessing }
+        // Inspect the intermediate frames, not just the final restored viewport.
+        for _ in 0..<8 {
+            host.view.layoutSubtreeIfNeeded()
+            let currentViews = descendants(PDFView.self, in: host.view)
+            try require(currentViews.contains { $0 === right } && right.document === retainedDocument,
+                        "Recalculation removed or replaced the last complete preview")
+            let frame = right.convert(right.bounds, to: host.view)
+            try require(abs(frame.minY - retainedFrame.minY) < 1 && abs(frame.height - retainedFrame.height) < 1,
+                        "Calculating status changed the PDF viewport frame")
+            try await Task.sleep(for: .milliseconds(40))
+        }
         try await wait { model.canAccept }
         host.view.layoutSubtreeIfNeeded()
         try await wait { descendants(PDFView.self, in: host.view).filter { $0.document?.pageCount == 2 }.count == 2 }
@@ -87,6 +107,14 @@ struct PDFCompressionViewSmoke {
         model.setCurrentPageUsesIndividualSettingsFromView(true)
         try await wait { model.canAccept && model.standardComparisonBytes == full.byteCount }
         host.view.layoutSubtreeIfNeeded()
+        model.updateCurrentPageOptionsFromView(model.currentPageOptions)
+        try await Task.sleep(for: .milliseconds(80))
+        try require(model.currentPageUsesIndividualSettings, "Touching a page control reset Individual")
+        var individual = model.currentPageOptions
+        individual.contrast = 41
+        model.updateCurrentPageOptionsFromView(individual)
+        try await wait { model.currentPageOptions.contrast == 41 && model.canAccept }
+        try require(model.currentPageUsesIndividualSettings, "Moving a page slider reset Individual")
         try require(model.currentPageSizeImpact != nil && model.sharedResourcesFromEarlierPages == 1,
                     "Current-page size comparison or shared-resource state is missing")
         try await wait { editing.inspection?.report.imagePlacementAnalysisComplete == true }

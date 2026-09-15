@@ -29,14 +29,14 @@ struct PDFCompressionView: View {
                 }.padding(.horizontal)
             }
             PDFComparisonSurface(
-                original: session.input, result: session.candidate ?? session.pagePreview,
-                previewPage: session.previewPageIndex, password: session.password,
+                original: session.input, result: session.displayedResult,
+                previewPage: session.displayedPreviewPageIndex, password: session.password,
                 currentPage: $session.currentPage,
                 paperSample: displayedPaperSample,
                 isChoosingPaperArea: paperSelectionScope != nil,
                 paperSampled: applyPaperSample
             )
-            if let candidate = session.candidate, !candidate.warnings.isEmpty {
+            if let candidate = session.displayedResult, !candidate.warnings.isEmpty {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 6) {
                         ForEach(candidate.warnings) { warning in
@@ -134,12 +134,12 @@ struct PDFCompressionView: View {
                 pageSizeComparison
             } else {
                 Label(settingsSummary(session.options), systemImage: "doc.text")
+                    .lineLimit(2, reservesSpace: true)
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
 
-            if session.sharedResourcesFromEarlierPages > 0 {
-                Label(
+            Label(
                     String.localizedStringWithFormat(
                         String(localized: "%lld shared resources use settings from earlier pages."),
                         session.sharedResourcesFromEarlierPages
@@ -148,7 +148,9 @@ struct PDFCompressionView: View {
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            }
+                .lineLimit(2, reservesSpace: true)
+                .opacity(session.sharedResourcesFromEarlierPages > 0 ? 1 : 0)
+                .accessibilityHidden(session.sharedResourcesFromEarlierPages == 0)
 
             HStack {
                 Button("Reset Page") { session.resetCurrentPage() }
@@ -179,19 +181,14 @@ struct PDFCompressionView: View {
             HStack {
                 Text("With Document Standard on this page")
                 Spacer()
-                if let size = session.standardComparisonSize {
-                    Text(size)
-                } else {
-                    HStack(spacing: 5) {
-                        ProgressView().controlSize(.small)
-                        Text("Calculating…")
-                    }
+                Text(session.standardComparisonSize ?? String(localized: "Calculating…"))
                     .foregroundStyle(.secondary)
-                }
             }
-            if let impact = session.currentPageSizeImpact {
-                Text(impact).bold().frame(maxWidth: .infinity, alignment: .trailing)
-            }
+            Text(session.currentPageSizeImpact ?? String(localized: "No file-size difference"))
+                .bold()
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .opacity(session.currentPageSizeImpact == nil ? 0 : 1)
+                .accessibilityHidden(session.currentPageSizeImpact == nil)
         }
         .font(.caption)
         .monospacedDigit()
@@ -201,13 +198,16 @@ struct PDFCompressionView: View {
         HStack(alignment: .firstTextBaseline) {
             Text("Original: \(session.originalSize)")
             Spacer()
-            if let size = session.resultSize {
-                VStack(alignment: .trailing) {
+            VStack(alignment: .trailing) {
+                if let size = session.resultSize {
                     Text("Result: \(size)").bold()
-                    if let difference = session.sizeDifference { Text(difference).font(.caption) }
+                } else {
+                    Text("Calculating file size…").foregroundStyle(.secondary)
                 }
-            } else {
-                Text("Calculating file size…").foregroundStyle(.secondary)
+                Text(session.sizeDifference ?? String(localized: "Calculating file size…"))
+                    .font(.caption)
+                    .opacity(session.sizeDifference == nil ? 0 : 1)
+                    .accessibilityHidden(session.sizeDifference == nil)
             }
         }
         .font(.callout)
@@ -218,10 +218,12 @@ struct PDFCompressionView: View {
         HStack {
             Button("Cancel") { session.cancel(); close() }.keyboardShortcut(.cancelAction)
             Button("Licenses") { showsLicenses = true }.buttonStyle(.plain).font(.caption)
-            if session.isProcessing || session.isCalculatingPageDifference {
+            HStack {
                 ProgressView().controlSize(.small)
                 Text(progressText).font(.caption).foregroundStyle(.secondary)
             }
+            .opacity(session.isProcessing || session.isCalculatingPageDifference ? 1 : 0)
+            .accessibilityHidden(!session.isProcessing && !session.isCalculatingPageDifference)
             Spacer()
             Button("Use result") {
                 if session.accept() { close() }
